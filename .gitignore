@@ -1,0 +1,7 @@
+.idea
+.logs
+node_modules
+generated
+
+.env
+db.json
