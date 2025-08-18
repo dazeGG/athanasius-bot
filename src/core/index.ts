@@ -4,7 +4,7 @@ export {
 
 export {
 	default as DB,
-} from './db';
+} from './entities/db';
 
 export {
 	default as LOGGER,
