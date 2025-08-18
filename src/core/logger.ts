@@ -13,7 +13,7 @@ export default winston.createLogger({
 	),
 	transports: [
 		new DailyRotateFile({
-			filename: '.logs/error-%DATE%.log',
+			filename: 'logs/error-%DATE%.log',
 			datePattern: 'YYYY-MM-DD',
 			maxFiles: '30d',
 		}),
