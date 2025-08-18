@@ -1,4 +1,4 @@
-import type { CallbackHandlerOptions } from '~/core/types';
+import type { CallbackHandlerOptions } from '~/core';
 
 import { chatIdMiddleware } from '../middlewares';
 

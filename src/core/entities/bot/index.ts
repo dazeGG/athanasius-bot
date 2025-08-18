@@ -5,12 +5,11 @@ import TelegramBot from 'node-telegram-bot-api';
 import { MessageHandlers } from '~/core/entities/message-handlers';
 import type { MessageHandlerOptions } from '~/core/entities/message-handlers';
 
-import { logError } from '~/lib';
+import { logError } from '~/core';
+import type { MessageHandler, CallbackHandler, MessageContext, Buttons, CallbackContext } from '~/core';
 
 import { callbackHandler } from './lib';
-
-import type { MessageHandler, CallbackHandler, MessageContext, Buttons, CallbackContext } from '../types';
-import { chatIdMiddleware } from '~/core/bot/middlewares';
+import { chatIdMiddleware } from './middlewares';
 
 type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };
 

@@ -1,7 +1,7 @@
 import type TelegramBot from 'node-telegram-bot-api';
 
 import { STATES } from '~/core';
-import type { MessageHandler as MessageHandlerType } from '~/core/types';
+import type { MessageHandler as MessageHandlerType } from '~/core';
 
 import type { MessageHandlerOptions } from '.';
 
