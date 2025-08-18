@@ -2,23 +2,30 @@ import 'dotenv/config';
 
 import TelegramBot from 'node-telegram-bot-api';
 
+import { MessageHandlers } from '~/core/entities/message-handlers';
+import type { MessageHandlerOptions } from '~/core/entities/message-handlers';
+
 import { logError } from '~/lib';
-import type { Handlers, Callbacks, Handler, Callback, MessageContext, Buttons, CallbackContext } from '~/types/base';
 
-import { callbackHandler, messageHandler } from './lib';
+import { callbackHandler } from './lib';
 
-const token = process.env.BOT_TOKEN ?? '';
+import type { MessageHandler, CallbackHandler, MessageContext, Buttons, CallbackContext } from '../types';
+import { chatIdMiddleware } from '~/core/bot/middlewares';
 
 type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };
 
 class Bot {
 	private readonly bot: TelegramBot;
-	private readonly handlers: Handlers;
-	private readonly callbacks: Callbacks;
 
-	constructor () {
+	private readonly commands: Record<string, MessageHandler>;
+	private readonly messageHandlers: MessageHandlers;
+	private readonly callbacks: Record<string, CallbackHandler>;
+
+	constructor (token: string) {
 		this.bot = new TelegramBot(token, { polling: true });
-		this.handlers = {};
+
+		this.commands = {};
+		this.messageHandlers = new MessageHandlers();
 		this.callbacks = {};
 	}
 
@@ -26,18 +33,43 @@ class Bot {
 		await this.bot.setMyCommands(menuCommands);
 	}
 
-	registerHandler (handler: string, cb: Handler) {
-		this.handlers[handler] = cb;
+	registerCommand (command: string, handler: MessageHandler) {
+		this.commands[command] = handler;
 	}
 
-	registerCallback (callbackStart: string, cb: Callback) {
+	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions) {
+		this.messageHandlers.register(handler, options);
+	}
+
+	registerCallback (callbackStart: string, cb: CallbackHandler) {
 		this.callbacks[callbackStart] = cb;
 	}
 
 	async init (commands: TelegramBot.BotCommand[]) {
 		await this.setMenuCommands(commands);
 
-		this.bot.on('message', async message => await messageHandler({ handlers: this.handlers, message }));
+		this.bot.on('message', async message => {
+			if (!message.text || !message.from) {
+				return;
+			}
+
+			const { text, from: user } = message;
+
+			// * Command
+			if (text.startsWith('/') && this.commands[text]) {
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: this.commands[text] });
+				return;
+			}
+
+			// * Message handler
+			const handler = this.messageHandlers.getHandler(message);
+
+			if (handler) {
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: handler });
+				return;
+			}
+		});
+
 		this.bot.on('callback_query', async callback => await callbackHandler({ callbacks: this.callbacks, callback }));
 	}
 
@@ -137,4 +169,6 @@ class Bot {
 	}
 }
 
-export default new Bot();
+const BOT = new Bot(process.env.BOT_TOKEN ?? '');
+
+export default BOT;

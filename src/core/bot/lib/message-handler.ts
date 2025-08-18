@@ -1,5 +1,5 @@
 import { STATES } from '~/core';
-import type { MessageHandlerOptions } from '~/types/base';
+import type { MessageHandlerOptions } from '~/core/types';
 
 import { chatIdMiddleware } from '../middlewares';
 

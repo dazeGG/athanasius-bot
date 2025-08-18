@@ -1,4 +1,4 @@
-import type { Buttons } from '~/types/base';
+import type { Buttons } from '~/core/types';
 
 declare global {
 	type ModuleKeyboards = Record<string, Buttons>
