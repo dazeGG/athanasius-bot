@@ -1,4 +1,3 @@
-import 'dotenv/config';
 import type TelegramBot from 'node-telegram-bot-api';
 
 import { BOT } from '~/core';

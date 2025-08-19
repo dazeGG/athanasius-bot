@@ -2,43 +2,91 @@ import 'dotenv/config';
 
 import TelegramBot from 'node-telegram-bot-api';
 
-import { logError } from '~/lib';
-import type { Handlers, Callbacks, Handler, Callback, MessageContext, Buttons, CallbackContext } from '~/types/base';
+import { MessageHandlers } from '~/core/entities/message-handlers';
+import type { MessageHandlerOptions } from '~/core/entities/message-handlers';
+import { CallbackHandlers } from '~/core/entities/callback-handlers';
+import type { CallbackHandlerOptions } from '~/core/entities/callback-handlers';
 
-import { callbackHandler, messageHandler } from './lib';
+import { logError } from '~/core';
+import type { MessageHandler, CallbackHandler, MessageContext, Buttons, CallbackContext } from '~/core';
 
-const token = process.env.BOT_TOKEN ?? '';
+import { chatIdMiddleware } from './middlewares';
 
 type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };
 
 class Bot {
 	private readonly bot: TelegramBot;
-	private readonly handlers: Handlers;
-	private readonly callbacks: Callbacks;
 
-	constructor () {
+	private readonly commands: Map<string, MessageHandler>;
+	private readonly messageHandlers: MessageHandlers;
+	private readonly callbackHandlers: CallbackHandlers;
+
+	constructor (token: string) {
 		this.bot = new TelegramBot(token, { polling: true });
-		this.handlers = {};
-		this.callbacks = {};
+
+		this.commands = new Map();
+		this.messageHandlers = new MessageHandlers();
+		this.callbackHandlers = new CallbackHandlers();
 	}
 
 	private async setMenuCommands (menuCommands: TelegramBot.BotCommand[]) {
 		await this.bot.setMyCommands(menuCommands);
 	}
 
-	registerHandler (handler: string, cb: Handler) {
-		this.handlers[handler] = cb;
+	registerCommand (command: string, handler: MessageHandler) {
+		this.commands.set(command, handler);
 	}
 
-	registerCallback (callbackStart: string, cb: Callback) {
-		this.callbacks[callbackStart] = cb;
+	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions) {
+		this.messageHandlers.register(handler, options);
+	}
+
+	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions) {
+		this.callbackHandlers.register(handler, options);
 	}
 
 	async init (commands: TelegramBot.BotCommand[]) {
 		await this.setMenuCommands(commands);
 
-		this.bot.on('message', async message => await messageHandler({ handlers: this.handlers, message }));
-		this.bot.on('callback_query', async callback => await callbackHandler({ callbacks: this.callbacks, callback }));
+		this.bot.on('message', async message => {
+			if (!message.text || !message.from) {
+				return;
+			}
+
+			const { text, from: user } = message;
+
+			// * Command handler
+			const commandHandler = this.commands.get(text);
+
+			if (text.startsWith('/') && commandHandler) {
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: commandHandler });
+				return;
+			}
+
+			// * Message handler
+			const messageHandler = this.messageHandlers.getHandler(message);
+
+			if (messageHandler) {
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: messageHandler });
+				return;
+			}
+		});
+
+		this.bot.on('callback_query', async callbackQuery => {
+			if (!callbackQuery.data || !callbackQuery.message) {
+				return;
+			}
+
+			const { data, message } = callbackQuery;
+
+			// * Callback handler
+			const callbackHandler = this.callbackHandlers.getHandler(callbackQuery);
+
+			if (callbackHandler) {
+				await chatIdMiddleware({ callback: { ...callbackQuery, data, message }, next: callbackHandler });
+				return;
+			}
+		});
 	}
 
 	async sendMessageByChatId (chatId: TelegramBot.ChatId, message: string, keyboard?: Buttons) {
@@ -137,4 +185,6 @@ class Bot {
 	}
 }
 
-export default new Bot();
+const BOT = new Bot(process.env.BOT_TOKEN ?? '');
+
+export default BOT;

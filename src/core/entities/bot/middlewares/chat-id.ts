@@ -1,8 +1,8 @@
-import type { Callback, CallbackContextCallback, Handler, MessageContextMessage } from '~/types/base';
+import type { CallbackHandler, CallbackContextCallback, MessageHandler, MessageContextMessage } from '~/core';
 
 type ChatIdMiddlewareContext =
-  | { message: MessageContextMessage; next: Handler; callback?: never; }
-  | { callback: CallbackContextCallback; next: Callback; message?: never; };
+  | { message: MessageContextMessage; next: MessageHandler; callback?: never; }
+  | { callback: CallbackContextCallback; next: CallbackHandler; message?: never; };
 
 export const chatIdMiddleware = async (ctx: ChatIdMiddlewareContext) => {
 	if (ctx.callback) {
