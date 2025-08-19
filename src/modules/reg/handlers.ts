@@ -9,7 +9,7 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const user = DB.data.users.find(user => user.id === ctx.message.from.id);
 
 	if (user) {
-		await BOT.sendMessage(ctx, lib.txt.alreadyRegistered);
+		await BOT.sendMessage({ ctx, message: lib.txt.alreadyRegistered });
 		return;
 	}
 
@@ -18,14 +18,14 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const validationData = validateName(name);
 
 	if (!validationData.success) {
-		await BOT.sendMessage(ctx, validationData.message);
+		await BOT.sendMessage({ ctx, message: validationData.message });
 		return;
 	}
 
 	const userWithName = DB.data.users.find(user => user.name === name);
 
 	if (userWithName) {
-		await BOT.sendMessage(ctx, lib.txt.nameAlreadyTaken);
+		await BOT.sendMessage({ ctx, message: lib.txt.nameAlreadyTaken });
 		return;
 	}
 
@@ -39,5 +39,5 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		};
 	});
 
-	await BOT.sendMessage(ctx, lib.txt.successfulRegistration);
+	await BOT.sendMessage({ ctx, message: lib.txt.successfulRegistration });
 };
