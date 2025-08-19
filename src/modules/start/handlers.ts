@@ -1,6 +1,8 @@
 import { BOT } from '~/core';
 import type { MessageContext } from '~/core';
 
-export const start = async (ctx: MessageContext) => {
-	await BOT.sendMessage(ctx, 'Я бот для игры в Афанасия, я пока в разработке)');
+import * as lib from './lib';
+
+export const startCommandHandler = async (ctx: MessageContext) => {
+	await BOT.sendMessage(ctx, lib.txt.start);
 };
