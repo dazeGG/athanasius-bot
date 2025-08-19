@@ -1,6 +1,8 @@
-import registerStart from "./start";
+import registerReg from './reg';
+import registerStart from './start';
 
 const registerModules = () => {
+	registerReg();
 	registerStart();
 };
 
