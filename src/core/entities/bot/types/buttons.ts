@@ -1,4 +1,4 @@
-import type { CallbackHandlerOptions } from '~/core/entities/callback-handlers';
+import type { CallbackHandlerOptions } from '../lib';
 
 /* RAW */
 

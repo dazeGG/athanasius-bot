@@ -4,12 +4,8 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import { logError } from '~/core';
 
-import { MessageHandlers } from '~/core/entities/message-handlers';
-import type { MessageHandlerOptions } from '~/core/entities/message-handlers';
-import { CallbackHandlers } from '~/core/entities/callback-handlers';
-import type { CallbackHandlerOptions } from '~/core/entities/callback-handlers';
-
-import { stringifyCallbackData } from './lib';
+import { stringifyCallbackData, MessageHandlers, CallbackHandlers } from './lib';
+import type { MessageHandlerOptions, CallbackHandlerOptions } from './lib';
 import { chatIdMiddleware } from './middlewares';
 import type {
 	MessageHandler,
@@ -101,6 +97,7 @@ class Bot {
 
 		if (keyboard) {
 			messageOptions.reply_markup = {
+				...options?.reply_markup,
 				inline_keyboard: stringifyCallbackData(keyboard),
 			};
 		}
@@ -135,6 +132,7 @@ class Bot {
 
 		if (keyboard) {
 			messageOptions.reply_markup = {
+				...options?.reply_markup,
 				inline_keyboard: stringifyCallbackData(keyboard),
 			};
 		}
