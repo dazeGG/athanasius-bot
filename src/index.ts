@@ -5,6 +5,8 @@ import { BOT } from '~/core';
 import registerModules from './modules/register-modules';
 
 const commands: TelegramBot.BotCommand[] = [
+	{ command: '/addglobalkeyboard', description: 'Добавить клавиатуру' },
+	{ command: '/removeglobalkeyboard', description: 'Убрать клавиатуру' },
 ];
 
 BOT.init(commands)
