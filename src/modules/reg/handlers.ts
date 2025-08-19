@@ -1,6 +1,8 @@
 import { BOT, DB } from '~/core';
 import type { MessageContext } from '~/core';
 
+import { validateName } from '~/lib';
+
 import * as lib from './lib';
 
 export const regStartMessageHandler = async (ctx: MessageContext) => {
@@ -13,7 +15,7 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 
 	const name = ctx.message.text.slice(5, ctx.message.text.length);
 
-	const validationData = lib.mtd.validateName(name);
+	const validationData = validateName(name);
 
 	if (!validationData.success) {
 		await BOT.sendMessage(ctx, validationData.message);
