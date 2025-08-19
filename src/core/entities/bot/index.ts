@@ -4,11 +4,12 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import { MessageHandlers } from '~/core/entities/message-handlers';
 import type { MessageHandlerOptions } from '~/core/entities/message-handlers';
+import { CallbackHandlers } from '~/core/entities/callback-handlers';
+import type { CallbackHandlerOptions } from '~/core/entities/callback-handlers';
 
 import { logError } from '~/core';
 import type { MessageHandler, CallbackHandler, MessageContext, Buttons, CallbackContext } from '~/core';
 
-import { callbackHandler } from './lib';
 import { chatIdMiddleware } from './middlewares';
 
 type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };
@@ -18,14 +19,14 @@ class Bot {
 
 	private readonly commands: Record<string, MessageHandler>;
 	private readonly messageHandlers: MessageHandlers;
-	private readonly callbacks: Record<string, CallbackHandler>;
+	private readonly callbackHandlers: CallbackHandlers;
 
 	constructor (token: string) {
 		this.bot = new TelegramBot(token, { polling: true });
 
 		this.commands = {};
 		this.messageHandlers = new MessageHandlers();
-		this.callbacks = {};
+		this.callbackHandlers = new CallbackHandlers();
 	}
 
 	private async setMenuCommands (menuCommands: TelegramBot.BotCommand[]) {
@@ -40,8 +41,8 @@ class Bot {
 		this.messageHandlers.register(handler, options);
 	}
 
-	registerCallback (callbackStart: string, cb: CallbackHandler) {
-		this.callbacks[callbackStart] = cb;
+	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions) {
+		this.callbackHandlers.register(handler, options);
 	}
 
 	async init (commands: TelegramBot.BotCommand[]) {
@@ -69,7 +70,21 @@ class Bot {
 			}
 		});
 
-		this.bot.on('callback_query', async callback => await callbackHandler({ callbacks: this.callbacks, callback }));
+		this.bot.on('callback_query', async callbackQuery => {
+			if (!callbackQuery.data || !callbackQuery.message) {
+				return;
+			}
+
+			const { data, message } = callbackQuery;
+
+			// * Callback handler
+			const handler = this.callbackHandlers.getHandler(callbackQuery);
+
+			if (handler) {
+				await chatIdMiddleware({ callback: { ...callbackQuery, data, message }, next: handler });
+				return;
+			}
+		});
 	}
 
 	async sendMessageByChatId (chatId: TelegramBot.ChatId, message: string, keyboard?: Buttons) {
