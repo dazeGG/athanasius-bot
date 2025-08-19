@@ -17,14 +17,14 @@ type BotContext = MessageContext & { callback?: never } | CallbackContext & { me
 class Bot {
 	private readonly bot: TelegramBot;
 
-	private readonly commands: Record<string, MessageHandler>;
+	private readonly commands: Map<string, MessageHandler>;
 	private readonly messageHandlers: MessageHandlers;
 	private readonly callbackHandlers: CallbackHandlers;
 
 	constructor (token: string) {
 		this.bot = new TelegramBot(token, { polling: true });
 
-		this.commands = {};
+		this.commands = new Map();
 		this.messageHandlers = new MessageHandlers();
 		this.callbackHandlers = new CallbackHandlers();
 	}
@@ -34,7 +34,7 @@ class Bot {
 	}
 
 	registerCommand (command: string, handler: MessageHandler) {
-		this.commands[command] = handler;
+		this.commands.set(command, handler);
 	}
 
 	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions) {
@@ -55,17 +55,19 @@ class Bot {
 
 			const { text, from: user } = message;
 
-			// * Command
-			if (text.startsWith('/') && this.commands[text]) {
-				await chatIdMiddleware({ message: { ...message, text, from: user }, next: this.commands[text] });
+			// * Command handler
+			const commandHandler = this.commands.get(text);
+
+			if (text.startsWith('/') && commandHandler) {
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: commandHandler });
 				return;
 			}
 
 			// * Message handler
-			const handler = this.messageHandlers.getHandler(message);
+			const messageHandler = this.messageHandlers.getHandler(message);
 
-			if (handler) {
-				await chatIdMiddleware({ message: { ...message, text, from: user }, next: handler });
+			if (messageHandler) {
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: messageHandler });
 				return;
 			}
 		});
@@ -78,10 +80,10 @@ class Bot {
 			const { data, message } = callbackQuery;
 
 			// * Callback handler
-			const handler = this.callbackHandlers.getHandler(callbackQuery);
+			const callbackHandler = this.callbackHandlers.getHandler(callbackQuery);
 
-			if (handler) {
-				await chatIdMiddleware({ callback: { ...callbackQuery, data, message }, next: handler });
+			if (callbackHandler) {
+				await chatIdMiddleware({ callback: { ...callbackQuery, data, message }, next: callbackHandler });
 				return;
 			}
 		});
