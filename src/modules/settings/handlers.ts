@@ -1,8 +1,8 @@
-import { BOT } from '~/core';
+import { BOT, DB } from '~/core';
 import type { MessageContext } from '~/core';
 
 import * as lib from './lib';
 
-export const startCommandHandler = async (ctx: MessageContext) => {
+export const settingsStartMessageHandler = async (ctx: MessageContext) => {
 	await BOT.sendMessage({ ctx, message: lib.txt.start });
 };

@@ -1,6 +1,4 @@
-export {
-	default as BOT,
-} from './entities/bot';
+export * from './entities/bot';
 
 export {
 	default as DB,
@@ -15,4 +13,3 @@ export {
 } from './plugins/logger';
 
 export * from './lib';
-export * from './types';

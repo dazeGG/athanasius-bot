@@ -1,4 +1,4 @@
-import type { CallbackHandler, CallbackContextCallback, MessageHandler, MessageContextMessage } from '~/core';
+import type { CallbackHandler, CallbackContextCallback, MessageContextMessage, MessageHandler } from '..';
 
 type ChatIdMiddlewareContext =
   | { message: MessageContextMessage; next: MessageHandler; callback?: never; }
