@@ -9,7 +9,11 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const user = DB.data.users.find(user => user.id === ctx.message.from.id);
 
 	if (user) {
-		await BOT.sendMessage({ ctx, text: lib.txt.alreadyRegistered, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
+		await BOT.sendMessage({
+			ctx,
+			text: lib.txt.alreadyRegistered,
+			options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+		});
 		return;
 	}
 
@@ -32,5 +36,9 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		};
 	});
 
-	await BOT.sendMessage({ ctx, text: lib.txt.successfulRegistration, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
+	await BOT.sendMessage({
+		ctx,
+		text: lib.txt.successfulRegistration,
+		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+	});
 };

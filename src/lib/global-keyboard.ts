@@ -8,15 +8,15 @@ export const GLOBAL_KEYBOARD: TelegramBot.ReplyKeyboardMarkup['keyboard'] = [[{ 
 const addGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
 	await BOT.sendMessage({
 		ctx,
-		message: 'Добавил клавиатуру',
-		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } },
+		text: 'Добавил клавиатуру',
+		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
 	});
 };
 
 const removeGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
 	await BOT.sendMessage({
 		ctx,
-		message: 'Убрал клавиатуру',
+		text: 'Убрал клавиатуру',
 		options: { reply_markup: { remove_keyboard: true } },
 	});
 };
