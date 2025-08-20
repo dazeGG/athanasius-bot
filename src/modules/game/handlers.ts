@@ -2,6 +2,7 @@ import { BOT, DB } from '~/core';
 import type { MessageContext, CallbackContext , SendMessageOptions } from '~/core';
 
 import * as lib from './lib';
+import { Game } from './model';
 
 const DECKS_COUNT = 2;
 
@@ -24,7 +25,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 
 		const sendMessageOptions: SendMessageOptions = { ctx, text: gameInfoText };
 
-		if (players.length >= 3) {
+		if (players.length >= 2) {
 			sendMessageOptions.keyboard = lib.kb.start;
 		} else {
 			sendMessageOptions.text += '\n\n' + lib.txt.playersCountError;
@@ -38,5 +39,10 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
-	console.log(ctx.callback.data);
+	await BOT.answerCallbackQuery(ctx);
+
+	const players = DB.data.users.map(user => user.id);
+	const game = new Game({ players, decksCount: DECKS_COUNT });
+
+	console.log(game);
 };

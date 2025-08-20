@@ -4,6 +4,8 @@ export {
 	default as DB,
 } from './entities/db';
 
+export type * from './entities/db';
+
 export {
 	default as STATES,
 } from './entities/states';

@@ -16,3 +16,5 @@ const DB = await JSONFilePreset<DatabaseSchema>('db.json', {
 });
 
 export default DB;
+
+export type * from './types';

@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 
 import { suits, names, nameValueMap } from './config';
-import type { Card } from './types';
+import type { Card } from '.';
 
 export const generateCards = (): Card[] => {
 	const cards: Card[] = [];
