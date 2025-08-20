@@ -1,7 +1,5 @@
-import { getCardById } from '~/core';
-import type { Card, CardId } from '~/core';
-
-const getPrettyCard = (card: Card): string => card.name + card.suit[0];
+import { BaseDeck } from '~/core';
+import type { CardId , Card } from '~/core';
 
 export class Hand {
 	private readonly hand: CardId[];
@@ -15,7 +13,9 @@ export class Hand {
 	}
 
 	toString (): string {
-		return `Hand(${this.hand.length} cards): [${this.hand.map(cardId => getPrettyCard(getCardById(cardId))).join(', ')}]`;
+		const cardsInHand: Card[] = this.hand.map(cardId => BaseDeck.getCardById(cardId)).filter(Boolean) as Card[];
+
+		return `Hand(${this.hand.length} cards): [${BaseDeck.displayDeck(BaseDeck.sortByValue(cardsInHand)).join(', ')}]`;
 	}
 
 	[Symbol.for('nodejs.util.inspect.custom')] (): string {

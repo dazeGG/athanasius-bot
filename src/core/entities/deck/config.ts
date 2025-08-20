@@ -1,4 +1,10 @@
-export const SUITS = ['Hearts', 'Diamonds', 'Clubs', 'Spades'] as const;
+export const SUITS = [
+	{ name: 'Hearts', symbol: '♥' },
+	{ name: 'Diamonds', symbol: '♦' },
+	{ name: 'Clubs', symbol: '♣' },
+	{ name: 'Spades', symbol: '♠' },
+] as const;
+
 export const RANKS = [
 	{ name: '2', value: 2 },
 	{ name: '3', value: 3 },

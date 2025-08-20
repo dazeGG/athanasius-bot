@@ -6,15 +6,15 @@ import type { CardId, Card } from '~/core';
 export type UserId = TelegramBot.User['id'];
 export type GameId = ReturnType<typeof nanoid>;
 
-export type User = {
+export type UserSchema = {
 	id: UserId;
 	username: TelegramBot.User['username'];
 	name: string;
 };
 
-export type Game = {
+export type GameSchema = {
 	id: GameId;
 	queue: UserId[];
-	decks: Record<UserId, CardId[]>;
+	hands: Record<UserId, CardId[]>;
 	athanasiuses: Record<UserId, Card['name'][]>;
 };

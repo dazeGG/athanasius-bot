@@ -1,4 +1,4 @@
-import { generateDeck } from '~/core';
+import { BaseDeck } from '~/core';
 import type { CardId } from '~/core';
 import { shuffleArray } from '~/lib';
 
@@ -31,7 +31,7 @@ export class Hands {
 				this.hands[+playerId as PlayerId] = new Hand(hands[+playerId as PlayerId]);
 			});
 		} else if (players && decksCount && queue) {
-			const cardsIds = generateDeck().map(card => card.id);
+			const cardsIds = BaseDeck.getDeck().map(card => card.id);
 			const mainDeck = shuffleArray<CardId>(Array(decksCount).fill(cardsIds).flat());
 
 			this.hands = {};
