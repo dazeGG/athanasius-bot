@@ -1,16 +1,10 @@
 import type TelegramBot from 'node-telegram-bot-api';
 import type { nanoid } from 'nanoid';
 
-export type CardId = ReturnType<typeof nanoid>;
+import type { CardId, Card } from '~/core';
+
 export type UserId = TelegramBot.User['id'];
 export type GameId = ReturnType<typeof nanoid>;
-
-export type Card = {
-	id: CardId;
-	name: string;
-	value: number;
-	suit: string;
-};
 
 export type User = {
 	id: UserId;
