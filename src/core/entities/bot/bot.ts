@@ -99,7 +99,7 @@ class Bot {
 		});
 	}
 
-	async sendMessageByChatId ({ chatId, message, keyboard, options }: SendMessageByChatIdOptions) {
+	async sendMessageByChatId ({ chatId, text, keyboard, options }: SendMessageByChatIdOptions) {
 		const messageOptions: TelegramBot.SendMessageOptions = { parse_mode: 'HTML', disable_web_page_preview: true };
 
 		if (keyboard) {
@@ -110,15 +110,15 @@ class Bot {
 		}
 
 		try {
-			await this.bot.sendMessage(chatId, message, { ...messageOptions, ...options });
+			await this.bot.sendMessage(chatId, text, { ...messageOptions, ...options });
 		} catch (error) {
-			logError({ error, errorText: message, chatId });
+			logError({ error, errorText: text, chatId });
 		}
 	}
 
-	async sendMessage ({ ctx, message, keyboard, options }: SendMessageOptions) {
+	async sendMessage ({ ctx, text, keyboard, options }: SendMessageOptions) {
 		try {
-			await this.sendMessageByChatId({ chatId: ctx.chatId, message, keyboard, options });
+			await this.sendMessageByChatId({ chatId: ctx.chatId, text, keyboard, options });
 		} catch (error) {
 			logError({
 				error,
@@ -129,7 +129,7 @@ class Bot {
 		}
 	}
 
-	async editMessage ({ ctx, message, keyboard, options }: EditMessageOptions) {
+	async editMessage ({ ctx, text, keyboard, options }: EditMessageOptions) {
 		const messageOptions: TelegramBot.EditMessageTextOptions = {
 			chat_id: ctx.chatId,
 			message_id: ctx.message?.message_id ?? ctx.callback?.message.message_id,
@@ -145,7 +145,7 @@ class Bot {
 		}
 
 		try {
-			await this.bot.editMessageText(message, messageOptions);
+			await this.bot.editMessageText(text, messageOptions);
 		} catch (error) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-expect-error
@@ -160,7 +160,7 @@ class Bot {
 				userId: ctx.message?.from.id ?? ctx.callback?.from.id,
 			});
 
-			await this.sendMessageByChatId({ chatId: ctx.chatId, message, keyboard, options: { ...options, ...messageOptions } });
+			await this.sendMessageByChatId({ chatId: ctx.chatId, text, keyboard, options: { ...options, ...messageOptions } });
 		}
 	}
 
