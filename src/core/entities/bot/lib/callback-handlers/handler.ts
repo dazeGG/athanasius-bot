@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import type TelegramBot from 'node-telegram-bot-api';
 
 import type { CallbackHandler as CallbackHandlerType } from '~/core';
@@ -18,7 +19,7 @@ export class CallbackHandler {
 			return false;
 		}
 
-		const { module, action, back } = JSON.parse(callbackQuery.data) as Partial<CallbackHandlerOptions>;
+		const { module, action, back, meta } = JSON.parse(callbackQuery.data) as Partial<CallbackHandlerOptions>;
 
 		if (!module) {
 			return false;
@@ -28,6 +29,7 @@ export class CallbackHandler {
 			module === this.options.module,
 			this.options.action ? action === this.options.action : true,
 			this.options.back ? back === this.options.back : true,
+			this.options.meta ? _.isEqual(meta, this.options.meta) : true,
 		];
 
 		return conditions.every(Boolean);
