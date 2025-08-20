@@ -1,7 +1,7 @@
 import { BOT, DB } from '~/core';
 import type { MessageContext } from '~/core';
 
-import { validateName } from '~/lib';
+import { GLOBAL_KEYBOARD, validateName } from '~/lib';
 
 import * as lib from './lib';
 
@@ -9,7 +9,7 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const user = DB.data.users.find(user => user.id === ctx.message.from.id);
 
 	if (user) {
-		await BOT.sendMessage({ ctx, text: lib.txt.alreadyRegistered });
+		await BOT.sendMessage({ ctx, text: lib.txt.alreadyRegistered, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
 		return;
 	}
 
@@ -39,5 +39,5 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		};
 	});
 
-	await BOT.sendMessage({ ctx, text: lib.txt.successfulRegistration });
+	await BOT.sendMessage({ ctx, text: lib.txt.successfulRegistration, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
 };

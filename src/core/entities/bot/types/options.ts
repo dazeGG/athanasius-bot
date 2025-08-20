@@ -18,5 +18,5 @@ export type SendMessageOptions = SharedMessageTextOptions & {
 
 export type EditMessageOptions = Omit<SharedMessageTextOptions, 'options'> & {
 	ctx: BotContext;
-	options: TelegramBot.EditMessageTextOptions;
+	options?: TelegramBot.EditMessageTextOptions;
 };
