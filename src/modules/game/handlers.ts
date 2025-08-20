@@ -1,12 +1,39 @@
-import { BOT } from '~/core';
-import type { MessageContext, CallbackContext } from '~/core';
+import { BOT, DB } from '~/core';
+import type { MessageContext, CallbackContext , SendMessageOptions } from '~/core';
 
 import * as lib from './lib';
 
+const DECKS_COUNT = 2;
+
 export const gameCommandHandler = async (ctx: MessageContext) => {
-	await BOT.sendMessage({ ctx, text: lib.txt.start, keyboard: lib.kb.start });
+	const game = DB.data.games[0];
+
+	if (!game) {
+		const players = DB.data.users.map(user => user.id);
+
+		const gameInfoText = lib.txt.notStarted + '\n' +
+			'\n' +
+			lib.txt.players + ':\n' +
+			DB.data.users.map(user => '• ' + user.name).join('\n') + '\n' +
+			'\n' +
+			lib.txt.gameSettings + ':\n' +
+			'• ' + lib.txt.decksCount + ': ' + DECKS_COUNT;
+
+		const sendMessageOptions: SendMessageOptions = { ctx, text: gameInfoText };
+
+		if (players.length >= 3) {
+			sendMessageOptions.keyboard = lib.kb.start;
+		} else {
+			sendMessageOptions.text += '\n\n' + lib.txt.playersCountError;
+		}
+
+		await BOT.sendMessage(sendMessageOptions);
+		return;
+	}
+
+	await BOT.sendMessage({ ctx, text: lib.txt.ongoing });
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
-	await BOT.sendMessage({ ctx, text: lib.txt.start, keyboard: lib.kb.start });
+	// await BOT.sendMessage({ ctx, text: lib.txt.start, keyboard: lib.kb.start });
 };
