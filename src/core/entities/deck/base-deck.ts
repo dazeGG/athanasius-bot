@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import { SUITS, SUIT_WEIGHT_MAP, RANKS } from './config';
 import type { Card } from '.';
 
@@ -26,7 +28,7 @@ export class BaseDeck {
 	}
 
 	public static getDeck (): Card[] {
-		return [...this.deck];
+		return _.cloneDeep(this.deck);
 	}
 
 	public static getCardById (id: number): Card | undefined {
@@ -38,7 +40,7 @@ export class BaseDeck {
 	}
 
 	public static sortByValue (cards: Card[], sortType: 'asc' | 'desc' = 'asc'): Card[] {
-		return [...cards].sort((a, b) => {
+		return _.cloneDeep(cards).sort((a, b) => {
 			if (a.value !== b.value) {
 				return sortType === 'asc' ? a.value - b.value : b.value - a.value;
 			}
