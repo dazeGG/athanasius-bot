@@ -1,3 +1,3 @@
-export * from './decks';
+export * from './hands';
 export * from './game';
 export * from './queue';

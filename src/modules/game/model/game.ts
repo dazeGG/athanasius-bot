@@ -4,7 +4,7 @@ import { DB } from '~/core';
 import type { Game as GameSchema, GameId } from '~/core';
 
 import type { PlayerId } from '../types';
-import { Decks, Queue } from '.';
+import { Hands, Queue } from '.';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -21,7 +21,7 @@ interface ConstructorOptionsInit {
 export class Game {
 	private readonly id: GameId;
 	private readonly queue: Queue;
-	private readonly decks: Decks;
+	private readonly decks: Hands;
 	private readonly athanasiuses: GameSchema['athanasiuses'];
 
 	constructor ({ id, players, decksCount }: ConstructorOptionsById | ConstructorOptionsInit) {
@@ -34,12 +34,12 @@ export class Game {
 
 			this.id = game.id;
 			this.queue = new Queue(game.queue, false);
-			this.decks = new Decks({ decks: game.decks });
+			this.decks = new Hands({ decks: game.decks });
 			this.athanasiuses = game.athanasiuses;
 		} else if (players && decksCount) {
 			this.id = nanoid();
 			this.queue = new Queue(players, false);
-			this.decks = new Decks({ players, decksCount, queue: this.queue });
+			this.decks = new Hands({ players, decksCount, queue: this.queue });
 			this.athanasiuses = {};
 		} else {
 			throw new Error('Game options error');
