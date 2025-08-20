@@ -93,7 +93,7 @@ class Bot {
 			const callbackHandler = this.callbackHandlers.getHandler(callbackQuery);
 
 			if (callbackHandler) {
-				await chatIdMiddleware({ callback: { ...callbackQuery, data, message }, next: callbackHandler });
+				await chatIdMiddleware({ callback: { ...callbackQuery, data: JSON.parse(data), message }, next: callbackHandler });
 				return;
 			}
 		});
@@ -122,7 +122,7 @@ class Bot {
 		} catch (error) {
 			logError({
 				error,
-				errorText: ctx.message?.text ?? ctx.callback?.data ?? 'Send message with no context',
+				errorText: ctx.message?.text ?? JSON.stringify(ctx.callback?.data) ?? 'Send message with no context',
 				chatId: ctx.chatId,
 				userId: ctx.message?.from.id ?? ctx.callback?.from.id,
 			});
@@ -155,7 +155,7 @@ class Bot {
 
 			logError({
 				error,
-				errorText: ctx.message?.text ?? ctx.callback?.data ?? 'Edit message with no context',
+				errorText: ctx.message?.text ?? JSON.stringify(ctx.callback?.data) ?? 'Edit message with no context',
 				chatId: ctx.chatId,
 				userId: ctx.message?.from.id ?? ctx.callback?.from.id,
 			});

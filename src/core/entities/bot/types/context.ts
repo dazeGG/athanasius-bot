@@ -1,5 +1,7 @@
 import type TelegramBot from 'node-telegram-bot-api';
 
+import type { CallbackHandlerOptions } from '~/core/entities/bot/lib';
+
 type BaseContext = {
   chatId: TelegramBot.ChatId;
 };
@@ -15,7 +17,7 @@ export type MessageContext = BaseContext & {
 
 export type CallbackContextCallback = Omit<(TelegramBot.CallbackQuery), 'message' | 'data'> & {
   message: TelegramBot.Message;
-  data: string;
+  data: CallbackHandlerOptions;
 };
 
 export type CallbackContext = BaseContext & {
