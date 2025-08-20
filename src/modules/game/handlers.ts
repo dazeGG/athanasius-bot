@@ -14,7 +14,10 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 		const gameInfoText = lib.txt.notStarted + '\n' +
 			'\n' +
 			lib.txt.players + ':\n' +
-			DB.data.users.map(user => '• ' + user.name).join('\n') + '\n' +
+			players.map(playerId => {
+				const user = DB.data.users.find(user => user.id === playerId);
+				return '• ' + (user ? user.name : `Игрок не найден (id: ${playerId})`);
+			}).join('\n') + '\n' +
 			'\n' +
 			lib.txt.gameSettings + ':\n' +
 			'• ' + lib.txt.decksCount + ': ' + DECKS_COUNT;
@@ -35,5 +38,5 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
-	// await BOT.sendMessage({ ctx, text: lib.txt.start, keyboard: lib.kb.start });
+	console.log(ctx.callback.data);
 };
