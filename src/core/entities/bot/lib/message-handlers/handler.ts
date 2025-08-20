@@ -19,12 +19,13 @@ export class MessageHandler {
 			return false;
 		}
 
-		const { state, startsWith, userId } = this.options;
+		const { state, startsWith, exact, userId } = this.options;
 
 		const conditions: boolean[] = [
-			state ? STATES.getState(message.from.id) === state : false,
+			state ? state === STATES.getState(message.from.id) : false,
 			startsWith ? message.text.startsWith(startsWith) : false,
-			userId ? message.from.id === userId : false,
+			exact ? exact === message.text : false,
+			userId ? userId === message.from.id : false,
 		];
 
 		return conditions.some(Boolean);

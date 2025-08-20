@@ -21,3 +21,5 @@ export type CallbackContextCallback = Omit<(TelegramBot.CallbackQuery), 'message
 export type CallbackContext = BaseContext & {
   callback: CallbackContextCallback;
 };
+
+export type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };

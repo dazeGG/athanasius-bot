@@ -1,29 +1,31 @@
 import { BOT, DB } from '~/core';
 import type { MessageContext } from '~/core';
 
+import { GLOBAL_KEYBOARD, validateName } from '~/lib';
+
 import * as lib from './lib';
 
 export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const user = DB.data.users.find(user => user.id === ctx.message.from.id);
 
 	if (user) {
-		await BOT.sendMessage(ctx, lib.txt.alreadyRegistered);
+		await BOT.sendMessage({ ctx, message: lib.txt.alreadyRegistered, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
 		return;
 	}
 
 	const name = ctx.message.text.slice(5, ctx.message.text.length);
 
-	const validationData = lib.mtd.validateName(name);
+	const validationData = validateName(name);
 
 	if (!validationData.success) {
-		await BOT.sendMessage(ctx, validationData.message);
+		await BOT.sendMessage({ ctx, message: validationData.message });
 		return;
 	}
 
 	const userWithName = DB.data.users.find(user => user.name === name);
 
 	if (userWithName) {
-		await BOT.sendMessage(ctx, lib.txt.nameAlreadyTaken);
+		await BOT.sendMessage({ ctx, message: lib.txt.nameAlreadyTaken });
 		return;
 	}
 
@@ -37,5 +39,5 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		};
 	});
 
-	await BOT.sendMessage(ctx, lib.txt.successfulRegistration);
+	await BOT.sendMessage({ ctx, message: lib.txt.successfulRegistration, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
 };
