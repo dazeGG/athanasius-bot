@@ -22,13 +22,6 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		return;
 	}
 
-	const userWithName = DB.data.users.find(user => user.name === name);
-
-	if (userWithName) {
-		await BOT.sendMessage({ ctx, text: lib.txt.nameAlreadyTaken });
-		return;
-	}
-
 	await DB.update(({ users }) => {
 		const { from: user } = ctx.message;
 
