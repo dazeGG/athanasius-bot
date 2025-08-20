@@ -14,8 +14,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/lodash": "^4.17.20",
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
+    "lodash": "^4.17.21",
     "lowdb": "^7.0.1",
     "nanoid": "^5.1.5",
     "node-html-to-image": "^5.0.0",

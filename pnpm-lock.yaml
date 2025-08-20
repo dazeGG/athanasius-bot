@@ -8,12 +8,18 @@ importers:
 
   .:
     dependencies:
+      '@types/lodash':
+        specifier: ^4.17.20
+        version: 4.17.20
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
       dotenv:
         specifier: ^16.4.7
         version: 16.6.1
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       lowdb:
         specifier: ^7.0.1
         version: 7.0.1
@@ -470,6 +476,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/lodash@4.17.20':
+    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
 
   '@types/node-telegram-bot-api@0.64.10':
     resolution: {integrity: sha512-hiwjeze0TGVB7f5Es6WnLqEsd3g3TRbR2SLeT7iAtO2rrkisCjc4N65wFXzkp+viIReV7xun2/j/PHTf+Hcaqg==}
@@ -2404,6 +2413,8 @@ snapshots:
   '@types/estree@1.0.8': {}
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/lodash@4.17.20': {}
 
   '@types/node-telegram-bot-api@0.64.10':
     dependencies:
