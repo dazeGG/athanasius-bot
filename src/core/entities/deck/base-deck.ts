@@ -1,12 +1,9 @@
-import { SUITS, RANKS } from './config';
+import { SUITS, SUIT_WEIGHT_MAP, RANKS } from './config';
 import type { Card } from '.';
 
 export class BaseDeck {
 	private static readonly deck: Card[] = BaseDeck.generateDeck();
-
-	private static readonly cardCache: Map<number, Card> = new Map(
-		BaseDeck.deck.map(card => [card.id, card]),
-	);
+	private static readonly cardCache: Map<number, Card> = new Map(BaseDeck.deck.map(card => [card.id, card]));
 
 	private static generateDeck (): Card[] {
 		const deck: Card[] = [];
@@ -41,7 +38,16 @@ export class BaseDeck {
 	}
 
 	public static sortByValue (cards: Card[], sortType: 'asc' | 'desc' = 'asc'): Card[] {
-		return [...cards].sort((a, b) => sortType === 'asc' ? a.value - b.value : b.value - a.value);
+		return [...cards].sort((a, b) => {
+			if (a.value !== b.value) {
+				return sortType === 'asc' ? a.value - b.value : b.value - a.value;
+			}
+
+			const aSuitWeight = SUIT_WEIGHT_MAP[a.suit];
+			const bSuitWeight = SUIT_WEIGHT_MAP[b.suit];
+
+			return sortType === 'asc' ? aSuitWeight - bSuitWeight : bSuitWeight - aSuitWeight;
+		});
 	}
 
 	public static displayDeck (cards: Card[]): string[] {
