@@ -15,12 +15,13 @@ import type {
 	SendMessageByChatIdOptions,
 	SendMessageOptions,
 	CallbackContext,
+	HandlerGuard,
 } from '.';
 
 class Bot {
 	private readonly bot: TelegramBot;
 
-	private readonly commands: Map<string, MessageHandler>;
+	private readonly commands: Map<string, { handler: MessageHandler, guard?: HandlerGuard }>;
 	private readonly messageHandlers: MessageHandlers;
 	private readonly callbackHandlers: CallbackHandlers;
 
@@ -36,33 +37,39 @@ class Bot {
 		await this.bot.setMyCommands(menuCommands);
 	}
 
-	registerCommand (command: string, handler: MessageHandler) {
-		this.commands.set(command, handler);
+	registerCommand (command: string, handler: MessageHandler, guard?: HandlerGuard) {
+		this.commands.set(command, { handler, guard });
 	}
 
-	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions) {
-		this.messageHandlers.register(handler, options);
+	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions, guard?: HandlerGuard) {
+		this.messageHandlers.register(handler, options, guard);
 	}
 
-	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions) {
-		this.callbackHandlers.register(handler, options);
+	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions, guard?: HandlerGuard) {
+		this.callbackHandlers.register(handler, options, guard);
 	}
 
 	async init (commands: TelegramBot.BotCommand[]) {
 		await this.setMenuCommands(commands);
 
 		this.bot.on('message', async message => {
-			if (!message.text || !message.from) {
+			const { text, from: user } = message;
+
+			if (!text || !user) {
 				return;
 			}
 
-			const { text, from: user } = message;
-
 			// * Command handler
-			const commandHandler = this.commands.get(text);
+			const commandHandlerData = this.commands.get(text);
 
-			if (text.startsWith('/') && commandHandler) {
-				await chatIdMiddleware({ message: { ...message, text, from: user }, next: commandHandler });
+			if (text.startsWith('/') && commandHandlerData) {
+				const { handler, guard } = commandHandlerData;
+
+				if (guard && !guard({ ...message, text, from: user })) {
+					return;
+				}
+
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: handler });
 				return;
 			}
 
