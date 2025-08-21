@@ -44,5 +44,12 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	const players = DB.data.users.map(user => user.id);
 	const game = new Game({ players, decksCount: DECKS_COUNT });
 
+	await game.save();
 	console.log(game);
+
+	for (const playerId of players) {
+		await BOT.sendMessageByChatId({ chatId: playerId, text: 'Игра началась!' });
+	}
+
+	await BOT.sendMessageByChatId({ chatId: game.activePlayer, text: 'Ты ходишь первым!' });
 };
