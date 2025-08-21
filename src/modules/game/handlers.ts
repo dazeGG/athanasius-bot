@@ -1,8 +1,9 @@
 import { BOT, DB } from '~/core';
-import type { MessageContext, CallbackContext , SendMessageOptions } from '~/core';
+import type { MessageContext, CallbackContext , SendMessageOptions , GameId } from '~/core';
 
 import * as lib from './lib';
 import { Game } from './model';
+import type { PlayerId } from './types';
 
 const DECKS_COUNT = 2;
 
@@ -48,8 +49,49 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	console.log(game);
 
 	for (const playerId of players) {
-		await BOT.sendMessageByChatId({ chatId: playerId, text: 'Игра началась!' });
+		await BOT.sendMessageByChatId({ chatId: playerId, text: lib.txt.gameStarted });
 	}
 
-	await BOT.sendMessageByChatId({ chatId: game.activePlayer, text: 'Ты ходишь первым!' });
+	await BOT.sendMessageByChatId({
+		chatId: game.activePlayer,
+		text: lib.txt.firstTurnMessage,
+		keyboard: lib.gkb.playersSelect(game.activePlayer, game.gameId, players),
+	});
+};
+
+interface TurnMeta {
+	stage?: string;
+	gameId?: GameId;
+	playerId?: PlayerId;
+}
+
+export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+
+	const { meta: callbackMeta } = ctx.callback.data as { meta?: TurnMeta };
+
+	if (!callbackMeta || !callbackMeta.stage || !callbackMeta.gameId || !callbackMeta.playerId) {
+		await BOT.sendMessage({ ctx, text: 'Something went wrong!' });
+		return;
+	}
+
+	const user = DB.data.users.find(user => user.id === callbackMeta.playerId);
+
+	if (!user) {
+		await BOT.sendMessage({ ctx, text: 'Select player error!' });
+		return;
+	}
+
+	switch (callbackMeta.stage) {
+	case 'player':
+		await BOT.editMessage({
+			ctx,
+			text: '<b>Отлично!</b>\n' +
+					'\n' +
+					'Твой выбор:\n' +
+					'• Игрок: ' + '<b>' + user.name + '</b>',
+			keyboard: lib.gkb.cardSelect(ctx.callback.from.id, callbackMeta.gameId, callbackMeta.playerId),
+		});
+		break;
+	}
 };

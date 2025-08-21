@@ -6,4 +6,6 @@ export const txt = {
 	gameSettings: 'Настройки игры',
 	decksCount: 'Количество колод',
 	playersCountError: '<b>Чтобы начать игру, необходимо как минимум 3 игрока!</b>',
+	gameStarted: 'Игра началась!',
+	firstTurnMessage: 'Ты ходишь первым, выбери у кого хочешь спросить карту',
 } as const;

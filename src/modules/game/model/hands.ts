@@ -73,6 +73,10 @@ export class Hands {
 		return result;
 	}
 
+	public getHand (playerId: PlayerId): Hand | undefined {
+		return this.hands.get(playerId);
+	}
+
 	public has (playerId: PlayerId, options: HandHasOptions): boolean {
 		return !!this.hands.get(playerId)?.has(options);
 	}

@@ -6,6 +6,7 @@ import type { GameSchema, GameId } from '~/core';
 import type { PlayerId } from '../types';
 import { Hands, Queue } from '.';
 import type { HandHasOptions } from './types';
+import type { Hand } from './hand';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -47,6 +48,10 @@ export class Game {
 		}
 	}
 
+	get gameId (): GameId {
+		return this.id;
+	}
+
 	get activePlayer (): PlayerId {
 		return this.queue.activePlayer;
 	}
@@ -86,5 +91,9 @@ export class Game {
 			await this.save();
 			return { success: false };
 		}
+	}
+
+	public getHand (playerId: PlayerId): Hand | undefined {
+		return this.hands.getHand(playerId);
 	}
 }
