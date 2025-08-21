@@ -1,8 +1,9 @@
 import { DB } from '~/core';
 import type { RawButtons , GameId , CardName } from '~/core';
 
+import { DECKS_COUNT } from '../config';
 import { Game } from '../model';
-import type { PlayerId } from '../types';
+import type { PlayerId, Suits } from '../types';
 import { RANKS_MAP } from '~/core/entities/deck/config';
 
 /* KEYBOARDS */
@@ -47,5 +48,128 @@ export const gkb = {
 
 		return distributedCardNames.map(row => row.map(cardName =>
 			({ text: cardName, callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}` } })));
+	},
+
+	countSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number): RawButtons => {
+		const actionButtons = [];
+
+		if (count > 1) {
+			actionButtons.push({
+				text: '-',
+				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}-` },
+			});
+		}
+
+		if (count < DECKS_COUNT * 4 - 1) {
+			actionButtons.push({
+				text: '+',
+				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}+` },
+			});
+		}
+
+		return [
+			actionButtons,
+			[{
+				text: 'Выбрать',
+				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}select` },
+			}],
+		];
+	},
+
+	colorsSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, redCount: number): RawButtons => {
+		const actionButtons = [];
+
+		if (redCount > 0) {
+			actionButtons.push({
+				text: '-',
+				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}#${redCount}-` },
+			});
+		}
+
+		if (redCount < count) {
+			actionButtons.push({
+				text: '+',
+				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}#${redCount}+` },
+			});
+		}
+
+		return [
+			actionButtons,
+			[{
+				text: 'Выбрать',
+				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}#${redCount}select` },
+			}],
+		];
+	},
+
+	suitsSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, redCount: number, suits: Suits): RawButtons => {
+		const actionButtons = [];
+		const baseMeta = `${gameId}#${playerId}#${cardName}#${count}#${redCount}#${suits.hearts}!${suits.diamonds}!${suits.spades}!${suits.clubs}!${suits.mode}`;
+
+		if (redCount > 0) {
+			if (suits.mode === '+' || (suits.mode === '-' && suits.hearts !== 0)) {
+				actionButtons.push({
+					text: '♥️',
+					callback_data: {
+						module: 'g',
+						action: 't',
+						meta: baseMeta + '!h',
+					},
+				});
+			}
+
+			if (suits.mode === '+' || (suits.mode === '-' && suits.diamonds !== 0)) {
+				actionButtons.push({
+					text: '♦️',
+					callback_data: {
+						module: 'g',
+						action: 't',
+						meta: baseMeta + '!d',
+					},
+				});
+			}
+		}
+
+		if (redCount !== count) {
+			if (suits.mode === '+' || (suits.mode === '-' && suits.spades !== 0)) {
+				actionButtons.push({
+					text: '♠️',
+					callback_data: {
+						module: 'g',
+						action: 't',
+						meta: baseMeta + '!s',
+					},
+				});
+			}
+
+			if (suits.mode === '+' || (suits.mode === '-' && suits.clubs !== 0)) {
+				actionButtons.push({
+					text: '♣️',
+					callback_data: {
+						module: 'g',
+						action: 't',
+						meta: baseMeta + '!c',
+					},
+				});
+			}
+		}
+
+		const keyboard = [
+			actionButtons,
+			[{
+				text: 'mode: ' + suits.mode,
+				callback_data: { module: 'g', action: 't', meta: baseMeta + '!m' },
+			}],
+		];
+
+		if (
+			suits.hearts + suits.diamonds + suits.spades + suits.spades === count
+			&& suits.hearts + suits.diamonds === redCount
+			&& suits.spades + suits.clubs === count - redCount
+		) {
+			keyboard.push([{ text: 'Выбрать', callback_data: { module: 'g', action: 't', meta: baseMeta + '!select' } }]);
+		}
+
+		return keyboard;
 	},
 } as const;

@@ -2,10 +2,9 @@ import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core
 import { BOT, DB } from '~/core';
 
 import * as lib from './lib';
+import { DECKS_COUNT } from './config';
 import { Game } from './model';
 import { TurnStage } from './types';
-
-const DECKS_COUNT = 2;
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
 	const game = DB.data.games[0];
@@ -70,25 +69,21 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	const turnMeta = lib.parseTurnMeta(callbackMeta);
 
-	const user = DB.data.users.find(user => user.id === turnMeta.playerId);
-
-	if (!user) {
-		await BOT.sendMessage({ ctx, text: 'Select player error!' });
-		return;
-	}
-
-	console.log(turnMeta);
-
 	switch (turnMeta.stage) {
-	case TurnStage.player:
-		await BOT.editMessage({
-			ctx,
-			text: '<b>' + lib.txt.yourChoice + ':</b>\n' +
-					'• Игрок: ' + '<b>' + user.name + '</b>\n' +
-				'\n' +
-				lib.txt.turnCardSelect,
-			keyboard: lib.gkb.cardSelect(ctx.callback.from.id, turnMeta.gameId, turnMeta.playerId),
-		});
+	case TurnStage.card:
+		await BOT.editMessage(lib.GameMessage.getCardSelectMessageOptions(ctx, turnMeta));
+		break;
+
+	case TurnStage.count:
+		await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+		break;
+
+	case TurnStage.colors:
+		await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+		break;
+
+	case TurnStage.suits:
+		await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 		break;
 	}
 };
