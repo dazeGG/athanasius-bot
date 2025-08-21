@@ -1,7 +1,5 @@
 import _ from 'lodash';
-import type TelegramBot from 'node-telegram-bot-api';
-
-import type { HandlerGuard, CallbackHandler as CallbackHandlerType } from '~/core';
+import type { HandlerGuard, CallbackHandler as CallbackHandlerType, CallbackContextCallback } from '~/core';
 
 import type { CallbackHandlerOptions } from '.';
 
@@ -16,7 +14,7 @@ export class CallbackHandler {
 		this.guard = guard;
 	}
 
-	match (callbackQuery: TelegramBot.CallbackQuery): boolean {
+	match (callbackQuery: CallbackContextCallback): boolean {
 		const { data, message } = callbackQuery;
 
 		if (!data || !message) {
@@ -27,7 +25,7 @@ export class CallbackHandler {
 			return false;
 		}
 
-		const { module, action, back, meta } = JSON.parse(data) as Partial<CallbackHandlerOptions>;
+		const { module, action, back, meta } = data as Partial<CallbackHandlerOptions>;
 
 		if (!module) {
 			return false;

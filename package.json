@@ -19,6 +19,7 @@
     "dotenv": "^16.4.7",
     "lodash": "^4.17.21",
     "lowdb": "^7.0.1",
+    "lru-cache": "^11.1.0",
     "nanoid": "^5.1.5",
     "node-html-to-image": "^5.0.0",
     "node-telegram-bot-api": "^0.66.0",

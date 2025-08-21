@@ -4,7 +4,7 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import { logError } from '~/core';
 
-import { stringifyCallbackData, MessageHandlers, CallbackHandlers } from './lib';
+import { storeCallbackData, MessageHandlers, CallbackHandlers, CallbackStorage } from './lib';
 import type { MessageHandlerOptions, CallbackHandlerOptions } from './lib';
 import { chatIdMiddleware } from './middlewares';
 import type {
@@ -87,13 +87,22 @@ class Bot {
 				return;
 			}
 
+			// * Callback handler
+
 			const { data, message } = callbackQuery;
 
-			// * Callback handler
-			const callbackHandler = this.callbackHandlers.getHandler(callbackQuery);
+			const callbackData = CallbackStorage.resolve(data);
 
-			if (callbackHandler) {
-				await chatIdMiddleware({ callback: { ...callbackQuery, data: JSON.parse(data), message }, next: callbackHandler });
+			if (!callbackData) {
+				return;
+			}
+
+			const contextCallback = { ...callbackQuery, data: callbackData, message };
+
+			const callbackHandler = this.callbackHandlers.getHandler(contextCallback);
+
+			if (callbackHandler && callbackData) {
+				await chatIdMiddleware({ callback: contextCallback, next: callbackHandler });
 				return;
 			}
 		});
@@ -105,7 +114,7 @@ class Bot {
 		if (keyboard) {
 			messageOptions.reply_markup = {
 				...options?.reply_markup,
-				inline_keyboard: stringifyCallbackData(keyboard),
+				inline_keyboard: storeCallbackData(keyboard),
 			};
 		}
 
@@ -140,7 +149,7 @@ class Bot {
 		if (keyboard) {
 			messageOptions.reply_markup = {
 				...options?.reply_markup,
-				inline_keyboard: stringifyCallbackData(keyboard),
+				inline_keyboard: storeCallbackData(keyboard),
 			};
 		}
 

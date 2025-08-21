@@ -1,6 +1,4 @@
-import type TelegramBot from 'node-telegram-bot-api';
-
-import type { HandlerGuard, CallbackHandler as CallbackHandlerType } from '~/core';
+import type { HandlerGuard, CallbackHandler as CallbackHandlerType, CallbackContextCallback } from '~/core';
 
 import { CallbackHandler } from './handler';
 import type { CallbackHandlerOptions } from '.';
@@ -12,7 +10,7 @@ export class CallbackHandlers {
 		this.callbackHandlers.push(new CallbackHandler(handler, options, guard));
 	}
 
-	public getHandler (callbackQuery: TelegramBot.CallbackQuery): CallbackHandlerType | undefined {
+	public getHandler (callbackQuery: CallbackContextCallback): CallbackHandlerType | undefined {
 		const callbackHandler = this.callbackHandlers.find(callbackHandler => callbackHandler.match(callbackQuery));
 
 		if (callbackHandler) {
