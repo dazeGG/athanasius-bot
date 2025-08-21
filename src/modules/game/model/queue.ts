@@ -1,3 +1,5 @@
+import _ from 'lodash';
+
 import { shuffleArray } from '~/lib';
 
 import type { PlayerId } from '../types';
@@ -10,7 +12,7 @@ export class Queue {
 	}
 
 	get allPlayers (): PlayerId[] {
-		return [...this.queue];
+		return _.cloneDeep(this.queue);
 	}
 
 	get activePlayer (): PlayerId {

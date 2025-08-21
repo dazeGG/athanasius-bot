@@ -5,6 +5,7 @@ import { shuffleArray } from '~/lib';
 import type { PlayerId } from '../types';
 import { Hand } from './hand';
 import type { Queue } from '.';
+import type { HandHasOptions } from './types';
 
 interface ConstructorOptionsInit {
 	hands?: never;
@@ -21,22 +22,22 @@ interface ConstructorOptionsByHands {
 }
 
 export class Hands {
-	private readonly hands: Record<PlayerId, Hand>;
+	private readonly hands: Map<PlayerId, Hand>;
 
 	constructor ({ hands, players, decksCount, queue }: ConstructorOptionsInit | ConstructorOptionsByHands) {
 		if (hands) {
-			this.hands = {};
+			this.hands = new Map();
 
-			Object.keys(hands).forEach(playerId => {
-				this.hands[+playerId as PlayerId] = new Hand(hands[+playerId as PlayerId]);
+			Object.keys(hands).map(Number).forEach(playerId => {
+				this.hands.set(playerId, new Hand(hands[playerId]));
 			});
 		} else if (players && decksCount && queue) {
 			const cardsIds = BaseDeck.getDeck().map(card => card.id);
 			const mainDeck = shuffleArray<CardId>(Array(decksCount).fill(cardsIds).flat());
 
-			this.hands = {};
+			this.hands = new Map();
 			players.forEach(playerId => {
-				this.hands[playerId] = new Hand();
+				this.hands.set(playerId, new Hand());
 			});
 
 			this.dealCards(mainDeck, players);
@@ -55,9 +56,24 @@ export class Hands {
 				}
 
 				const card = mainDeck[cardIndex];
-				this.hands[playerId].pushCard(card);
+				this.hands.get(playerId)?.pushCard(card);
 				cardIndex++;
 			}
 		}
+	}
+
+	get allHands (): Record<PlayerId, CardId[]> {
+		const preResult = Object.fromEntries(this.hands);
+		const result: Record<PlayerId, CardId[]> = {};
+
+		Object.keys(preResult).map(Number).forEach(playerId => {
+			result[playerId] = preResult[playerId.toString()].cardIds;
+		});
+
+		return result;
+	}
+
+	public has (playerId: PlayerId, options: HandHasOptions): boolean {
+		return !!this.hands.get(playerId)?.has(options);
 	}
 }

@@ -5,6 +5,7 @@ import type { GameSchema, GameId } from '~/core';
 
 import type { PlayerId } from '../types';
 import { Hands, Queue } from '.';
+import type { HandHasOptions } from './types';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -43,6 +44,43 @@ export class Game {
 			this.athanasiuses = {};
 		} else {
 			throw new Error('Game options error');
+		}
+	}
+
+	private async save (): Promise<void> {
+		const game = DB.data.games.find(game => game.id === this.id);
+
+		if (game) {
+			game.queue = this.queue.allPlayers;
+			game.hands = this.hands.allHands;
+			game.athanasiuses = this.athanasiuses;
+
+			await DB.write();
+		} else {
+			await DB.update(({ games }) => {
+				games.push({
+					id: this.id,
+					queue: this.queue.allPlayers,
+					hands: this.hands.allHands,
+					athanasiuses: this.athanasiuses,
+				});
+
+				return {
+					games,
+				};
+			});
+		}
+	}
+
+	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean }> {
+		const right = this.hands.has(playerId, options);
+
+		if (right) {
+			return { success: true };
+		} else {
+			this.queue.next();
+			await this.save();
+			return { success: false };
 		}
 	}
 }
