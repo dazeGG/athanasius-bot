@@ -32,3 +32,19 @@ export const RANKS: { name: CardName, value: CardValue }[] = [
 	{ name: 'K', value: 13 },
 	{ name: 'A', value: 14 },
 ];
+
+export const RANKS_MAP: Record<CardName, CardValue> = {
+	'2': 2,
+	'3': 3,
+	'4': 4,
+	'5': 5,
+	'6': 6,
+	'7': 7,
+	'8': 8,
+	'9': 9,
+	'10': 10,
+	'J': 11,
+	'Q': 12,
+	'K': 13,
+	'A': 14,
+};
