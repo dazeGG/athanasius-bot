@@ -39,7 +39,7 @@ export class Game {
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
 		} else if (players && decksCount) {
-			this.id = nanoid();
+			this.id = nanoid(6);
 			this.queue = new Queue(players, true);
 			this.hands = new Hands({ players, decksCount, queue: this.queue });
 			this.athanasiuses = {};

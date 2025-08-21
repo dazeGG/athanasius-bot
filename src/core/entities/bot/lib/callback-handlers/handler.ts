@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import type { HandlerGuard, CallbackHandler as CallbackHandlerType, CallbackContextCallback } from '~/core';
 
 import type { CallbackHandlerOptions } from '.';
@@ -35,7 +34,7 @@ export class CallbackHandler {
 			module === this.options.module,
 			this.options.action ? action === this.options.action : true,
 			this.options.back ? back === this.options.back : true,
-			this.options.meta ? _.isEqual(meta, this.options.meta) : true,
+			this.options.meta ? meta === this.options.meta : true,
 		];
 
 		return conditions.every(Boolean);

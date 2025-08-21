@@ -17,7 +17,7 @@ export interface CallbackData {
   module: string;
   action?: string;
   back?: boolean;
-  meta?: Record<string, unknown>;
+  meta?: string;
 }
 
 export type CallbackContextCallback = Omit<(TelegramBot.CallbackQuery), 'message' | 'data'> & {

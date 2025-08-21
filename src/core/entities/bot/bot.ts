@@ -4,7 +4,7 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import { logError } from '~/core';
 
-import { storeCallbackData, MessageHandlers, CallbackHandlers, CallbackStorage } from './lib';
+import { storeCallbackData, MessageHandlers, CallbackHandlers, CallbackUtils } from './lib';
 import type { MessageHandlerOptions, CallbackHandlerOptions } from './lib';
 import { chatIdMiddleware } from './middlewares';
 import type {
@@ -91,7 +91,7 @@ class Bot {
 
 			const { data, message } = callbackQuery;
 
-			const callbackData = CallbackStorage.resolve(data);
+			const callbackData = CallbackUtils.parseCallbackData(data);
 
 			if (!callbackData) {
 				return;

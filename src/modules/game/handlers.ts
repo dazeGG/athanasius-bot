@@ -1,9 +1,9 @@
+import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 import { BOT, DB } from '~/core';
-import type { MessageContext, CallbackContext , SendMessageOptions , GameId } from '~/core';
 
 import * as lib from './lib';
 import { Game } from './model';
-import type { PlayerId } from './types';
+import { TurnStage } from './types';
 
 const DECKS_COUNT = 2;
 
@@ -46,7 +46,6 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	const game = new Game({ players, decksCount: DECKS_COUNT });
 
 	await game.save();
-	console.log(game);
 
 	for (const playerId of players) {
 		await BOT.sendMessageByChatId({ chatId: playerId, text: lib.txt.gameStarted });
@@ -54,43 +53,41 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await BOT.sendMessageByChatId({
 		chatId: game.activePlayer,
-		text: lib.txt.firstTurnMessage,
+		text: lib.txt.turnFirstMessage,
 		keyboard: lib.gkb.playersSelect(game.activePlayer, game.gameId, players),
 	});
 };
 
-interface TurnMeta {
-	stage?: string;
-	gameId?: GameId;
-	playerId?: PlayerId;
-}
-
 export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
-	const { meta: callbackMeta } = ctx.callback.data as { meta?: TurnMeta };
+	const { meta: callbackMeta } = ctx.callback.data;
 
-	if (!callbackMeta || !callbackMeta.stage || !callbackMeta.gameId || !callbackMeta.playerId) {
-		await BOT.sendMessage({ ctx, text: 'Something went wrong!' });
+	if (!callbackMeta) {
+		await BOT.sendMessage({ ctx, text: 'No game metadata!' });
 		return;
 	}
 
-	const user = DB.data.users.find(user => user.id === callbackMeta.playerId);
+	const turnMeta = lib.parseTurnMeta(callbackMeta);
+
+	const user = DB.data.users.find(user => user.id === turnMeta.playerId);
 
 	if (!user) {
 		await BOT.sendMessage({ ctx, text: 'Select player error!' });
 		return;
 	}
 
-	switch (callbackMeta.stage) {
-	case 'player':
+	console.log(turnMeta);
+
+	switch (turnMeta.stage) {
+	case TurnStage.player:
 		await BOT.editMessage({
 			ctx,
-			text: '<b>Отлично!</b>\n' +
-					'\n' +
-					'Твой выбор:\n' +
-					'• Игрок: ' + '<b>' + user.name + '</b>',
-			keyboard: lib.gkb.cardSelect(ctx.callback.from.id, callbackMeta.gameId, callbackMeta.playerId),
+			text: '<b>' + lib.txt.yourChoice + ':</b>\n' +
+					'• Игрок: ' + '<b>' + user.name + '</b>\n' +
+				'\n' +
+				lib.txt.turnCardSelect,
+			keyboard: lib.gkb.cardSelect(ctx.callback.from.id, turnMeta.gameId, turnMeta.playerId),
 		});
 		break;
 	}
