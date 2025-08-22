@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
 
-import { BOT, DB } from '~/core';
+import { BOT, type CardName, DB } from '~/core';
 import type { GameSchema, GameId } from '~/core';
 
 import type { MailingOptions, PlayerId } from '../types';
@@ -106,5 +106,9 @@ export class Game {
 
 	public getHand (playerId: PlayerId): Hand | undefined {
 		return this.hands.getHand(playerId);
+	}
+
+	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): void {
+		this.hands.moveCards(me, playerId, cardName);
 	}
 }

@@ -1,13 +1,13 @@
 import _ from 'lodash';
 
 import { BaseDeck } from '~/core';
-import type { CardId, Card } from '~/core';
+import type { CardId, Card, CardName } from '~/core';
 import { RED_SUITS } from '~/core/entities/deck/config';
 
 import type { HandHasOptions } from './types';
 
 export class Hand {
-	private readonly hand: CardId[];
+	private hand: CardId[];
 
 	constructor (hand?: CardId[]) {
 		this.hand = hand ?? [];
@@ -23,6 +23,10 @@ export class Hand {
 
 	public pushCard (cardId: CardId): void {
 		this.hand.push(cardId);
+	}
+
+	public getCardsByName (cardName: CardName): Card[] {
+		return this.cardsInHand.filter(card => card.name === cardName);
 	}
 
 	public has ({ cardName, count, colors, suits }: HandHasOptions): boolean {
@@ -68,6 +72,18 @@ export class Hand {
 		}
 
 		return !!neededCardsInHand.length;
+	}
+
+	public addCards (cardIds: CardId[]): void {
+		this.hand.push(...cardIds);
+	}
+
+	public removeCards (cardIds: CardId[]): void {
+		this.hand = this.hand.filter(cardId => !cardIds.includes(cardId));
+	}
+
+	public removeCardsByName (cardName: CardName): void {
+		this.removeCards(this.getCardsByName(cardName).map(card => card.id));
 	}
 
 	[Symbol.for('nodejs.util.inspect.custom')] (): string {

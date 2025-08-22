@@ -1,5 +1,5 @@
 import { BaseDeck } from '~/core';
-import type { CardId } from '~/core';
+import type { CardId , CardName } from '~/core';
 import { shuffleArray } from '~/lib';
 
 import type { PlayerId } from '../types';
@@ -79,5 +79,16 @@ export class Hands {
 
 	public has (playerId: PlayerId, options: HandHasOptions): boolean {
 		return !!this.hands.get(playerId)?.has(options);
+	}
+
+	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): void {
+		const cardIds = this.hands.get(playerId)?.getCardsByName(cardName).map(card => card.id);
+
+		if (!cardIds) {
+			return;
+		}
+
+		this.hands.get(playerId)?.removeCards(cardIds);
+		this.hands.get(me)?.addCards(cardIds);
 	}
 }

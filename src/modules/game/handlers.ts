@@ -96,6 +96,12 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	const turnMeta = lib.parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
 
+	const me = DB.data.users.find(user => user.id === ctx.callback.from.id);
+
+	if (!me) {
+		return;
+	}
+
 	console.log(turnMeta);
 
 	switch (turnMeta.stage) {
@@ -112,9 +118,6 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} нет ${turnMeta.cardName} :(` });
 
 			if (turn.moveGoneNext) {
-				for (const playerId of game.allPlayers) {
-					await BOT.sendMessageByChatId(lib.InfoMessage.getFirstMessage(playerId));
-				}
 				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
 			}
 		}
@@ -165,6 +168,9 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 			if (turn.success) {
 				await BOT.editMessage(lib.GameMessage.getCardsStealMessage(ctx, turnMeta));
+				game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
+				await game.save();
+			} else {
 			}
 
 			await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
