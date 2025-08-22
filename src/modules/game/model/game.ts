@@ -85,15 +85,15 @@ export class Game {
 		}
 	}
 
-	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean }> {
+	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean; moveGoneNext: boolean; }> {
 		const right = this.hands.has(playerId, options);
 
 		if (right) {
-			return { success: true };
+			return { success: true, moveGoneNext: false };
 		} else {
 			this.queue.next();
 			await this.save();
-			return { success: false };
+			return { success: false, moveGoneNext: true };
 		}
 	}
 
