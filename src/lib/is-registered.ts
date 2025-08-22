@@ -1,4 +1,4 @@
 import { DB } from '~/core';
-import type { HandlerGuardContextEntity } from '~/core';
+import type { CallbackContextCallback, MessageContextMessage } from '~/core';
 
-export const isRegistered = (ctx: HandlerGuardContextEntity): boolean => !!DB.data.users.find(user => user.id === ctx.from.id);
+export const isRegistered = (ctx: MessageContextMessage | CallbackContextCallback): boolean => !!DB.data.users.find(user => user.id === ctx.from.id);

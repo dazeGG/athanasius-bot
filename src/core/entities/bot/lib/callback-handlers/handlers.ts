@@ -6,7 +6,7 @@ import type { CallbackHandlerOptions } from '.';
 export class CallbackHandlers {
 	private readonly callbackHandlers: CallbackHandler[] = [];
 
-	public register (handler: CallbackHandlerType, options: CallbackHandlerOptions, guard?: HandlerGuard): void {
+	public register (handler: CallbackHandlerType, options: CallbackHandlerOptions, guard?: HandlerGuard<CallbackContextCallback>): void {
 		this.callbackHandlers.push(new CallbackHandler(handler, options, guard));
 	}
 

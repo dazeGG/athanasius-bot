@@ -1,7 +1,6 @@
-import type { CallbackContext, CallbackContextCallback, MessageContext, MessageContextMessage } from '.';
+import type { CallbackContext, MessageContext } from '.';
 
 export type MessageHandler = (ctx: MessageContext) => Promise<void>;
 export type CallbackHandler = (ctx: CallbackContext) => Promise<void>;
 
-export type HandlerGuardContextEntity = MessageContextMessage | CallbackContextCallback;
-export type HandlerGuard = (contextEntity: HandlerGuardContextEntity) => boolean;
+export type HandlerGuard<EntityT> = (contextEntity: EntityT) => boolean;

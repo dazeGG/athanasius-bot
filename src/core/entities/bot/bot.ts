@@ -16,12 +16,14 @@ import type {
 	SendMessageOptions,
 	CallbackContext,
 	HandlerGuard,
+	MessageContextMessage,
+	CallbackContextCallback,
 } from '.';
 
 class Bot {
 	private readonly bot: TelegramBot;
 
-	private readonly commands: Map<string, { handler: MessageHandler, guard?: HandlerGuard }>;
+	private readonly commands: Map<string, { handler: MessageHandler, guard?: HandlerGuard<MessageContextMessage> }>;
 	private readonly messageHandlers: MessageHandlers;
 	private readonly callbackHandlers: CallbackHandlers;
 
@@ -37,15 +39,15 @@ class Bot {
 		await this.bot.setMyCommands(menuCommands);
 	}
 
-	registerCommand (command: string, handler: MessageHandler, guard?: HandlerGuard) {
+	registerCommand (command: string, handler: MessageHandler, guard?: HandlerGuard<MessageContextMessage>) {
 		this.commands.set(command, { handler, guard });
 	}
 
-	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions, guard?: HandlerGuard) {
+	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions, guard?: HandlerGuard<MessageContextMessage>) {
 		this.messageHandlers.register(handler, options, guard);
 	}
 
-	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions, guard?: HandlerGuard) {
+	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions, guard?: HandlerGuard<CallbackContextCallback>) {
 		this.callbackHandlers.register(handler, options, guard);
 	}
 
