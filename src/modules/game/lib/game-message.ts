@@ -1,32 +1,31 @@
 import _ from 'lodash';
 
 import { DB } from '~/core';
-import type { EditMessageOptions , CallbackContext , SendMessageOptions , SendMessageByChatIdOptions } from '~/core';
+import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } from '~/core';
 
 import { txt, gkb } from '.';
-import { TurnStage } from '../types';
 import type { Game } from '../model';
-import type { TurnMeta , Suits , PlayerId } from '../types';
+import type { TurnMeta, Suits } from '../types';
 import * as lib from '~/modules/game/lib/index.ts';
 
 export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {
 		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n';
 
-		if (turnMeta.stage >= TurnStage.card) {
+		if (turnMeta.playerId) {
 			const user = DB.data.users.find(user => user.id === turnMeta.playerId);
 			choiceMessage += '• ' + txt.player + ': ' + '<b>' + user?.name + '</b>\n';
 		}
 
-		if (turnMeta.stage >= TurnStage.count) {
+		if (turnMeta.cardName) {
 			choiceMessage += '• ' + txt.card + ': ' + '<b>' + turnMeta.cardName + '</b>\n';
 		}
 
-		if (turnMeta.stage >= TurnStage.colors) {
+		if (turnMeta.count && turnMeta.countAction === undefined) {
 			choiceMessage += '• ' + txt.cardsCount + ': ' + '<b>' + turnMeta.count + '</b>\n';
 		}
 
-		if (turnMeta.stage >= TurnStage.suits) {
+		if (turnMeta.redCount !== undefined && turnMeta.blackCount !== undefined && turnMeta.redCountAction === undefined) {
 			choiceMessage += '• ' + txt.colors + ': ' + `🔴: <b>${turnMeta.redCount}</b> ⚫: <b>${turnMeta.blackCount}</b>\n`;
 		}
 

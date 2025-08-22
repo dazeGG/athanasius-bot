@@ -4,6 +4,7 @@ import type { RawButtons , GameId , CardName } from '~/core';
 import { DECKS_COUNT } from '../config';
 import type { Game } from '../model';
 import type { PlayerId, Suits } from '../types';
+import { TurnStage } from '../types';
 import { RANKS_MAP } from '~/core/entities/deck/config';
 
 /* KEYBOARDS */
@@ -15,12 +16,18 @@ export const kb: ModuleKeyboards = {
 
 /* GENERABLE KEYBOARDS */
 export const gkb = {
+	gameStarted: (gameId: GameId) => [
+		[{ text: 'Отправить игровое сообщение повторно', callback_data: { module: 'game', action: 'rgm', meta: gameId } }],
+	],
+
 	playersSelect: (me: PlayerId, gameId: GameId, playerIds: PlayerId[]): RawButtons => {
 		const playersExceptMe = playerIds.filter(playerId => playerId !== me);
 		const players = DB.data.users.filter(user => playersExceptMe.includes(user.id));
 
-		return players.map(player =>
-			[{ text: player.name, callback_data: { module: 'g', action: 't', meta: `${gameId}#${player.id}` } }]);
+		return players.map(player => [{
+			text: player.name,
+			callback_data: { module: 'g', action: 't', meta: `${TurnStage.player}#${gameId}#${player.id}` },
+		}]);
 	},
 
 	cardSelect: (me: PlayerId, game: Game, playerId: PlayerId): RawButtons => {
@@ -44,65 +51,51 @@ export const gkb = {
 			return acc;
 		}, [[]]);
 
-		return distributedCardNames.map(row => row.map(cardName =>
-			({ text: cardName, callback_data: { module: 'g', action: 't', meta: `${game.gameId}#${playerId}#${cardName}` } })));
+		return distributedCardNames.map(row => row.map(cardName => ({
+			text: cardName,
+			callback_data: { module: 'g', action: 't', meta: `${TurnStage.card}#${game.gameId}#${playerId}#${cardName}` },
+		})));
 	},
 
 	countSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number): RawButtons => {
 		const actionButtons = [];
+		const baseMeta = `${TurnStage.count}#${gameId}#${playerId}#${cardName}#${count}`;
 
 		if (count > 1) {
-			actionButtons.push({
-				text: '-',
-				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}-` },
-			});
+			actionButtons.push({ text: '-', callback_data: { module: 'g',action: 't',meta: baseMeta + '-' } });
 		}
 
 		if (count < DECKS_COUNT * 4 - 1) {
-			actionButtons.push({
-				text: '+',
-				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}+` },
-			});
+			actionButtons.push({ text: '+', callback_data: { module: 'g',action: 't',meta: baseMeta + '+' } });
 		}
 
 		return [
 			actionButtons,
-			[{
-				text: 'Выбрать',
-				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}select` },
-			}],
+			[{ text: 'Выбрать', callback_data: { module: 'g',action: 't',meta: baseMeta + 'select' } }],
 		];
 	},
 
 	colorsSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, redCount: number): RawButtons => {
 		const actionButtons = [];
+		const baseMeta = `${TurnStage.colors}#${gameId}#${playerId}#${cardName}#${count}#${redCount}`;
 
 		if (redCount > 0) {
-			actionButtons.push({
-				text: '-',
-				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}#${redCount}-` },
-			});
+			actionButtons.push({ text: '-', callback_data: { module: 'g', action: 't', meta: baseMeta + '-' } });
 		}
 
 		if (redCount < count) {
-			actionButtons.push({
-				text: '+',
-				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}#${redCount}+` },
-			});
+			actionButtons.push({ text: '+', callback_data: { module: 'g', action: 't', meta: baseMeta + '+' } });
 		}
 
 		return [
 			actionButtons,
-			[{
-				text: 'Выбрать',
-				callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}#${count}#${redCount}select` },
-			}],
+			[{ text: 'Выбрать', callback_data: { module: 'g', action: 't', meta: baseMeta + 'select' } }],
 		];
 	},
 
 	suitsSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, redCount: number, suits: Suits): RawButtons => {
 		const actionButtons = [];
-		const baseMeta = `${gameId}#${playerId}#${cardName}#${count}#${redCount}#${suits.hearts}!${suits.diamonds}!${suits.spades}!${suits.clubs}!${suits.mode}`;
+		const baseMeta = `${TurnStage.suits}#${gameId}#${playerId}#${cardName}#${count}#${redCount}#${suits.hearts}!${suits.diamonds}!${suits.spades}!${suits.clubs}!${suits.mode}`;
 
 		if (redCount > 0) {
 			if (suits.mode === '+' || (suits.mode === '-' && suits.hearts !== 0)) {

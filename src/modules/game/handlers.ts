@@ -35,7 +35,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 		return;
 	}
 
-	await BOT.sendMessage({ ctx, text: lib.txt.ongoing });
+	await BOT.sendMessage({ ctx, text: lib.txt.ongoing, keyboard: lib.gkb.gameStarted(game.id) });
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
@@ -53,6 +53,19 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
 };
 
+export const gameResendGameMessageCallbackHandler = async (ctx: CallbackContext) => {
+	const gameId = ctx.callback.data.meta;
+	const game = gameId ? new Game({ id: gameId }) : null;
+
+	if (game) {
+		await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+		await BOT.editMessage({ ctx, text: 'Игровое сообщение успешно отправлено!' });
+	} else {
+		await BOT.sendMessage({ ctx, text: 'Could not find the game!' });
+	}
+
+};
+
 export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
@@ -66,12 +79,14 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	const turnMeta = lib.parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
 
+	console.log(turnMeta);
+
 	switch (turnMeta.stage) {
-	case TurnStage.card:
+	case TurnStage.player:
 		await BOT.editMessage(lib.GameMessage.getCardSelectMessageOptions(ctx, turnMeta, game));
 		break;
 
-	case TurnStage.count:
+	case TurnStage.card:
 		if (turnMeta.cardName) {
 			const turn = await game.turn(turnMeta.playerId, { cardName: turnMeta.cardName });
 
@@ -84,12 +99,28 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		}
 		break;
 
+	case TurnStage.count:
+		if (turnMeta.countAction === 'select') {
+			await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+		} else {
+			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+		}
+		break;
+
 	case TurnStage.colors:
-		await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+		if (turnMeta.redCountAction === 'select') {
+			await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+		} else {
+			await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+		}
 		break;
 
 	case TurnStage.suits:
-		await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+		if (turnMeta.suits?.action === 'select') {
+			// Finally check logic
+		} else {
+			await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+		}
 		break;
 	}
 };
