@@ -1,4 +1,4 @@
-import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
+import type { CallbackContext, MessageContext, SendMessageOptions, UserSchema } from '~/core';
 import { BaseDeck } from '~/core';
 import { BOT, DB } from '~/core';
 
@@ -95,6 +95,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	const turnMeta = lib.parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
+	const user = DB.data.users.find(user => user.id === ctx.callback.from.id) as UserSchema;
 
 	const me = DB.data.users.find(user => user.id === ctx.callback.from.id);
 
@@ -116,6 +117,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		} else {
 			await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} нет ${turnMeta.cardName} :(` });
+			await game.mailing(lib.InfoMessage.getWrongCardMessage(turnMeta, user), [user.id]);
 
 			if (turn.moveGoneNext) {
 				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
@@ -131,6 +133,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 			} else {
 				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} количество ${turnMeta.cardName} не ${turnMeta.count} :(` });
+				await game.mailing(lib.InfoMessage.getWrongCountMessage(turnMeta, user), [user.id]);
 
 				if (turn.moveGoneNext) {
 					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
@@ -152,6 +155,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 			} else {
 				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} количество красных ${turnMeta.cardName} не ${turnMeta.redCount} :(` });
+				await game.mailing(lib.InfoMessage.getWrongColorMessage(turnMeta, user), [user.id]);
 
 				if (turn.moveGoneNext) {
 					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
@@ -171,6 +175,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
 				await game.save();
 			} else {
+				await BOT.editMessage({ ctx, text: 'К сожалению, ты не угадал ТЕКСТ ДОПОЛНИТЬ' });
+				await game.mailing(lib.InfoMessage.getWrongSuitsMessage(turnMeta, user), [user.id]);
 			}
 
 			await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
