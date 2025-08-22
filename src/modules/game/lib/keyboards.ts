@@ -1,11 +1,11 @@
 import { DB } from '~/core';
 import type { RawButtons , GameId , CardName } from '~/core';
+import { RANKS_MAP } from '~/core/entities/deck/config';
 
 import { DECKS_COUNT } from '../config';
 import type { Game } from '../model';
 import type { PlayerId, Suits } from '../types';
 import { TurnStage } from '../types';
-import { RANKS_MAP } from '~/core/entities/deck/config';
 
 /* KEYBOARDS */
 export const kb: ModuleKeyboards = {
@@ -17,7 +17,8 @@ export const kb: ModuleKeyboards = {
 /* GENERABLE KEYBOARDS */
 export const gkb = {
 	gameStarted: (gameId: GameId) => [
-		[{ text: 'Отправить игровое сообщение повторно', callback_data: { module: 'game', action: 'rgm', meta: gameId } }],
+		[{ text: 'Посмотреть свои карты', callback_data: { module: 'game', action: 'started', meta: `${gameId}#mc` } }],
+		[{ text: 'Отправить игровое сообщение повторно', callback_data: { module: 'game', action: 'started', meta: `${gameId}#rgm` } }],
 	],
 
 	playersSelect: (me: PlayerId, gameId: GameId, playerIds: PlayerId[]): RawButtons => {

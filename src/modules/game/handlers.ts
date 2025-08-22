@@ -1,4 +1,5 @@
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
+import { BaseDeck } from '~/core';
 import { BOT, DB } from '~/core';
 
 import * as lib from './lib';
@@ -53,17 +54,35 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
 };
 
-export const gameResendGameMessageCallbackHandler = async (ctx: CallbackContext) => {
-	const gameId = ctx.callback.data.meta;
-	const game = gameId ? new Game({ id: gameId }) : null;
+export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
 
-	if (game) {
-		await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
-		await BOT.editMessage({ ctx, text: 'Игровое сообщение успешно отправлено!' });
-	} else {
-		await BOT.sendMessage({ ctx, text: 'Could not find the game!' });
+	if (!ctx.callback.data.meta) {
+		throw new Error('Game started meta is required!');
 	}
 
+	const [gameId, action] = ctx.callback.data.meta?.split('#');
+	const game = gameId ? new Game({ id: gameId }) : null;
+
+	if (!game) {
+		throw new Error('Could not find the game!');
+	}
+
+	switch (action) {
+	case 'mc':
+		const hand = game.getHand(ctx.callback.from.id);
+
+		if (!hand) {
+			throw new Error('Could not find player\'s hand!');
+		}
+
+		await BOT.editMessage({ ctx, text: BaseDeck.displayDeck(BaseDeck.sortByValue(hand.cardsInHand)).join(' ') });
+		break;
+	case 'rgm':
+		await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+		await BOT.editMessage({ ctx, text: lib.txt.gameMessageResendSuccess });
+		break;
+	}
 };
 
 export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
