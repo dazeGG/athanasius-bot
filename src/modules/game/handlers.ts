@@ -47,7 +47,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await game.save();
 
-	await game.mailing(lib.InfoMessage.getGameStartMessage);
+	await game.mailing(lib.InfoMessage.getGameStartMessage());
 
 	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
 };

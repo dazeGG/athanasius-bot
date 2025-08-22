@@ -1,9 +1,9 @@
 import { nanoid } from 'nanoid';
 
 import { BOT, DB } from '~/core';
-import type { GameSchema, GameId, SendMessageByChatIdOptions } from '~/core';
+import type { GameSchema, GameId } from '~/core';
 
-import type { PlayerId } from '../types';
+import type { MailingOptions, PlayerId } from '../types';
 import { Hands, Queue } from '.';
 import type { HandHasOptions } from './types';
 import type { Hand } from './hand';
@@ -97,9 +97,9 @@ export class Game {
 		}
 	}
 
-	public async mailing (options: (playerId: PlayerId) => SendMessageByChatIdOptions, exclude: PlayerId[] = []): Promise<void> {
+	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
 		const actualPlayers = this.allPlayers.filter(playerId => !exclude.includes(playerId));
-		const methods = actualPlayers.map(playerId => BOT.sendMessageByChatId(options(playerId)));
+		const methods = actualPlayers.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId }));
 
 		await Promise.all(methods);
 	}

@@ -1,4 +1,4 @@
-import type { CardName, GameId, UserId, UserSchema } from '~/core';
+import type { CardName, GameId, SendMessageByChatIdOptions, UserId, UserSchema } from '~/core';
 
 export type PlayerId = UserId;
 
@@ -74,3 +74,5 @@ interface SuitsStage extends Omit<BaseTurnMeta, SuitsStageOmitOptions> {
 }
 
 export type TurnMeta = PlayerStage | CardStage | CountStage | ColorsStage | SuitsStage;
+
+export type MailingOptions = Omit<SendMessageByChatIdOptions, 'chatId'>;

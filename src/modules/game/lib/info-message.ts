@@ -1,19 +1,15 @@
-import type { SendMessageByChatIdOptions } from '~/core';
-
 import { txt } from '.';
-import type { PlayerId, TurnMeta } from '../types';
+import type { MailingOptions, TurnMeta } from '../types';
 
 export class InfoMessage {
-	public static getGameStartMessage (playerId: PlayerId): SendMessageByChatIdOptions {
+	public static getGameStartMessage (): MailingOptions {
 		return {
-			chatId: playerId,
 			text: txt.gameStarted,
 		};
 	}
 
-	public static getFirstMessage (playerId: PlayerId, turnMeta: TurnMeta): SendMessageByChatIdOptions {
+	public static getFirstMessage (turnMeta: TurnMeta): MailingOptions {
 		return {
-			chatId: playerId,
 			text: txt.gameStarted,
 		};
 	}
