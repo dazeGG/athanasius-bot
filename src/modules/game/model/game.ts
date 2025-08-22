@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 
-import { DB } from '~/core';
-import type { GameSchema, GameId } from '~/core';
+import { BOT, DB } from '~/core';
+import type { GameSchema, GameId, SendMessageByChatIdOptions } from '~/core';
 
 import type { PlayerId } from '../types';
 import { Hands, Queue } from '.';
@@ -95,6 +95,13 @@ export class Game {
 			await this.save();
 			return { success: false, moveGoneNext: true };
 		}
+	}
+
+	public async mailing (options: (playerId: PlayerId) => SendMessageByChatIdOptions, exclude: PlayerId[] = []): Promise<void> {
+		const actualPlayers = this.allPlayers.filter(playerId => !exclude.includes(playerId));
+		const methods = actualPlayers.map(playerId => BOT.sendMessageByChatId(options(playerId)));
+
+		await Promise.all(methods);
 	}
 
 	public getHand (playerId: PlayerId): Hand | undefined {

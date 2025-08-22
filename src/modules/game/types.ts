@@ -35,25 +35,25 @@ interface PlayerStage extends BaseTurnMeta {
 	stage: TurnStage.player;
 }
 
-type CardStageOmit = 'cardName';
+type CardStageOmitOptions = 'cardName';
 
-interface CardStage extends Omit<BaseTurnMeta, CardStageOmit> {
+interface CardStage extends Omit<BaseTurnMeta, CardStageOmitOptions> {
 	stage: TurnStage.card;
 	cardName: CardName;
 }
 
-type CountStageOmit = CardStageOmit | 'count' | 'countAction';
+type CountStageOmitOptions = CardStageOmitOptions | 'count' | 'countAction';
 
-interface CountStage extends Omit<BaseTurnMeta, CountStageOmit> {
+interface CountStage extends Omit<BaseTurnMeta, CountStageOmitOptions> {
 	stage: TurnStage.count;
 	cardName: CardName;
 	count: number;
 	countAction: string;
 }
 
-type ColorsStageOmit = CardStageOmit | 'count' | 'redCount' | 'blackCount' | 'redCountAction';
+type ColorsStageOmitOptions = CardStageOmitOptions | 'count' | 'redCount' | 'blackCount' | 'redCountAction';
 
-interface ColorsStage extends Omit<BaseTurnMeta, ColorsStageOmit> {
+interface ColorsStage extends Omit<BaseTurnMeta, ColorsStageOmitOptions> {
 	stage: TurnStage.colors;
 	cardName: CardName;
 	count: number;
@@ -62,9 +62,9 @@ interface ColorsStage extends Omit<BaseTurnMeta, ColorsStageOmit> {
 	redCountAction: string;
 }
 
-type SuitsStageOmit = CardStageOmit | 'count' | 'redCount' | 'blackCount' | 'suits';
+type SuitsStageOmitOptions = CardStageOmitOptions | 'count' | 'redCount' | 'blackCount' | 'suits';
 
-interface SuitsStage extends Omit<BaseTurnMeta, SuitsStageOmit> {
+interface SuitsStage extends Omit<BaseTurnMeta, SuitsStageOmitOptions> {
 	stage: TurnStage.suits;
 	cardName: CardName;
 	count: number;

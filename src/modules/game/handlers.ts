@@ -47,9 +47,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await game.save();
 
-	for (const playerId of players) {
-		await BOT.sendMessageByChatId(lib.InfoMessage.getGameStartMessage(playerId));
-	}
+	await game.mailing(lib.InfoMessage.getGameStartMessage);
 
 	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
 };
@@ -164,8 +162,6 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	case TurnStage.suits:
 		if (turnMeta.suits?.action === 'select') {
 			const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName, suits: { ...turnMeta.suits } });
-
-			console.log(turn);
 
 			if (turn.success) {
 				await BOT.editMessage(lib.GameMessage.getCardsStealMessage(ctx, turnMeta));
