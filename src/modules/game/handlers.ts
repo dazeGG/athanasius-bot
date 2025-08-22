@@ -48,7 +48,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await game.save();
 
 	for (const playerId of players) {
-		await BOT.sendMessageByChatId({ chatId: playerId, text: lib.txt.gameStarted });
+		await BOT.sendMessageByChatId(lib.InfoMessage.getGameStartMessage(playerId));
 	}
 
 	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
@@ -114,6 +114,9 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} нет ${turnMeta.cardName} :(` });
 
 			if (turn.moveGoneNext) {
+				for (const playerId of game.allPlayers) {
+					await BOT.sendMessageByChatId(lib.InfoMessage.getFirstMessage(playerId));
+				}
 				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
 			}
 		}
