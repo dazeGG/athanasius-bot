@@ -34,7 +34,7 @@ export class Hand {
 
 		if (colors) {
 			const counts: [number, number] = neededCardsInHand.reduce(
-				(a, c) => RED_SUITS.includes(c.suit) ? [a[0]++, a[1]] : [a[0], a[1]++],
+				(a, c) => RED_SUITS.includes(c.suit) ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
 				[0, 0],
 			);
 
@@ -45,13 +45,13 @@ export class Hand {
 			const counts: [number, number, number, number] = neededCardsInHand.reduce(
 				(a, c) => {
 					if (c.suit === 'Hearts') {
-						return [a[0]++, a[1], a[2], a[3]];
+						return [a[0] + 1, a[1], a[2], a[3]];
 					} else if (c.suit === 'Diamonds') {
-						return [a[0], a[1]++, a[2], a[3]];
+						return [a[0], a[1] + 1, a[2], a[3]];
 					} else if (c.suit === 'Spades') {
-						return [a[0], a[1], a[2]++, a[3]];
+						return [a[0], a[1], a[2] + 1, a[3]];
 					} else if (c.suit === 'Clubs') {
-						return [a[0], a[1], a[2], a[3]++];
+						return [a[0], a[1], a[2], a[3] + 1];
 					} else {
 						return a;
 					}
