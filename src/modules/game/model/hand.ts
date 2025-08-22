@@ -25,19 +25,23 @@ export class Hand {
 		this.hand.push(cardId);
 	}
 
-	public has ({ count, colors, suits }: HandHasOptions): boolean {
-		const neededCardsInHand = this.cardsInHand.filter(card => card.name === (count?.cardName ?? colors?.cardName ?? suits?.cardName));
+	public has ({ cardName, count, colors, suits }: HandHasOptions): boolean {
+		const neededCardsInHand = this.cardsInHand.filter(card => card.name === cardName);
 
 		if (count) {
-			return neededCardsInHand.length === count.count;
-		} else if (colors) {
+			return neededCardsInHand.length === count;
+		}
+
+		if (colors) {
 			const counts: [number, number] = neededCardsInHand.reduce(
 				(a, c) => RED_SUITS.includes(c.suit) ? [a[0]++, a[1]] : [a[0], a[1]++],
 				[0, 0],
 			);
 
 			return colors.red === counts[0] && colors.black === counts[1];
-		} else if (suits) {
+		}
+
+		if (suits) {
 			const counts: [number, number, number, number] = neededCardsInHand.reduce(
 				(a, c) => {
 					if (c.suit === 'Hearts') {
@@ -61,9 +65,9 @@ export class Hand {
 				&& suits.spades === counts[2]
 				&& suits.clubs === counts[3]
 			);
-		} else {
-			throw new Error('Bad hand has options');
 		}
+
+		return !!neededCardsInHand.length;
 	}
 
 	[Symbol.for('nodejs.util.inspect.custom')] (): string {

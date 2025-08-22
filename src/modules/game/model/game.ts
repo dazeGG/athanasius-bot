@@ -56,6 +56,10 @@ export class Game {
 		return this.queue.activePlayer;
 	}
 
+	get allPlayers (): PlayerId[] {
+		return this.queue.allPlayers;
+	}
+
 	public async save (): Promise<void> {
 		const game = DB.data.games.find(game => game.id === this.id);
 

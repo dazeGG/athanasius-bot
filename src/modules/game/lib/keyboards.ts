@@ -2,7 +2,7 @@ import { DB } from '~/core';
 import type { RawButtons , GameId , CardName } from '~/core';
 
 import { DECKS_COUNT } from '../config';
-import { Game } from '../model';
+import type { Game } from '../model';
 import type { PlayerId, Suits } from '../types';
 import { RANKS_MAP } from '~/core/entities/deck/config';
 
@@ -23,9 +23,7 @@ export const gkb = {
 			[{ text: player.name, callback_data: { module: 'g', action: 't', meta: `${gameId}#${player.id}` } }]);
 	},
 
-	cardSelect: (me: PlayerId, gameId: GameId, playerId: PlayerId): RawButtons => {
-		const game = new Game({ id: gameId });
-
+	cardSelect: (me: PlayerId, game: Game, playerId: PlayerId): RawButtons => {
 		const myHand = game.getHand(me);
 
 		if (!myHand) {
@@ -47,7 +45,7 @@ export const gkb = {
 		}, [[]]);
 
 		return distributedCardNames.map(row => row.map(cardName =>
-			({ text: cardName, callback_data: { module: 'g', action: 't', meta: `${gameId}#${playerId}#${cardName}` } })));
+			({ text: cardName, callback_data: { module: 'g', action: 't', meta: `${game.gameId}#${playerId}#${cardName}` } })));
 	},
 
 	countSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number): RawButtons => {

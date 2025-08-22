@@ -50,11 +50,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 		await BOT.sendMessageByChatId({ chatId: playerId, text: lib.txt.gameStarted });
 	}
 
-	await BOT.sendMessageByChatId({
-		chatId: game.activePlayer,
-		text: lib.txt.turnFirstMessage,
-		keyboard: lib.gkb.playersSelect(game.activePlayer, game.gameId, players),
-	});
+	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
 };
 
 export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
@@ -68,14 +64,24 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	}
 
 	const turnMeta = lib.parseTurnMeta(callbackMeta);
+	const game = new Game({ id: turnMeta.gameId });
 
 	switch (turnMeta.stage) {
 	case TurnStage.card:
-		await BOT.editMessage(lib.GameMessage.getCardSelectMessageOptions(ctx, turnMeta));
+		await BOT.editMessage(lib.GameMessage.getCardSelectMessageOptions(ctx, turnMeta, game));
 		break;
 
 	case TurnStage.count:
-		await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+		if (turnMeta.cardName) {
+			const turn = await game.turn(turnMeta.playerId, { cardName: turnMeta.cardName });
+
+			if (turn.success) {
+				await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+			} else {
+				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.playerId} нет ${turnMeta.cardName} :(` });
+				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+			}
+		}
 		break;
 
 	case TurnStage.colors:

@@ -1,18 +1,13 @@
 import type { CardName } from '~/core';
 
-interface SharedHandHasOptions {
-	cardName: CardName;
-}
-
 export interface HandHasOptions {
-	count?: SharedHandHasOptions & {
-		count: number;
-	};
-	colors?: SharedHandHasOptions & {
+	cardName: CardName;
+	count?: number;
+	colors?: {
 		red: number;
 		black: number;
 	};
-	suits?: SharedHandHasOptions & {
+	suits?: {
 		hearts: number;
 		diamonds: number;
 		spades: number;

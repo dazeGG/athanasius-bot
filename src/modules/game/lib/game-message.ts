@@ -1,11 +1,13 @@
 import _ from 'lodash';
 
 import { DB } from '~/core';
-import type { EditMessageOptions , CallbackContext } from '~/core';
+import type { EditMessageOptions , CallbackContext , SendMessageOptions , SendMessageByChatIdOptions } from '~/core';
 
 import { txt, gkb } from '.';
 import { TurnStage } from '../types';
-import type { TurnMeta , Suits } from '../types';
+import type { Game } from '../model';
+import type { TurnMeta , Suits , PlayerId } from '../types';
+import * as lib from '~/modules/game/lib/index.ts';
 
 export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {
@@ -31,11 +33,19 @@ export class GameMessage {
 		return choiceMessage;
 	}
 
-	public static getCardSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta): EditMessageOptions {
+	public static getFirstMessage (game: Game, initialMessage: boolean): SendMessageByChatIdOptions {
+		return {
+			chatId: game.activePlayer,
+			text: initialMessage ? lib.txt.firstTurnMessage : lib.txt.turnFirstMessage,
+			keyboard: lib.gkb.playersSelect(game.activePlayer, game.gameId, game.allPlayers),
+		};
+	}
+
+	public static getCardSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta, game: Game): EditMessageOptions {
 		return {
 			ctx,
 			text: this.generateChoiceMessage(turnMeta) + '\n' + txt.turnCardSelect,
-			keyboard: gkb.cardSelect(ctx.callback.from.id, turnMeta.gameId, turnMeta.playerId),
+			keyboard: gkb.cardSelect(ctx.callback.from.id, game, turnMeta.playerId),
 		};
 	}
 
