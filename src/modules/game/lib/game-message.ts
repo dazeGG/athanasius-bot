@@ -1,6 +1,5 @@
 import _ from 'lodash';
 
-import { DB } from '~/core';
 import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } from '~/core';
 
 import { txt, gkb } from '.';
@@ -12,20 +11,21 @@ export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {
 		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n';
 
-		if (turnMeta.playerId) {
-			const user = DB.data.users.find(user => user.id === turnMeta.playerId);
-			choiceMessage += '• ' + txt.player + ': ' + '<b>' + user?.name + '</b>\n';
-		}
+		choiceMessage += '• ' + txt.player + ': ' + '<b>' + turnMeta.player.name + '</b>\n';
 
 		if (turnMeta.cardName) {
 			choiceMessage += '• ' + txt.card + ': ' + '<b>' + turnMeta.cardName + '</b>\n';
 		}
 
-		if (turnMeta.count && turnMeta.countAction === undefined) {
+		if (turnMeta.count && (turnMeta.countAction === undefined || turnMeta.countAction === 'select')) {
 			choiceMessage += '• ' + txt.cardsCount + ': ' + '<b>' + turnMeta.count + '</b>\n';
 		}
 
-		if (turnMeta.redCount !== undefined && turnMeta.blackCount !== undefined && turnMeta.redCountAction === undefined) {
+		if (
+			turnMeta.redCount !== undefined
+			&& turnMeta.blackCount !== undefined
+			&& (turnMeta.redCountAction === undefined || turnMeta.redCountAction === 'select')
+		) {
 			choiceMessage += '• ' + txt.colors + ': ' + `🔴: <b>${turnMeta.redCount}</b> ⚫: <b>${turnMeta.blackCount}</b>\n`;
 		}
 
@@ -44,7 +44,7 @@ export class GameMessage {
 		return {
 			ctx,
 			text: this.generateChoiceMessage(turnMeta) + '\n' + txt.turnCardSelect,
-			keyboard: gkb.cardSelect(ctx.callback.from.id, game, turnMeta.playerId),
+			keyboard: gkb.cardSelect(ctx.callback.from.id, game, turnMeta.player.id),
 		};
 	}
 
@@ -59,7 +59,7 @@ export class GameMessage {
 					txt.turnCountSelect + '\n' +
 					'\n' +
 					txt.nowSelected + ': <b>' + newCount + '</b>',
-				keyboard: gkb.countSelect(turnMeta.gameId, turnMeta.playerId, turnMeta.cardName, newCount),
+				keyboard: gkb.countSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, newCount),
 			};
 		} else if (turnMeta.cardName) {
 			const initialCount = 1;
@@ -71,7 +71,7 @@ export class GameMessage {
 					txt.turnCountSelect + '\n' +
 					'\n' +
 					txt.nowSelected + ': <b>' + initialCount + '</b>',
-				keyboard: gkb.countSelect(turnMeta.gameId, turnMeta.playerId, turnMeta.cardName, initialCount),
+				keyboard: gkb.countSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, initialCount),
 			};
 		} else {
 			throw new Error('Card name is required!');
@@ -90,7 +90,7 @@ export class GameMessage {
 					'\n' +
 					txt.nowSelected + ':\n' +
 					'🔴: <b>' + newRedCount + '</b> ⚫: <b>' + (turnMeta.count - newRedCount) + '</b>\n',
-				keyboard: gkb.colorsSelect(turnMeta.gameId, turnMeta.playerId, turnMeta.cardName, turnMeta.count, newRedCount),
+				keyboard: gkb.colorsSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, turnMeta.count, newRedCount),
 			};
 		} else if (turnMeta.cardName && turnMeta.count) {
 			const initialRedCount = 0;
@@ -103,7 +103,7 @@ export class GameMessage {
 					'\n' +
 					txt.nowSelected + ':\n' +
 					'🔴: <b>' + initialRedCount + '</b> ⚫️: <b>' + (turnMeta.count - initialRedCount) + '</b>\n',
-				keyboard: gkb.colorsSelect(turnMeta.gameId, turnMeta.playerId, turnMeta.cardName, turnMeta.count, initialRedCount),
+				keyboard: gkb.colorsSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, turnMeta.count, initialRedCount),
 			};
 		} else {
 			throw new Error('Card name and count is required!');
@@ -168,11 +168,11 @@ export class GameMessage {
 					'\n' +
 					txt.turnColorsSelect + '\n' +
 					'\n' +
-					txt.nowSelected + '\n' +
+					txt.nowSelected + ':\n' +
 					this.getSuitsNowSelected(turnMeta, newSuits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count),
 				keyboard: gkb.suitsSelect(
 					turnMeta.gameId,
-					turnMeta.playerId,
+					turnMeta.player.id,
 					turnMeta.cardName,
 					turnMeta.count,
 					turnMeta.redCount,
@@ -188,11 +188,11 @@ export class GameMessage {
 					'\n' +
 					txt.turnSuitsSelect + '\n' +
 					'\n' +
-					txt.nowSelected + '\n' +
+					txt.nowSelected + ':\n' +
 					this.getSuitsNowSelected(turnMeta, initialSuits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count),
 				keyboard: gkb.suitsSelect(
 					turnMeta.gameId,
-					turnMeta.playerId,
+					turnMeta.player.id,
 					turnMeta.cardName,
 					turnMeta.count,
 					turnMeta.redCount,
@@ -202,5 +202,12 @@ export class GameMessage {
 		} else {
 			throw new Error('Card name, count and red count is required!');
 		}
+	}
+
+	public static getCardsStealMessage (ctx: CallbackContext, turnMeta: TurnMeta): EditMessageOptions {
+		return {
+			ctx,
+			text: `<b>Поздравляю!</b> Ты успешно украл карты ${turnMeta.cardName} у ${turnMeta.player.name}`,
+		};
 	}
 }

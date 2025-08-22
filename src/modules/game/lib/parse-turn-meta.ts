@@ -1,6 +1,8 @@
 import type { CardName } from '~/core';
+import { DB } from '~/core';
 
 import type { TurnMeta } from '../types';
+import { TurnStage } from '../types';
 
 const getCount = (countData: string): [number, string] => {
 	return [+countData.replace(/\D/g, ''), countData.replace(/\d/g, '')];
@@ -13,33 +15,74 @@ export const parseTurnMeta = (meta: string): TurnMeta => {
 		throw new Error('Parse turn meta error');
 	}
 
-	const [count, countAction] = countData ? getCount(countData) : [undefined, undefined];
-	const [redCount, redCountAction] = redCountData ? getCount(redCountData) : [undefined, undefined];
-	const blackCount = (count && redCount !== undefined) ? count - redCount : undefined;
+	const user = DB.data.users.find(user  => user.id === +playerId);
 
-	const [hearts, diamonds, spades, clubs, mode, action] = suitsData
-		? suitsData.split('!')
-		: [undefined, undefined, undefined, undefined, undefined, undefined];
+	if (!user) {
+		throw new Error('Cannot find player with provided in turn meta player id');
+	}
 
-	const suits =
-		hearts !== undefined
-		&& diamonds !== undefined
-		&& spades !== undefined
-		&& clubs !== undefined
-		&& mode !== undefined
-			? { hearts: +hearts, diamonds: +diamonds, spades: +spades, clubs: +clubs, mode, action }
-			: undefined;
+	let count, countAction, redCount, redCountAction, blackCount, suits;
 
-	return {
-		stage: +turnStage,
-		gameId,
-		playerId: +playerId,
-		cardName: cardName as CardName | undefined,
-		count,
-		countAction: countAction || undefined,
-		redCount,
-		blackCount,
-		redCountAction: redCountAction || undefined,
-		suits,
-	};
+	if (countData) {
+		[count, countAction] = getCount(countData);
+	}
+
+	if (redCountData) {
+		[redCount, redCountAction] = getCount(redCountData);
+		blackCount = count - redCount;
+	}
+
+	if (suitsData) {
+		const [hearts, diamonds, spades, clubs, mode, action] = suitsData.split('!');
+		suits = { hearts: +hearts, diamonds: +diamonds, spades: +spades, clubs: +clubs, mode, action };
+	}
+
+	switch (+turnStage) {
+	case TurnStage.player:
+		return {
+			stage: TurnStage.player,
+			gameId,
+			player: user,
+		};
+	case TurnStage.card:
+		return {
+			stage: TurnStage.card,
+			gameId,
+			player: user,
+			cardName: cardName as CardName,
+		};
+	case TurnStage.count:
+		return {
+			stage: TurnStage.count,
+			gameId,
+			player: user,
+			cardName: cardName as CardName,
+			count,
+			countAction,
+		};
+	case TurnStage.colors:
+		return {
+			stage: TurnStage.colors,
+			gameId,
+			player: user,
+			cardName: cardName as CardName,
+			count: count,
+			redCount: redCount,
+			blackCount: blackCount,
+			redCountAction: redCountAction,
+		};
+	case TurnStage.suits:
+		return {
+			stage: TurnStage.suits,
+			gameId,
+			player: user,
+			cardName: cardName as CardName,
+			count: count,
+			redCount: redCount,
+			blackCount: blackCount,
+			suits: suits,
+		};
+	default:
+		throw new Error('Invalid stage');
+	}
 };

@@ -106,13 +106,14 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		break;
 
 	case TurnStage.card:
-		if (turnMeta.cardName) {
-			const turn = await game.turn(turnMeta.playerId, { cardName: turnMeta.cardName });
+		const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName });
 
-			if (turn.success) {
-				await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
-			} else {
-				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.playerId} нет ${turnMeta.cardName} :(` });
+		if (turn.success) {
+			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+		} else {
+			await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} нет ${turnMeta.cardName} :(` });
+
+			if (turn.moveGoneNext) {
 				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
 			}
 		}
@@ -120,7 +121,17 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.count:
 		if (turnMeta.countAction === 'select') {
-			await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+			const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName, count: turnMeta.count });
+
+			if (turn.success) {
+				await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+			} else {
+				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} количество ${turnMeta.cardName} не ${turnMeta.count} :(` });
+
+				if (turn.moveGoneNext) {
+					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+				}
+			}
 		} else {
 			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		}
@@ -128,7 +139,20 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.colors:
 		if (turnMeta.redCountAction === 'select') {
-			await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+			const turn = await game.turn(
+				turnMeta.player.id,
+				{ cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
+			);
+
+			if (turn.success) {
+				await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+			} else {
+				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} количество красных ${turnMeta.cardName} не ${turnMeta.redCount} :(` });
+
+				if (turn.moveGoneNext) {
+					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+				}
+			}
 		} else {
 			await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 		}
@@ -136,7 +160,15 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.suits:
 		if (turnMeta.suits?.action === 'select') {
-			// Finally check logic
+			const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName, suits: { ...turnMeta.suits } });
+
+			console.log(turn);
+
+			if (turn.success) {
+				await BOT.editMessage(lib.GameMessage.getCardsStealMessage(ctx, turnMeta));
+			}
+
+			await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
 		} else {
 			await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 		}

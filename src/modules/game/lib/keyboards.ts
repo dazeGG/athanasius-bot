@@ -17,7 +17,7 @@ export const kb: ModuleKeyboards = {
 /* GENERABLE KEYBOARDS */
 export const gkb = {
 	gameStarted: (gameId: GameId) => [
-		[{ text: 'Посмотреть свои карты', callback_data: { module: 'game', action: 'started', meta: `${gameId}#mc` } }],
+		[{ text: 'Посмотреть мои карты', callback_data: { module: 'game', action: 'started', meta: `${gameId}#mc` } }],
 		[{ text: 'Отправить игровое сообщение повторно', callback_data: { module: 'game', action: 'started', meta: `${gameId}#rgm` } }],
 	],
 
@@ -155,7 +155,7 @@ export const gkb = {
 		];
 
 		if (
-			suits.hearts + suits.diamonds + suits.spades + suits.spades === count
+			suits.hearts + suits.diamonds + suits.spades + suits.clubs === count
 			&& suits.hearts + suits.diamonds === redCount
 			&& suits.spades + suits.clubs === count - redCount
 		) {
