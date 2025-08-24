@@ -1,11 +1,10 @@
+import type { CardId, CardName, GameUtils } from '~/core';
 import { BaseDeck } from '~/core';
-import type { CardId , CardName } from '~/core';
 import { shuffleArray } from '~/lib';
 
 import type { PlayerId } from '../types';
 import { Hand } from './hand';
 import type { Queue } from '.';
-import type { HandHasOptions } from './types';
 
 interface ConstructorOptionsInit {
 	hands?: never;
@@ -46,6 +45,21 @@ export class Hands {
 		}
 	}
 
+	public hand (playerId: PlayerId): Hand {
+		const hand = this.hands.get(playerId);
+
+		if (!hand) {
+			throw new Error(`No hand for player ${playerId}`);
+		}
+
+		return new Proxy(hand, {
+			get (target, prop, receiver) {
+				const value = Reflect.get(target, prop, receiver);
+				return typeof value === 'function' ? value.bind(target) : value;
+			},
+		});
+	}
+
 	private dealCards (mainDeck: CardId[], players: PlayerId[]): void {
 		let cardIndex = 0;
 
@@ -56,7 +70,7 @@ export class Hands {
 				}
 
 				const card = mainDeck[cardIndex];
-				this.hands.get(playerId)?.pushCard(card);
+				this.hand(playerId).pushCards([card]);
 				cardIndex++;
 			}
 		}
@@ -74,21 +88,14 @@ export class Hands {
 	}
 
 	public getHand (playerId: PlayerId): Hand | undefined {
-		return this.hands.get(playerId);
+		return this.hand(playerId);
 	}
 
-	public has (playerId: PlayerId, options: HandHasOptions): boolean {
-		return !!this.hands.get(playerId)?.has(options);
-	}
+	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName, utils: GameUtils): CardName[] {
+		const cardIds = this.hand(playerId).getCardsByName(cardName).map(card => card.id);
 
-	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): void {
-		const cardIds = this.hands.get(playerId)?.getCardsByName(cardName).map(card => card.id);
-
-		if (!cardIds) {
-			return;
-		}
-
-		this.hands.get(playerId)?.removeCards(cardIds);
-		this.hands.get(me)?.addCards(cardIds);
+		this.hand(playerId).removeCards(cardIds);
+		this.hand(me).pushCards(cardIds);
+		return this.hand(me).handleAthanasiuses(utils);
 	}
 }

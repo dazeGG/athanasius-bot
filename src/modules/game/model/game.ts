@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 
-import { BOT, type CardName, DB } from '~/core';
-import type { GameSchema, GameId } from '~/core';
+import { BOT, DB } from '~/core';
+import type { CardName, GameSchema, GameId, GameUtils } from '~/core';
 
 import type { MailingOptions, PlayerId } from '../types';
 import { Hands, Queue } from '.';
@@ -25,6 +25,7 @@ export class Game {
 	private readonly queue: Queue;
 	private readonly hands: Hands;
 	private readonly athanasiuses: GameSchema['athanasiuses'];
+	private readonly utils: GameUtils;
 
 	constructor ({ id, players, decksCount }: ConstructorOptionsById | ConstructorOptionsInit) {
 		if (id) {
@@ -38,11 +39,16 @@ export class Game {
 			this.queue = new Queue(game.queue, false);
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
+			this.utils = game.utils;
 		} else if (players && decksCount) {
 			this.id = nanoid(6);
 			this.queue = new Queue(players, true);
 			this.hands = new Hands({ players, decksCount, queue: this.queue });
 			this.athanasiuses = {};
+			players.forEach(playerId => {
+				this.athanasiuses[playerId] = [];
+			});
+			this.utils = { cardsToAthanasius: decksCount * 4 };
 		} else {
 			throw new Error('Game options error');
 		}
@@ -76,6 +82,7 @@ export class Game {
 					queue: this.queue.allPlayers,
 					hands: this.hands.allHands,
 					athanasiuses: this.athanasiuses,
+					utils: this.utils,
 				});
 
 				return {
@@ -86,7 +93,7 @@ export class Game {
 	}
 
 	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean; moveGoneNext: boolean; }> {
-		const right = this.hands.has(playerId, options);
+		const right = this.hands.hand(playerId).has(options);
 
 		if (right) {
 			return { success: true, moveGoneNext: false };
@@ -108,7 +115,13 @@ export class Game {
 		return this.hands.getHand(playerId);
 	}
 
-	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): void {
-		this.hands.moveCards(me, playerId, cardName);
+	public async moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): Promise<CardName[]> {
+		const newAthanasiuses = this.hands.moveCards(me, playerId, cardName, this.utils);
+
+		this.athanasiuses[me].push(...newAthanasiuses);
+
+		await this.save();
+
+		return newAthanasiuses;
 	}
 }

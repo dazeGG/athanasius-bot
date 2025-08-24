@@ -12,9 +12,14 @@ export type UserSchema = {
 	name: string;
 };
 
-export type GameSchema = {
+export interface GameUtils {
+	cardsToAthanasius: number;
+}
+
+export interface GameSchema {
 	id: GameId;
 	queue: UserId[];
 	hands: Record<UserId, CardId[]>;
 	athanasiuses: Record<UserId, Card['name'][]>;
+	utils: GameUtils;
 };

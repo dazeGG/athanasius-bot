@@ -1,7 +1,7 @@
-import _ from 'lodash';
+import _, { at } from 'lodash';
 
 import { BaseDeck } from '~/core';
-import type { CardId, Card, CardName } from '~/core';
+import type { CardId, Card, CardName, GameUtils } from '~/core';
 import { RED_SUITS } from '~/core/entities/deck/config';
 
 import type { HandHasOptions } from './types';
@@ -21,12 +21,20 @@ export class Hand {
 		return this.hand.map(cardId => BaseDeck.getCardById(cardId)).filter(Boolean) as Card[];
 	}
 
-	public pushCard (cardId: CardId): void {
-		this.hand.push(cardId);
+	public pushCards (cardIds: CardId[]): void {
+		this.hand.push(...cardIds);
+	}
+
+	public removeCards (cardIds: CardId[]): void {
+		this.hand = this.hand.filter(cardId => !cardIds.includes(cardId));
 	}
 
 	public getCardsByName (cardName: CardName): Card[] {
 		return this.cardsInHand.filter(card => card.name === cardName);
+	}
+
+	public removeCardsByName (cardName: CardName): void {
+		this.removeCards(this.getCardsByName(cardName).map(card => card.id));
 	}
 
 	public has ({ cardName, count, colors, suits }: HandHasOptions): boolean {
@@ -74,16 +82,31 @@ export class Hand {
 		return !!neededCardsInHand.length;
 	}
 
-	public addCards (cardIds: CardId[]): void {
-		this.hand.push(...cardIds);
+	private getAthanasiuses (cardsToAthanasius: number): CardName[] {
+		const cardsCounts = this.cardsInHand.reduce<Partial<Record<CardName, number>>>((acc, card) => {
+			acc[card.name] = (acc[card.name] ?? 0) + 1;
+			return acc;
+		}, {});
+
+		const athanasiusCards: CardName[] = [];
+
+		Object.keys(cardsCounts).forEach(cardName => {
+			if (cardsCounts[cardName as CardName] === cardsToAthanasius) {
+				athanasiusCards.push(cardName as CardName);
+			}
+		});
+
+		return athanasiusCards;
 	}
 
-	public removeCards (cardIds: CardId[]): void {
-		this.hand = this.hand.filter(cardId => !cardIds.includes(cardId));
-	}
+	public handleAthanasiuses ({ cardsToAthanasius }: GameUtils): ReturnType<typeof this.getAthanasiuses> {
+		const athanasiuses = this.getAthanasiuses(cardsToAthanasius);
 
-	public removeCardsByName (cardName: CardName): void {
-		this.removeCards(this.getCardsByName(cardName).map(card => card.id));
+		athanasiuses.forEach(athanasius => {
+			this.removeCardsByName(athanasius);
+		});
+
+		return athanasiuses;
 	}
 
 	[Symbol.for('nodejs.util.inspect.custom')] (): string {

@@ -172,8 +172,11 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 			if (turn.success) {
 				await BOT.editMessage(lib.GameMessage.getCardsStealMessage(ctx, turnMeta));
-				game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
-				await game.save();
+				const newAthanasiuses = await game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
+
+				if (newAthanasiuses.length > 0) {
+					await BOT.sendMessage({ ctx, text: `У ТЕБЯ НОВЫЙ АФАНАСИЙ ПОЗДРАВЛЯЮ!!! ${newAthanasiuses}` });
+				}
 			} else {
 				await BOT.editMessage({ ctx, text: 'К сожалению, ты не угадал ТЕКСТ ДОПОЛНИТЬ' });
 				await game.mailing(lib.InfoMessage.getWrongSuitsMessage(turnMeta, user), [user.id]);
