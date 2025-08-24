@@ -1,4 +1,4 @@
-import type { CallbackContext, MessageContext, SendMessageOptions, UserSchema } from '~/core';
+import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 import { BaseDeck } from '~/core';
 import { BOT, DB } from '~/core';
 
@@ -47,7 +47,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await game.save();
 
-	await game.mailing({ text: lib.InfoMessage.getGameStartMessage() });
+	await game.mailing({ text: lib.InfoMessage.gameStartedMailing() });
 
 	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
 };
@@ -95,15 +95,11 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	const turnMeta = lib.parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
-	const user = DB.data.users.find(user => user.id === ctx.callback.from.id) as UserSchema;
-
 	const me = DB.data.users.find(user => user.id === ctx.callback.from.id);
 
 	if (!me) {
 		return;
 	}
-
-	console.log(turnMeta);
 
 	switch (turnMeta.stage) {
 	case TurnStage.player:
@@ -116,8 +112,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		if (turn.success) {
 			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		} else {
-			await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} нет ${turnMeta.cardName} :(` });
-			await game.mailing({ text: lib.InfoMessage.getWrongCardMessage(turnMeta, user) }, [user.id]);
+			await BOT.editMessage(lib.InfoMessage.wrongCardMe(ctx, turnMeta));
+			await game.mailing({ text: lib.InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id]);
 
 			if (turn.moveGoneNext) {
 				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
@@ -132,8 +128,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			if (turn.success) {
 				await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 			} else {
-				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} количество ${turnMeta.cardName} не ${turnMeta.count} :(` });
-				await game.mailing({ text: lib.InfoMessage.getWrongCountMessage(turnMeta, user) }, [user.id]);
+				await BOT.editMessage(lib.InfoMessage.wrongCountMe(ctx, turnMeta));
+				await game.mailing({ text: lib.InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id]);
 
 				if (turn.moveGoneNext) {
 					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
@@ -154,8 +150,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			if (turn.success) {
 				await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 			} else {
-				await BOT.editMessage({ ctx, text: `К сожалению, ты не угадал, у ${turnMeta.player.name} количество красных ${turnMeta.cardName} не ${turnMeta.redCount} :(` });
-				await game.mailing({ text: lib.InfoMessage.getWrongColorMessage(turnMeta, user) }, [user.id]);
+				await BOT.editMessage(lib.InfoMessage.wrongColorsMe(ctx, turnMeta));
+				await game.mailing({ text: lib.InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id]);
 
 				if (turn.moveGoneNext) {
 					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
@@ -178,8 +174,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 					await BOT.sendMessage({ ctx, text: `У ТЕБЯ НОВЫЙ АФАНАСИЙ ПОЗДРАВЛЯЮ!!! ${newAthanasiuses}` });
 				}
 			} else {
-				await BOT.editMessage({ ctx, text: 'К сожалению, ты не угадал ТЕКСТ ДОПОЛНИТЬ' });
-				await game.mailing({ text: lib.InfoMessage.getWrongSuitsMessage(turnMeta, user) }, [user.id]);
+				await BOT.editMessage(lib.InfoMessage.wrongSuitsMe(ctx, turnMeta));
+				await game.mailing({ text: lib.InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id]);
 			}
 
 			await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
