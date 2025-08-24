@@ -31,20 +31,20 @@ interface BaseTurnMeta {
 	suits?: never;
 }
 
-interface PlayerStage extends BaseTurnMeta {
+export interface PlayerStageMeta extends BaseTurnMeta {
 	stage: TurnStage.player;
 }
 
 type CardStageOmitOptions = 'cardName';
 
-interface CardStage extends Omit<BaseTurnMeta, CardStageOmitOptions> {
+export interface CardStageMeta extends Omit<BaseTurnMeta, CardStageOmitOptions> {
 	stage: TurnStage.card;
 	cardName: CardName;
 }
 
 type CountStageOmitOptions = CardStageOmitOptions | 'count' | 'countAction';
 
-interface CountStage extends Omit<BaseTurnMeta, CountStageOmitOptions> {
+export interface CountStageMeta extends Omit<BaseTurnMeta, CountStageOmitOptions> {
 	stage: TurnStage.count;
 	cardName: CardName;
 	count: number;
@@ -53,7 +53,7 @@ interface CountStage extends Omit<BaseTurnMeta, CountStageOmitOptions> {
 
 type ColorsStageOmitOptions = CardStageOmitOptions | 'count' | 'redCount' | 'blackCount' | 'redCountAction';
 
-interface ColorsStage extends Omit<BaseTurnMeta, ColorsStageOmitOptions> {
+export interface ColorsStageMeta extends Omit<BaseTurnMeta, ColorsStageOmitOptions> {
 	stage: TurnStage.colors;
 	cardName: CardName;
 	count: number;
@@ -64,7 +64,7 @@ interface ColorsStage extends Omit<BaseTurnMeta, ColorsStageOmitOptions> {
 
 type SuitsStageOmitOptions = CardStageOmitOptions | 'count' | 'redCount' | 'blackCount' | 'suits';
 
-interface SuitsStage extends Omit<BaseTurnMeta, SuitsStageOmitOptions> {
+export interface SuitsStageMeta extends Omit<BaseTurnMeta, SuitsStageOmitOptions> {
 	stage: TurnStage.suits;
 	cardName: CardName;
 	count: number;
@@ -73,6 +73,6 @@ interface SuitsStage extends Omit<BaseTurnMeta, SuitsStageOmitOptions> {
 	suits: Suits;
 }
 
-export type TurnMeta = PlayerStage | CardStage | CountStage | ColorsStage | SuitsStage;
+export type TurnMeta = PlayerStageMeta | CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;
 
 export type MailingOptions = Omit<SendMessageByChatIdOptions, 'chatId'>;
