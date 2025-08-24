@@ -5,12 +5,12 @@ import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, Tu
 
 export class InfoMessage {
 	/* MAILING */
-	private static players (turnMeta: TurnMeta, user: UserSchema): string {
-		return `<b>${user.name} -> ${turnMeta.player.name}</b>\n`;
+	private static players (turnMeta: TurnMeta, me: UserSchema): string {
+		return `<b>${me.name} -> ${turnMeta.player.name}</b>\n`;
 	}
 
-	private static playersCard (turnMeta: TurnMeta, user: UserSchema): string {
-		return this.players(turnMeta, user) +
+	private static playersCard (turnMeta: TurnMeta, me: UserSchema): string {
+		return this.players(turnMeta, me) +
 			'\n' +
 			`<b>Карта: ${turnMeta.cardName}</b>\n`;
 	}
@@ -19,20 +19,24 @@ export class InfoMessage {
 		return txt.gameStarted;
 	}
 
-	public static wrongCardMailing (turnMeta: CardStageMeta, user: UserSchema): string {
-		return this.playersCard(turnMeta, user) + 'Карта не ' + turnMeta.cardName;
+	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
+		return this.playersCard(turnMeta, me) + 'Карта не ' + turnMeta.cardName;
 	}
 
-	public static wrongCountMailing (turnMeta: CountStageMeta, user: UserSchema): string {
-		return this.playersCard(turnMeta, user) + 'Количество не ' + turnMeta.count;
+	public static wrongCountMailing (turnMeta: CountStageMeta, me: UserSchema): string {
+		return this.playersCard(turnMeta, me) + 'Количество не ' + turnMeta.count;
 	}
 
-	public static wrongColorsMailing (turnMeta: ColorsStageMeta, user: UserSchema): string {
-		return this.playersCard(turnMeta, user) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}`;
+	public static wrongColorsMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.playersCard(turnMeta, me) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}`;
 	}
 
-	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, user: UserSchema): string {
-		return this.playersCard(turnMeta, user) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.hearts} ♠️: ${turnMeta.suits.hearts} ♣️: ${turnMeta.suits.hearts}`;
+	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.hearts} ♠️: ${turnMeta.suits.hearts} ♣️: ${turnMeta.suits.hearts}`;
+	}
+
+	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		return `У <b>${me.name}</b> новый Афанасий ${turnMeta.cardName}!`;
 	}
 
 	/* ME */
@@ -65,5 +69,9 @@ export class InfoMessage {
 			ctx,
 			text: this.meWrong(turnMeta) + ` масти не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} :(`,
 		};
+	}
+
+	public static newAthanasiusMe (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
+		return { ctx, text: `<b>Поздравляю!</b> У тебя новый Афанасий ${turnMeta.cardName}!` };
 	}
 }

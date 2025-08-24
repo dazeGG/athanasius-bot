@@ -171,7 +171,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				const newAthanasiuses = await game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
 
 				if (newAthanasiuses.length > 0) {
-					await BOT.sendMessage({ ctx, text: `У ТЕБЯ НОВЫЙ АФАНАСИЙ ПОЗДРАВЛЯЮ!!! ${newAthanasiuses}` });
+					await BOT.sendMessage(lib.InfoMessage.newAthanasiusMe(ctx, turnMeta));
+					await game.mailing({ text: lib.InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
 				}
 			} else {
 				await BOT.editMessage(lib.InfoMessage.wrongSuitsMe(ctx, turnMeta));
