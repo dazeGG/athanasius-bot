@@ -1,7 +1,7 @@
 import type { CardName } from '~/core';
 import { DB } from '~/core';
 
-import type { TurnMeta } from '../types';
+import type { Suits, TurnMeta } from '../types';
 import { TurnStage } from '../types';
 
 const getCount = (countData: string): [number, string] => {
@@ -29,7 +29,7 @@ export const parseTurnMeta = (meta: string): TurnMeta => {
 
 	if (redCountData) {
 		[redCount, redCountAction] = getCount(redCountData);
-		blackCount = count - redCount;
+		blackCount = count as number - redCount;
 	}
 
 	if (suitsData) {
@@ -57,8 +57,8 @@ export const parseTurnMeta = (meta: string): TurnMeta => {
 			gameId,
 			player: user,
 			cardName: cardName as CardName,
-			count,
-			countAction,
+			count: count as number,
+			countAction: countAction as string,
 		};
 	case TurnStage.colors:
 		return {
@@ -66,10 +66,10 @@ export const parseTurnMeta = (meta: string): TurnMeta => {
 			gameId,
 			player: user,
 			cardName: cardName as CardName,
-			count: count,
-			redCount: redCount,
-			blackCount: blackCount,
-			redCountAction: redCountAction,
+			count: count as number,
+			redCount: redCount as number,
+			blackCount: blackCount as number,
+			redCountAction: redCountAction as string,
 		};
 	case TurnStage.suits:
 		return {
@@ -77,10 +77,10 @@ export const parseTurnMeta = (meta: string): TurnMeta => {
 			gameId,
 			player: user,
 			cardName: cardName as CardName,
-			count: count,
-			redCount: redCount,
-			blackCount: blackCount,
-			suits: suits,
+			count: count as number,
+			redCount: redCount as number,
+			blackCount: blackCount as number,
+			suits: suits as Suits,
 		};
 	default:
 		throw new Error('Invalid stage');
