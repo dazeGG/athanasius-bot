@@ -164,7 +164,10 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.suits:
 		if (turnMeta.suits?.action === 'select') {
-			const turn = await game.turn(turnMeta.player.id, turnMeta);
+			const turn = await game.turn(
+				turnMeta.player.id,
+				{ cardName: turnMeta.cardName, suits: turnMeta.suits },
+			);
 
 			if (turn.success) {
 				await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));

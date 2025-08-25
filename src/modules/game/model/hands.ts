@@ -98,4 +98,13 @@ export class Hands {
 		this.hand(me).pushCards(cardIds);
 		return this.hand(me).handleAthanasiuses(utils);
 	}
+
+	public handleGameEnd (queue: PlayerId[]): boolean {
+		for (const playerId of queue) {
+			if (this.hand(playerId).cardsInHand.length > 0) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

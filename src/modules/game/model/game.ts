@@ -66,6 +66,17 @@ export class Game {
 		return this.queue.allPlayers;
 	}
 
+	public getHand (playerId: PlayerId): Hand | undefined {
+		return this.hands.getHand(playerId);
+	}
+
+	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
+		const actualPlayers = this.allPlayers.filter(playerId => !exclude.includes(playerId));
+		const methods = actualPlayers.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId }));
+
+		await Promise.all(methods);
+	}
+
 	public async save (): Promise<void> {
 		const game = DB.data.games.find(game => game.id === this.id);
 
@@ -104,24 +115,14 @@ export class Game {
 		}
 	}
 
-	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		const actualPlayers = this.allPlayers.filter(playerId => !exclude.includes(playerId));
-		const methods = actualPlayers.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId }));
-
-		await Promise.all(methods);
-	}
-
-	public getHand (playerId: PlayerId): Hand | undefined {
-		return this.hands.getHand(playerId);
-	}
-
 	public async moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): Promise<CardName[]> {
 		const newAthanasiuses = this.hands.moveCards(me, playerId, cardName, this.utils);
 
-		this.athanasiuses[me].push(...newAthanasiuses);
+		if (newAthanasiuses.length > 0) {
+			this.athanasiuses[me].push(...newAthanasiuses);
+		}
 
 		await this.save();
-
 		return newAthanasiuses;
 	}
 }
