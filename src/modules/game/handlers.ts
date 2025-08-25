@@ -114,10 +114,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		} else {
 			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
 			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id]);
-
-			if (turn.moveGoneNext) {
-				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
-			}
+			await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 		}
 		break;
 
@@ -130,10 +127,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			} else {
 				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
 				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id]);
-
-				if (turn.moveGoneNext) {
-					await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
-				}
+				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 			}
 		} else {
 			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
@@ -152,10 +146,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			} else {
 				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
 				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id]);
-
-				if (turn.moveGoneNext) {
-					await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
-				}
+				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 			}
 		} else {
 			await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));

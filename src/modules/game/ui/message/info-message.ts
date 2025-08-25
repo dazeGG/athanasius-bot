@@ -7,13 +7,11 @@ import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, Tu
 export class InfoMessage {
 	/* MAILING */
 	private static players (turnMeta: TurnMeta, me: UserSchema): string {
-		return `<b>${me.name} -> ${turnMeta.player.name}</b>\n`;
+		return `<b>${me.name} -> ${turnMeta.player.name}</b>\n\n`;
 	}
 
 	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) +
-			'\n' +
-			`<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
+		return this.players(turnMeta, me) + `<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
 	public static gameStartedMailing (): string {
@@ -21,7 +19,7 @@ export class InfoMessage {
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + 'Карта не ' + CARDS_VIEW_MAP[turnMeta.cardName];
+		return this.players(turnMeta, me) + 'Карта не ' + CARDS_VIEW_MAP[turnMeta.cardName];
 	}
 
 	public static wrongCountMailing (turnMeta: CountStageMeta, me: UserSchema): string {

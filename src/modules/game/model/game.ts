@@ -1,7 +1,9 @@
 import { nanoid } from 'nanoid';
+import type { Dayjs } from 'dayjs';
 
 import { BOT, DB } from '~/core';
 import type { CardName, GameSchema, GameId, GameUtils } from '~/core';
+import { dayjs } from '~/plugins';
 
 import type { MailingOptions, PlayerId } from '../types';
 import { Hands, Queue } from '.';
@@ -22,6 +24,8 @@ interface ConstructorOptionsInit {
 
 export class Game {
 	private readonly id: GameId;
+	private readonly started: Dayjs;
+	private readonly ended?: Dayjs;
 	private readonly queue: Queue;
 	private readonly hands: Hands;
 	private readonly athanasiuses: GameSchema['athanasiuses'];
@@ -36,19 +40,22 @@ export class Game {
 			}
 
 			this.id = game.id;
-			this.queue = new Queue(game.queue, false);
+			this.started = dayjs(game.started);
+			this.ended = game.ended ? dayjs(game.ended) : undefined;
+			this.queue = new Queue(game.players, false);
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
 			this.utils = game.utils;
 		} else if (players && decksCount) {
 			this.id = nanoid(6);
+			this.started = dayjs();
 			this.queue = new Queue(players, true);
 			this.hands = new Hands({ players, decksCount, queue: this.queue });
 			this.athanasiuses = {};
 			players.forEach(playerId => {
 				this.athanasiuses[playerId] = [];
 			});
-			this.utils = { cardsToAthanasius: decksCount * 4 };
+			this.utils = { cardsToAthanasius: decksCount * 4, logs: [] };
 		} else {
 			throw new Error('Game options error');
 		}
@@ -81,7 +88,7 @@ export class Game {
 		const game = DB.data.games.find(game => game.id === this.id);
 
 		if (game) {
-			game.queue = this.queue.allPlayers;
+			game.players = this.queue.allPlayers;
 			game.hands = this.hands.allHands;
 			game.athanasiuses = this.athanasiuses;
 
@@ -90,7 +97,9 @@ export class Game {
 			await DB.update(({ games }) => {
 				games.push({
 					id: this.id,
-					queue: this.queue.allPlayers,
+					started: this.started.valueOf(),
+					ended: this.ended ? this.ended.valueOf() : this.ended,
+					players: this.queue.allPlayers,
 					hands: this.hands.allHands,
 					athanasiuses: this.athanasiuses,
 					utils: this.utils,
@@ -103,15 +112,15 @@ export class Game {
 		}
 	}
 
-	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean; moveGoneNext: boolean; }> {
+	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean; }> {
 		const right = this.hands.hand(playerId).has(options);
 
 		if (right) {
-			return { success: true, moveGoneNext: false };
+			return { success: true };
 		} else {
 			this.queue.next();
 			await this.save();
-			return { success: false, moveGoneNext: true };
+			return { success: false };
 		}
 	}
 

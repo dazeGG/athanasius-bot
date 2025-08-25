@@ -1,7 +1,7 @@
 import type TelegramBot from 'node-telegram-bot-api';
 import type { nanoid } from 'nanoid';
 
-import type { CardId, Card } from '~/core';
+import type { CardId, Card, CardName } from '~/core';
 
 export type UserId = TelegramBot.User['id'];
 export type GameId = ReturnType<typeof nanoid>;
@@ -12,14 +12,25 @@ export type UserSchema = {
 	name: string;
 };
 
+export interface GameLog {
+	from: UserId;
+	to: UserId;
+	cardName: CardName;
+	steal: boolean;
+	stealData?: [number] | [number, number] | [number, number, number, number];
+}
+
 export interface GameUtils {
 	cardsToAthanasius: number;
+	logs: GameLog[];
 }
 
 export interface GameSchema {
 	id: GameId;
-	queue: UserId[];
+	started: number;
+	ended?: number;
+	players: UserId[];
 	hands: Record<UserId, CardId[]>;
 	athanasiuses: Record<UserId, Card['name'][]>;
 	utils: GameUtils;
-};
+}
