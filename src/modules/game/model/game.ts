@@ -148,9 +148,8 @@ export class Game {
 
 				if (newAthanasiuses.length > 0) {
 					this.athanasiuses[me].push(...newAthanasiuses);
+					this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
 				}
-
-				this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
 
 				const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
 
@@ -165,14 +164,6 @@ export class Game {
 					gameEnded,
 				};
 			} else {
-				this.utils.logs.push({
-					from: me,
-					to: turnMeta.player.id,
-					cardName: turnMeta.cardName,
-					steal: false,
-					stealData: getStealData(turnMeta),
-				});
-
 				await this.save();
 				return { success: true };
 			}
