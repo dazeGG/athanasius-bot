@@ -7,6 +7,7 @@ export const txt = {
 	decksCount: 'Количество колод',
 	playersCountError: '<b>Чтобы начать игру, необходимо как минимум 3 игрока!</b>',
 	gameStarted: 'Игра началась!',
+	gameEnded: 'Игра закончилась!',
 	yourChoice: 'Твой выбор',
 	player: 'Игрок',
 	card: 'Карта',

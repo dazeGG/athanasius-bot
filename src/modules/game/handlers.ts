@@ -156,7 +156,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.suits:
 		if (turnMeta.suits?.action === 'select') {
-			const { success, composeAthanasius } = await game.turn({
+			const { success, composeAthanasius, gameEnded } = await game.turn({
 				me: me.id,
 				turnMeta,
 				options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
@@ -168,6 +168,11 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				if (composeAthanasius) {
 					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
 					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
+				}
+
+				if (gameEnded) {
+					await game.mailing({ text: InfoMessage.gameEndedMailing() });
+					return;
 				}
 			} else {
 				await BOT.editMessage(InfoMessage.wrongSuitsMe(ctx, turnMeta));

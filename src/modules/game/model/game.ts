@@ -39,6 +39,7 @@ interface TurnOptions {
 interface TurnReturn {
 	success: boolean;
 	composeAthanasius?: boolean;
+	gameEnded?: boolean;
 }
 
 const getStealData = (turnMeta: TurnOptions['turnMeta']): GameLog['stealData'] => {
@@ -55,7 +56,7 @@ const getStealData = (turnMeta: TurnOptions['turnMeta']): GameLog['stealData'] =
 export class Game {
 	private readonly id: GameId;
 	private readonly started: Dayjs;
-	private readonly ended?: Dayjs;
+	private ended?: Dayjs;
 	private readonly queue: Queue;
 	private readonly hands: Hands;
 	private readonly athanasiuses: GameSchema['athanasiuses'];
@@ -151,8 +152,18 @@ export class Game {
 
 				this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
 
+				const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
+
+				if (gameEnded) {
+					this.ended = dayjs();
+				}
+
 				await this.save();
-				return { success: true, composeAthanasius: newAthanasiuses.length > 0 };
+				return {
+					success: true,
+					composeAthanasius: newAthanasiuses.length > 0,
+					gameEnded,
+				};
 			} else {
 				this.utils.logs.push({
 					from: me,

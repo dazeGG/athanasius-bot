@@ -18,6 +18,10 @@ export class InfoMessage {
 		return txt.gameStarted;
 	}
 
+	public static gameEndedMailing (): string {
+		return txt.gameEnded;
+	}
+
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
 		return this.players(turnMeta, me) + 'Карта не ' + CARDS_VIEW_MAP[turnMeta.cardName];
 	}
