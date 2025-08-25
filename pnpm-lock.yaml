@@ -8,15 +8,27 @@ importers:
 
   .:
     dependencies:
+      '@types/lodash':
+        specifier: ^4.17.20
+        version: 4.17.20
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
       dotenv:
         specifier: ^16.4.7
         version: 16.6.1
+      lodash:
+        specifier: ^4.17.21
+        version: 4.17.21
       lowdb:
         specifier: ^7.0.1
         version: 7.0.1
+      lru-cache:
+        specifier: ^11.1.0
+        version: 11.1.0
+      nanoid:
+        specifier: ^5.1.5
+        version: 5.1.5
       node-html-to-image:
         specifier: ^5.0.0
         version: 5.0.0(typescript@5.9.2)
@@ -467,6 +479,9 @@ packages:
 
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
+
+  '@types/lodash@4.17.20':
+    resolution: {integrity: sha512-H3MHACvFUEiujabxhaI/ImO6gUrd8oOurg7LQtS7mbwIXA/cUqWrvBsaeJ23aZEPk1TAYkurjfMbSELfoCXlGA==}
 
   '@types/node-telegram-bot-api@0.64.10':
     resolution: {integrity: sha512-hiwjeze0TGVB7f5Es6WnLqEsd3g3TRbR2SLeT7iAtO2rrkisCjc4N65wFXzkp+viIReV7xun2/j/PHTf+Hcaqg==}
@@ -1425,6 +1440,10 @@ packages:
     resolution: {integrity: sha512-neJAj8GwF0e8EpycYIDFqEPcx9Qz4GUho20jWFR7YiFeXzF1YMLdxB36PypcTSPMA+4+LvgyMacYhlr18Zlymw==}
     engines: {node: '>=18'}
 
+  lru-cache@11.1.0:
+    resolution: {integrity: sha512-QIXZUBJUx+2zHUdQujWejBkcD9+cs94tLn0+YL8UrCh+D5sCXZ4c7LaEH48pNwRY3MLDgqUFyhlCyjJPf1WP0A==}
+    engines: {node: 20 || >=22}
+
   lru-cache@7.18.3:
     resolution: {integrity: sha512-jumlc0BIUrS3qJGgIkWZsyfAM7NCWiBcCDhnd+3NNM5KbBmLTgHVfWBcg6W+rLUsIpzpERPsvwUP7CckAQSOoA==}
     engines: {node: '>=12'}
@@ -1472,6 +1491,11 @@ packages:
 
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
+
+  nanoid@5.1.5:
+    resolution: {integrity: sha512-Ir/+ZpE9fDsNH0hQ3C68uyThDXzYcim2EqcZ8zn8Chtt1iylPT9xXJB0kPCnqzgcEGikO9RxSrh63MsmVCU7Fw==}
+    engines: {node: ^18 || >=20}
+    hasBin: true
 
   natural-compare@1.4.0:
     resolution: {integrity: sha512-OWND8ei3VtNC9h7V60qff3SVobHr996CTwgxubgyQYEpg290h9J0buyECNNJexkFm5sOajh5G116RYA1c8ZMSw==}
@@ -2396,6 +2420,8 @@ snapshots:
   '@types/estree@1.0.8': {}
 
   '@types/json-schema@7.0.15': {}
+
+  '@types/lodash@4.17.20': {}
 
   '@types/node-telegram-bot-api@0.64.10':
     dependencies:
@@ -3518,6 +3544,8 @@ snapshots:
     dependencies:
       steno: 4.0.2
 
+  lru-cache@11.1.0: {}
+
   lru-cache@7.18.3: {}
 
   math-intrinsics@1.1.0: {}
@@ -3552,6 +3580,8 @@ snapshots:
   moment@2.30.1: {}
 
   ms@2.1.3: {}
+
+  nanoid@5.1.5: {}
 
   natural-compare@1.4.0: {}
 

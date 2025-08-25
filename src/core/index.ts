@@ -1,15 +1,13 @@
-export {
-	default as BOT,
-} from './bot';
-
-export {
-	default as DB,
-} from './db';
-
-export {
-	default as LOGGER,
-} from './logger';
+export * from './entities/bot';
+export * from './entities/db';
+export * from './entities/deck';
 
 export {
 	default as STATES,
-} from './states';
+} from './entities/states';
+
+export {
+	default as LOGGER,
+} from './plugins/logger';
+
+export * from './lib';

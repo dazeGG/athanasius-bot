@@ -1,6 +1,13 @@
 import { BOT } from '~/core';
-import type { MessageContext } from '~/types/base';
+import { isRegistered } from '~/lib';
+import type { MessageContext } from '~/core';
 
-export const start = async (ctx: MessageContext) => {
-	await BOT.sendMessage(ctx, 'Я бот для игры в Афанасия, я пока в разработке)');
+import * as lib from './lib';
+
+export const startCommandHandler = async (ctx: MessageContext) => {
+	if (isRegistered(ctx.message)) {
+		await BOT.sendMessage({ ctx, text: lib.txt.alreadyRegistered });
+	} else {
+		await BOT.sendMessage({ ctx, text: lib.txt.start });
+	}
 };
