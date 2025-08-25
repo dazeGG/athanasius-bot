@@ -13,7 +13,7 @@ const sendBaseSettingsMessage = async (ctx: MessageContext) => {
 		'\n' +
 		lib.txt.chooseWhatToChange;
 
-	await BOT.sendMessage({ ctx, message: settingsStartMessage, keyboard: lib.kb.baseSettings });
+	await BOT.sendMessage({ ctx, text: settingsStartMessage, keyboard: lib.kb.baseSettings });
 };
 
 export const settingsStartMessageHandler = async (ctx: MessageContext) => {
@@ -22,7 +22,7 @@ export const settingsStartMessageHandler = async (ctx: MessageContext) => {
 
 export const settingsChangeNameCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
-	await BOT.editMessage({ ctx, message: lib.txt.changeName });
+	await BOT.editMessage({ ctx, text: lib.txt.changeName });
 
 	STATES.setState(ctx.callback.from.id, 'SETTINGS_CHANGE_NAME');
 };
@@ -33,7 +33,7 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageContext)
 	const validationData = validateName(newName);
 
 	if (!validationData.success) {
-		await BOT.sendMessage({ ctx, message: '<b>Ошибка!</b>\n\n' + validationData.message });
+		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
 	} else {
 		await DB.update(({ users }) => {
 			const user = DB.data.users.find(user => user.id === ctx.message.from.id);
@@ -45,7 +45,7 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageContext)
 			return { users };
 		});
 
-		await BOT.sendMessage({ ctx, message: lib.txt.success });
+		await BOT.sendMessage({ ctx, text: lib.txt.success });
 		await sendBaseSettingsMessage(ctx);
 
 		STATES.clearState(ctx.message.from.id);

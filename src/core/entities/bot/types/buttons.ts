@@ -1,9 +1,9 @@
-import type { CallbackHandlerOptions } from '../lib';
+import type { CallbackData } from '.';
 
 /* RAW */
 
 export type RawButton =
-	| { text: string; callback_data: CallbackHandlerOptions; url?: never; }
+	| { text: string; callback_data: CallbackData; url?: never; }
 	| { text: string; url: string; callback_data?: never; };
 
 export type RawButtonRow = RawButton[]

@@ -4,7 +4,7 @@ import TelegramBot from 'node-telegram-bot-api';
 
 import { logError } from '~/core';
 
-import { stringifyCallbackData, MessageHandlers, CallbackHandlers } from './lib';
+import { storeCallbackData, MessageHandlers, CallbackHandlers, CallbackUtils } from './lib';
 import type { MessageHandlerOptions, CallbackHandlerOptions } from './lib';
 import { chatIdMiddleware } from './middlewares';
 import type {
@@ -15,12 +15,15 @@ import type {
 	SendMessageByChatIdOptions,
 	SendMessageOptions,
 	CallbackContext,
+	HandlerGuard,
+	MessageContextMessage,
+	CallbackContextCallback,
 } from '.';
 
 class Bot {
 	private readonly bot: TelegramBot;
 
-	private readonly commands: Map<string, MessageHandler>;
+	private readonly commands: Map<string, { handler: MessageHandler, guard?: HandlerGuard<MessageContextMessage> }>;
 	private readonly messageHandlers: MessageHandlers;
 	private readonly callbackHandlers: CallbackHandlers;
 
@@ -36,33 +39,39 @@ class Bot {
 		await this.bot.setMyCommands(menuCommands);
 	}
 
-	registerCommand (command: string, handler: MessageHandler) {
-		this.commands.set(command, handler);
+	registerCommand (command: string, handler: MessageHandler, guard?: HandlerGuard<MessageContextMessage>) {
+		this.commands.set(command, { handler, guard });
 	}
 
-	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions) {
-		this.messageHandlers.register(handler, options);
+	registerMessageHandler (handler: MessageHandler, options: MessageHandlerOptions, guard?: HandlerGuard<MessageContextMessage>) {
+		this.messageHandlers.register(handler, options, guard);
 	}
 
-	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions) {
-		this.callbackHandlers.register(handler, options);
+	registerCallbackHandler (handler: CallbackHandler, options: CallbackHandlerOptions, guard?: HandlerGuard<CallbackContextCallback>) {
+		this.callbackHandlers.register(handler, options, guard);
 	}
 
 	async init (commands: TelegramBot.BotCommand[]) {
 		await this.setMenuCommands(commands);
 
 		this.bot.on('message', async message => {
-			if (!message.text || !message.from) {
+			const { text, from: user } = message;
+
+			if (!text || !user) {
 				return;
 			}
 
-			const { text, from: user } = message;
-
 			// * Command handler
-			const commandHandler = this.commands.get(text);
+			const commandHandlerData = this.commands.get(text);
 
-			if (text.startsWith('/') && commandHandler) {
-				await chatIdMiddleware({ message: { ...message, text, from: user }, next: commandHandler });
+			if (text.startsWith('/') && commandHandlerData) {
+				const { handler, guard } = commandHandlerData;
+
+				if (guard && !guard({ ...message, text, from: user })) {
+					return;
+				}
+
+				await chatIdMiddleware({ message: { ...message, text, from: user }, next: handler });
 				return;
 			}
 
@@ -80,49 +89,58 @@ class Bot {
 				return;
 			}
 
+			// * Callback handler
+
 			const { data, message } = callbackQuery;
 
-			// * Callback handler
-			const callbackHandler = this.callbackHandlers.getHandler(callbackQuery);
+			const callbackData = CallbackUtils.parseCallbackData(data);
 
-			if (callbackHandler) {
-				await chatIdMiddleware({ callback: { ...callbackQuery, data, message }, next: callbackHandler });
+			if (!callbackData) {
+				return;
+			}
+
+			const contextCallback = { ...callbackQuery, data: callbackData, message };
+
+			const callbackHandler = this.callbackHandlers.getHandler(contextCallback);
+
+			if (callbackHandler && callbackData) {
+				await chatIdMiddleware({ callback: contextCallback, next: callbackHandler });
 				return;
 			}
 		});
 	}
 
-	async sendMessageByChatId ({ chatId, message, keyboard, options }: SendMessageByChatIdOptions) {
+	async sendMessageByChatId ({ chatId, text, keyboard, options }: SendMessageByChatIdOptions) {
 		const messageOptions: TelegramBot.SendMessageOptions = { parse_mode: 'HTML', disable_web_page_preview: true };
 
 		if (keyboard) {
 			messageOptions.reply_markup = {
 				...options?.reply_markup,
-				inline_keyboard: stringifyCallbackData(keyboard),
+				inline_keyboard: storeCallbackData(keyboard),
 			};
 		}
 
 		try {
-			await this.bot.sendMessage(chatId, message, { ...messageOptions, ...options });
+			await this.bot.sendMessage(chatId, text, { ...messageOptions, ...options });
 		} catch (error) {
-			logError({ error, errorText: message, chatId });
+			logError({ error, errorText: text, chatId });
 		}
 	}
 
-	async sendMessage ({ ctx, message, keyboard, options }: SendMessageOptions) {
+	async sendMessage ({ ctx, text, keyboard, options }: SendMessageOptions) {
 		try {
-			await this.sendMessageByChatId({ chatId: ctx.chatId, message, keyboard, options });
+			await this.sendMessageByChatId({ chatId: ctx.chatId, text, keyboard, options });
 		} catch (error) {
 			logError({
 				error,
-				errorText: ctx.message?.text ?? ctx.callback?.data ?? 'Send message with no context',
+				errorText: ctx.message?.text ?? JSON.stringify(ctx.callback?.data) ?? 'Send message with no context',
 				chatId: ctx.chatId,
 				userId: ctx.message?.from.id ?? ctx.callback?.from.id,
 			});
 		}
 	}
 
-	async editMessage ({ ctx, message, keyboard, options }: EditMessageOptions) {
+	async editMessage ({ ctx, text, keyboard, options }: EditMessageOptions) {
 		const messageOptions: TelegramBot.EditMessageTextOptions = {
 			chat_id: ctx.chatId,
 			message_id: ctx.message?.message_id ?? ctx.callback?.message.message_id,
@@ -133,12 +151,12 @@ class Bot {
 		if (keyboard) {
 			messageOptions.reply_markup = {
 				...options?.reply_markup,
-				inline_keyboard: stringifyCallbackData(keyboard),
+				inline_keyboard: storeCallbackData(keyboard),
 			};
 		}
 
 		try {
-			await this.bot.editMessageText(message, messageOptions);
+			await this.bot.editMessageText(text, messageOptions);
 		} catch (error) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-expect-error
@@ -148,12 +166,12 @@ class Bot {
 
 			logError({
 				error,
-				errorText: ctx.message?.text ?? ctx.callback?.data ?? 'Edit message with no context',
+				errorText: ctx.message?.text ?? JSON.stringify(ctx.callback?.data) ?? 'Edit message with no context',
 				chatId: ctx.chatId,
 				userId: ctx.message?.from.id ?? ctx.callback?.from.id,
 			});
 
-			await this.sendMessageByChatId({ chatId: ctx.chatId, message, keyboard, options: { ...options, ...messageOptions } });
+			await this.sendMessageByChatId({ chatId: ctx.chatId, text, keyboard, options: { ...options, ...messageOptions } });
 		}
 	}
 

@@ -13,9 +13,16 @@ export type MessageContext = BaseContext & {
   message: MessageContextMessage;
 };
 
+export interface CallbackData {
+  module: string;
+  action?: string;
+  back?: boolean;
+  meta?: string;
+}
+
 export type CallbackContextCallback = Omit<(TelegramBot.CallbackQuery), 'message' | 'data'> & {
   message: TelegramBot.Message;
-  data: string;
+  data: CallbackData;
 };
 
 export type CallbackContext = BaseContext & {

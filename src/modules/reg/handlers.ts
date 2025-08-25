@@ -9,7 +9,11 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const user = DB.data.users.find(user => user.id === ctx.message.from.id);
 
 	if (user) {
-		await BOT.sendMessage({ ctx, message: lib.txt.alreadyRegistered, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
+		await BOT.sendMessage({
+			ctx,
+			text: lib.txt.alreadyRegistered,
+			options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+		});
 		return;
 	}
 
@@ -18,14 +22,7 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 	const validationData = validateName(name);
 
 	if (!validationData.success) {
-		await BOT.sendMessage({ ctx, message: validationData.message });
-		return;
-	}
-
-	const userWithName = DB.data.users.find(user => user.name === name);
-
-	if (userWithName) {
-		await BOT.sendMessage({ ctx, message: lib.txt.nameAlreadyTaken });
+		await BOT.sendMessage({ ctx, text: validationData.message });
 		return;
 	}
 
@@ -39,5 +36,9 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		};
 	});
 
-	await BOT.sendMessage({ ctx, message: lib.txt.successfulRegistration, options: { reply_markup: { keyboard: GLOBAL_KEYBOARD } } });
+	await BOT.sendMessage({
+		ctx,
+		text: lib.txt.successfulRegistration,
+		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+	});
 };
