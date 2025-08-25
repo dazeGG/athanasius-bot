@@ -1,11 +1,11 @@
 import _ from 'lodash';
 
 import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } from '~/core';
+import { CARDS_VIEW_MAP } from '~/core/config';
 
-import { txt, gkb } from '.';
-import type { Game } from '../model';
-import type { TurnMeta, Suits } from '../types';
-import * as lib from '~/modules/game/lib/index.ts';
+import { txt, gkb } from '..';
+import type { Game } from '../../model';
+import type { TurnMeta, Suits, SuitsStageMeta } from '../../types';
 
 export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {
@@ -14,7 +14,7 @@ export class GameMessage {
 		choiceMessage += '• ' + txt.player + ': ' + '<b>' + turnMeta.player.name + '</b>\n';
 
 		if (turnMeta.cardName) {
-			choiceMessage += '• ' + txt.card + ': ' + '<b>' + turnMeta.cardName + '</b>\n';
+			choiceMessage += '• ' + txt.card + ': ' + '<b>' + CARDS_VIEW_MAP[turnMeta.cardName] + '</b>\n';
 		}
 
 		if (turnMeta.count && (turnMeta.countAction === undefined || turnMeta.countAction === 'select')) {
@@ -35,8 +35,8 @@ export class GameMessage {
 	public static getFirstMessage (game: Game, initialMessage: boolean): SendMessageByChatIdOptions {
 		return {
 			chatId: game.activePlayer,
-			text: initialMessage ? lib.txt.firstTurnMessage : lib.txt.turnFirstMessage,
-			keyboard: lib.gkb.playersSelect(game.activePlayer, game.gameId, game.allPlayers),
+			text: initialMessage ? txt.firstTurnMessage : txt.turnFirstMessage,
+			keyboard: gkb.playersSelect(game.activePlayer, game.gameId, game.allPlayers),
 		};
 	}
 
@@ -204,10 +204,10 @@ export class GameMessage {
 		}
 	}
 
-	public static getCardsStealMessage (ctx: CallbackContext, turnMeta: TurnMeta): EditMessageOptions {
+	public static getCardsStealMessage (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
 		return {
 			ctx,
-			text: `<b>Поздравляю!</b> Ты успешно украл карты ${turnMeta.cardName} у ${turnMeta.player.name}`,
+			text: `<b>Поздравляю!</b> Ты успешно украл карты ${CARDS_VIEW_MAP[turnMeta.cardName]} у ${turnMeta.player.name}`,
 		};
 	}
 }

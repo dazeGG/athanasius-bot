@@ -1,4 +1,4 @@
-import _, { at } from 'lodash';
+import _ from 'lodash';
 
 import { BaseDeck } from '~/core';
 import type { CardId, Card, CardName, GameUtils } from '~/core';

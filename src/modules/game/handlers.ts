@@ -2,10 +2,11 @@ import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core
 import { BaseDeck } from '~/core';
 import { BOT, DB } from '~/core';
 
-import * as lib from './lib';
 import { DECKS_COUNT } from './config';
-import { Game } from './model';
 import { TurnStage } from './types';
+import { parseTurnMeta } from './lib';
+import { Game } from './model';
+import { GameMessage, InfoMessage, txt, gkb, kb } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
 	const game = DB.data.games[0];
@@ -13,30 +14,30 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 	if (!game) {
 		const players = DB.data.users.map(user => user.id);
 
-		const gameInfoText = lib.txt.notStarted + '\n' +
+		const gameInfoText = txt.notStarted + '\n' +
 			'\n' +
-			lib.txt.players + ':\n' +
+			txt.players + ':\n' +
 			players.map(playerId => {
 				const user = DB.data.users.find(user => user.id === playerId);
 				return '• ' + (user ? user.name : `Игрок не найден (id: ${playerId})`);
 			}).join('\n') + '\n' +
 			'\n' +
-			lib.txt.gameSettings + ':\n' +
-			'• ' + lib.txt.decksCount + ': ' + DECKS_COUNT;
+			txt.gameSettings + ':\n' +
+			'• ' + txt.decksCount + ': ' + DECKS_COUNT;
 
 		const sendMessageOptions: SendMessageOptions = { ctx, text: gameInfoText };
 
 		if (players.length >= 2) {
-			sendMessageOptions.keyboard = lib.kb.start;
+			sendMessageOptions.keyboard = kb.start;
 		} else {
-			sendMessageOptions.text += '\n\n' + lib.txt.playersCountError;
+			sendMessageOptions.text += '\n\n' + txt.playersCountError;
 		}
 
 		await BOT.sendMessage(sendMessageOptions);
 		return;
 	}
 
-	await BOT.sendMessage({ ctx, text: lib.txt.ongoing, keyboard: lib.gkb.gameStarted(game.id) });
+	await BOT.sendMessage({ ctx, text: txt.ongoing, keyboard: gkb.gameStarted(game.id) });
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
@@ -47,9 +48,8 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await game.save();
 
-	await game.mailing({ text: lib.InfoMessage.gameStartedMailing() });
-
-	await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, true));
+	await game.mailing({ text: InfoMessage.gameStartedMailing() });
+	await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, true));
 };
 
 export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
@@ -77,8 +77,8 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 		await BOT.editMessage({ ctx, text: BaseDeck.displayDeck(BaseDeck.sortByValue(hand.cardsInHand)).join(' ') });
 		break;
 	case 'rgm':
-		await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
-		await BOT.editMessage({ ctx, text: lib.txt.gameMessageResendSuccess });
+		await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
+		await BOT.editMessage({ ctx, text: txt.gameMessageResendSuccess });
 		break;
 	}
 };
@@ -93,7 +93,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		return;
 	}
 
-	const turnMeta = lib.parseTurnMeta(callbackMeta);
+	const turnMeta = parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
 	const me = DB.data.users.find(user => user.id === ctx.callback.from.id);
 
@@ -103,20 +103,20 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	switch (turnMeta.stage) {
 	case TurnStage.player:
-		await BOT.editMessage(lib.GameMessage.getCardSelectMessageOptions(ctx, turnMeta, game));
+		await BOT.editMessage(GameMessage.getCardSelectMessageOptions(ctx, turnMeta, game));
 		break;
 
 	case TurnStage.card:
 		const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName });
 
 		if (turn.success) {
-			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		} else {
-			await BOT.editMessage(lib.InfoMessage.wrongCardMe(ctx, turnMeta));
-			await game.mailing({ text: lib.InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id]);
+			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
+			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id]);
 
 			if (turn.moveGoneNext) {
-				await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 			}
 		}
 		break;
@@ -126,17 +126,17 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName, count: turnMeta.count });
 
 			if (turn.success) {
-				await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+				await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 			} else {
-				await BOT.editMessage(lib.InfoMessage.wrongCountMe(ctx, turnMeta));
-				await game.mailing({ text: lib.InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id]);
+				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
+				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id]);
 
 				if (turn.moveGoneNext) {
-					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+					await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 				}
 			}
 		} else {
-			await BOT.editMessage(lib.GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		}
 		break;
 
@@ -148,40 +148,40 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			);
 
 			if (turn.success) {
-				await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+				await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 			} else {
-				await BOT.editMessage(lib.InfoMessage.wrongColorsMe(ctx, turnMeta));
-				await game.mailing({ text: lib.InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id]);
+				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
+				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id]);
 
 				if (turn.moveGoneNext) {
-					await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+					await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 				}
 			}
 		} else {
-			await BOT.editMessage(lib.GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+			await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 		}
 		break;
 
 	case TurnStage.suits:
 		if (turnMeta.suits?.action === 'select') {
-			const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName, suits: { ...turnMeta.suits } });
+			const turn = await game.turn(turnMeta.player.id, turnMeta);
 
 			if (turn.success) {
-				await BOT.editMessage(lib.GameMessage.getCardsStealMessage(ctx, turnMeta));
+				await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));
 				const newAthanasiuses = await game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
 
 				if (newAthanasiuses.length > 0) {
-					await BOT.sendMessage(lib.InfoMessage.newAthanasiusMe(ctx, turnMeta));
-					await game.mailing({ text: lib.InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
+					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
+					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
 				}
 			} else {
-				await BOT.editMessage(lib.InfoMessage.wrongSuitsMe(ctx, turnMeta));
-				await game.mailing({ text: lib.InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id]);
+				await BOT.editMessage(InfoMessage.wrongSuitsMe(ctx, turnMeta));
+				await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id]);
 			}
 
-			await BOT.sendMessageByChatId(lib.GameMessage.getFirstMessage(game, false));
+			await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 		} else {
-			await BOT.editMessage(lib.GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+			await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 		}
 		break;
 	}

@@ -1,7 +1,8 @@
 import type { CallbackContext, EditMessageOptions, UserSchema } from '~/core';
+import { CARDS_VIEW_MAP } from '~/core/config';
 
-import { txt } from '.';
-import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '../types';
+import { txt } from '..';
+import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '../../types';
 
 export class InfoMessage {
 	/* MAILING */
@@ -9,10 +10,10 @@ export class InfoMessage {
 		return `<b>${me.name} -> ${turnMeta.player.name}</b>\n`;
 	}
 
-	private static playersCard (turnMeta: TurnMeta, me: UserSchema): string {
+	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
 		return this.players(turnMeta, me) +
 			'\n' +
-			`<b>Карта: ${turnMeta.cardName}</b>\n`;
+			`<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
 	public static gameStartedMailing (): string {
@@ -20,7 +21,7 @@ export class InfoMessage {
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + 'Карта не ' + turnMeta.cardName;
+		return this.playersCard(turnMeta, me) + 'Карта не ' + CARDS_VIEW_MAP[turnMeta.cardName];
 	}
 
 	public static wrongCountMailing (turnMeta: CountStageMeta, me: UserSchema): string {
@@ -36,7 +37,7 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return `У <b>${me.name}</b> новый Афанасий ${turnMeta.cardName}!`;
+		return `У <b>${me.name}</b> новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
 
 	/* ME */
@@ -47,20 +48,20 @@ export class InfoMessage {
 	}
 
 	public static wrongCardMe (ctx: CallbackContext, turnMeta: CardStageMeta): EditMessageOptions {
-		return { ctx, text: this.meWrong(turnMeta) + ` нет ${turnMeta.cardName} :(` };
+		return { ctx, text: this.meWrong(turnMeta) + ` нет ${CARDS_VIEW_MAP[turnMeta.cardName]} :(` };
 	}
 
 	public static wrongCountMe (ctx: CallbackContext, turnMeta: CountStageMeta): EditMessageOptions {
 		return {
 			ctx,
-			text: this.meWrong(turnMeta) + ` количество ${turnMeta.cardName} не ${turnMeta.count} :(`,
+			text: this.meWrong(turnMeta) + ` количество ${CARDS_VIEW_MAP[turnMeta.cardName]} не ${turnMeta.count} :(`,
 		};
 	}
 
 	public static wrongColorsMe (ctx: CallbackContext, turnMeta: ColorsStageMeta): EditMessageOptions {
 		return {
 			ctx,
-			text: this.meWrong(turnMeta) + ` количество красных ${turnMeta.cardName} не ${turnMeta.redCount} :(`,
+			text: this.meWrong(turnMeta) + ` количество красных ${CARDS_VIEW_MAP[turnMeta.cardName]} не ${turnMeta.redCount} :(`,
 		};
 	}
 
@@ -72,6 +73,6 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMe (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
-		return { ctx, text: `<b>Поздравляю!</b> У тебя новый Афанасий ${turnMeta.cardName}!` };
+		return { ctx, text: `<b>Поздравляю!</b> У тебя новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!` };
 	}
 }

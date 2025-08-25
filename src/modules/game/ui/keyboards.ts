@@ -1,5 +1,6 @@
 import { DB } from '~/core';
 import type { RawButtons , GameId , CardName } from '~/core';
+import { CARDS_VIEW_MAP } from '~/core/config';
 import { RANKS_MAP } from '~/core/entities/deck/config';
 
 import { DECKS_COUNT } from '../config';
@@ -53,7 +54,7 @@ export const gkb = {
 		}, [[]]);
 
 		return distributedCardNames.map(row => row.map(cardName => ({
-			text: cardName,
+			text: CARDS_VIEW_MAP[cardName],
 			callback_data: { module: 'g', action: 't', meta: `${TurnStage.card}#${game.gameId}#${playerId}#${cardName}` },
 		})));
 	},
