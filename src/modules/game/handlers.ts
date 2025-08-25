@@ -107,9 +107,9 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		break;
 
 	case TurnStage.card:
-		const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName });
+		const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName } });
 
-		if (turn.success) {
+		if (success) {
 			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		} else {
 			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
@@ -120,9 +120,9 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.count:
 		if (turnMeta.countAction === 'select') {
-			const turn = await game.turn(turnMeta.player.id, { cardName: turnMeta.cardName, count: turnMeta.count });
+			const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName, count: turnMeta.count } });
 
-			if (turn.success) {
+			if (success) {
 				await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 			} else {
 				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
@@ -136,12 +136,13 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.colors:
 		if (turnMeta.redCountAction === 'select') {
-			const turn = await game.turn(
-				turnMeta.player.id,
-				{ cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
-			);
+			const { success } = await game.turn({
+				me: me.id,
+				turnMeta,
+				options: { cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
+			});
 
-			if (turn.success) {
+			if (success) {
 				await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 			} else {
 				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
@@ -155,16 +156,16 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	case TurnStage.suits:
 		if (turnMeta.suits?.action === 'select') {
-			const turn = await game.turn(
-				turnMeta.player.id,
-				{ cardName: turnMeta.cardName, suits: turnMeta.suits },
-			);
+			const { success, composeAthanasius } = await game.turn({
+				me: me.id,
+				turnMeta,
+				options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
+			});
 
-			if (turn.success) {
+			if (success) {
 				await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));
-				const newAthanasiuses = await game.moveCards(me.id, turnMeta.player.id, turnMeta.cardName);
 
-				if (newAthanasiuses.length > 0) {
+				if (composeAthanasius) {
 					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
 					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
 				}

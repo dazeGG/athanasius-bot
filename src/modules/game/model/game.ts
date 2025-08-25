@@ -1,11 +1,19 @@
 import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
+import type { GameId, GameLog, GameSchema, GameUtils } from '~/core';
 import { BOT, DB } from '~/core';
-import type { CardName, GameSchema, GameId, GameUtils } from '~/core';
 import { dayjs } from '~/plugins';
 
-import type { MailingOptions, PlayerId } from '../types';
+import type {
+	CardStageMeta,
+	ColorsStageMeta,
+	CountStageMeta,
+	MailingOptions,
+	PlayerId,
+	SuitsStageMeta,
+} from '../types';
+import { TurnStage } from '../types';
 import { Hands, Queue } from '.';
 import type { HandHasOptions } from './types';
 import type { Hand } from './hand';
@@ -22,6 +30,28 @@ interface ConstructorOptionsInit {
 	decksCount: number;
 }
 
+interface TurnOptions {
+	me: PlayerId;
+	turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;
+	options: HandHasOptions;
+}
+
+interface TurnReturn {
+	success: boolean;
+	composeAthanasius?: boolean;
+}
+
+const getStealData = (turnMeta: TurnOptions['turnMeta']): GameLog['stealData'] => {
+	switch (turnMeta.stage) {
+	case TurnStage.count:
+		return [turnMeta.count];
+	case TurnStage.colors:
+		return [turnMeta.redCount, turnMeta.blackCount];
+	case TurnStage.suits:
+		return [turnMeta.suits.hearts, turnMeta.suits.diamonds, turnMeta.suits.spades, turnMeta.suits.clubs];
+	}
+};
+
 export class Game {
 	private readonly id: GameId;
 	private readonly started: Dayjs;
@@ -36,7 +66,7 @@ export class Game {
 			const game = DB.data.games.find(game => game.id === id);
 
 			if (!game) {
-				throw new Error('404: Game not found');
+				throw new Error('Game not found');
 			}
 
 			this.id = game.id;
@@ -105,33 +135,49 @@ export class Game {
 					utils: this.utils,
 				});
 
-				return {
-					games,
-				};
+				return { games };
 			});
 		}
 	}
 
-	public async turn (playerId: PlayerId, options: HandHasOptions): Promise<{ success: boolean; }> {
-		const right = this.hands.hand(playerId).has(options);
+	public async turn ({ me, turnMeta, options }: TurnOptions): Promise<TurnReturn> {
+		if (this.hands.hand(turnMeta.player.id).has(options)) {
+			if (turnMeta.stage === TurnStage.suits) {
+				const newAthanasiuses = this.hands.moveCards(me, turnMeta.player.id, turnMeta.cardName, this.utils);
 
-		if (right) {
-			return { success: true };
+				if (newAthanasiuses.length > 0) {
+					this.athanasiuses[me].push(...newAthanasiuses);
+				}
+
+				this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
+
+				await this.save();
+				return { success: true, composeAthanasius: newAthanasiuses.length > 0 };
+			} else {
+				this.utils.logs.push({
+					from: me,
+					to: turnMeta.player.id,
+					cardName: turnMeta.cardName,
+					steal: false,
+					stealData: getStealData(turnMeta),
+				});
+
+				await this.save();
+				return { success: true };
+			}
 		} else {
 			this.queue.next();
+
+			this.utils.logs.push({
+				from: me,
+				to: turnMeta.player.id,
+				cardName: turnMeta.cardName,
+				steal: false,
+				stealData: getStealData(turnMeta),
+			});
+
 			await this.save();
 			return { success: false };
 		}
-	}
-
-	public async moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName): Promise<CardName[]> {
-		const newAthanasiuses = this.hands.moveCards(me, playerId, cardName, this.utils);
-
-		if (newAthanasiuses.length > 0) {
-			this.athanasiuses[me].push(...newAthanasiuses);
-		}
-
-		await this.save();
-		return newAthanasiuses;
 	}
 }
