@@ -3,7 +3,7 @@ import type TelegramBot from 'node-telegram-bot-api';
 import type { MessageContext } from '~/core';
 import { BOT } from '~/core';
 
-export const GLOBAL_KEYBOARD: TelegramBot.ReplyKeyboardMarkup['keyboard'] = [[{ text: 'Настройки' }]];
+export const GLOBAL_KEYBOARD: TelegramBot.ReplyKeyboardMarkup['keyboard'] = [[{ text: 'Настройки' }, { text: 'Игра' }]];
 
 const addGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
 	await BOT.sendMessage({
