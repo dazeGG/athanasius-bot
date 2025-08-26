@@ -1,5 +1,5 @@
 import { BOT, STATES } from '~/core';
-import { DB } from '~/entities/db';
+import { DB } from '~/db';
 import { validateName } from '~/shared/lib';
 import type { MessageContext, CallbackContext } from '~/core';
 

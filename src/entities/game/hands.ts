@@ -1,6 +1,6 @@
 import { BaseDeck } from '~/entities/deck';
 import type { CardId, CardName } from '~/entities/deck';
-import type { GameUtils } from '~/entities/db';
+import type { GameUtils } from '~/db';
 import { shuffleArray } from '~/shared/lib';
 
 import { Hand } from './hand';

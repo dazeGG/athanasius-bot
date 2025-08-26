@@ -1,6 +1,6 @@
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 import { BOT } from '~/core';
-import { DB } from '~/entities/db';
+import { DB } from '~/db';
 import { BaseDeck } from '~/entities/deck';
 import { Game, TurnStage } from '~/entities/game';
 

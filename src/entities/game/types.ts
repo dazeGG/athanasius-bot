@@ -1,5 +1,5 @@
 import type { SendMessageByChatIdOptions } from '~/core';
-import type { GameId, UserId, UserSchema } from '~/entities/db';
+import type { GameId, UserId, UserSchema } from '~/db';
 import type { CardName } from '~/entities/deck';
 
 export interface HandHasOptions {

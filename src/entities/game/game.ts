@@ -2,8 +2,8 @@ import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
 import { BOT } from '~/core';
-import { DB } from '~/entities/db';
-import type { GameId, GameLog, GameSchema, GameUtils } from '~/entities/db';
+import { DB } from '~/db';
+import type { GameId, GameLog, GameSchema, GameUtils } from '~/db';
 import { dayjs } from '~/shared/plugins';
 
 import { Queue } from './queue';

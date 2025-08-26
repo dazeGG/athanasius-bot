@@ -1,6 +1,6 @@
 import type { RawButtons } from '~/core';
-import { DB } from '~/entities/db';
-import type { GameId } from '~/entities/db';
+import { DB } from '~/db';
+import type { GameId } from '~/db';
 import type { CardName } from '~/entities/deck';
 import { CARDS_VIEW_MAP, RANKS_MAP } from '~/entities/deck';
 import type { Game, PlayerId, Suits } from '~/entities/game';
