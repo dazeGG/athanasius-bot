@@ -3,11 +3,10 @@ import { DB } from '~/entities/db';
 import type { GameId } from '~/entities/db';
 import type { CardName } from '~/entities/deck';
 import { CARDS_VIEW_MAP, RANKS_MAP } from '~/entities/deck';
+import type { Game, PlayerId, Suits } from '~/entities/game';
+import { TurnStage } from '~/entities/game';
 
 import { DECKS_COUNT } from '../config';
-import type { Game } from '../model';
-import type { PlayerId, Suits } from '../types';
-import { TurnStage } from '../types';
 
 /* KEYBOARDS */
 export const kb: ModuleKeyboards = {

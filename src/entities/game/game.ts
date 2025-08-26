@@ -6,6 +6,10 @@ import { DB } from '~/entities/db';
 import type { GameId, GameLog, GameSchema, GameUtils } from '~/entities/db';
 import { dayjs } from '~/shared/plugins';
 
+import { Queue } from './queue';
+import { Hands } from './hands';
+import type { Hand } from './hand';
+
 import type {
 	CardStageMeta,
 	ColorsStageMeta,
@@ -13,11 +17,9 @@ import type {
 	MailingOptions,
 	PlayerId,
 	SuitsStageMeta,
-} from '../types';
-import { TurnStage } from '../types';
-import { Hands, Queue } from '.';
-import type { HandHasOptions } from './types';
-import type { Hand } from './hand';
+	HandHasOptions,
+} from './types';
+import { TurnStage } from './types';
 
 interface ConstructorOptionsById {
 	id: string;

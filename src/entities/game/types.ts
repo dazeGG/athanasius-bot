@@ -2,6 +2,21 @@ import type { SendMessageByChatIdOptions } from '~/core';
 import type { GameId, UserId, UserSchema } from '~/entities/db';
 import type { CardName } from '~/entities/deck';
 
+export interface HandHasOptions {
+	cardName: CardName;
+	count?: number;
+	colors?: {
+		red: number;
+		black: number;
+	};
+	suits?: {
+		hearts: number;
+		diamonds: number;
+		spades: number;
+		clubs: number;
+	};
+}
+
 export type PlayerId = UserId;
 
 export enum TurnStage {

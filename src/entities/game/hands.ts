@@ -5,7 +5,7 @@ import { shuffleArray } from '~/shared/lib';
 
 import { Hand } from './hand';
 import type { Queue } from './queue';
-import type { PlayerId } from '../types';
+import type { PlayerId } from './types';
 
 interface ConstructorOptionsInit {
 	hands?: never;

@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { shuffleArray } from '~/shared/lib';
 
-import type { PlayerId } from '../types';
+import type { PlayerId } from './types';
 
 export class Queue {
 	private readonly queue: PlayerId[];

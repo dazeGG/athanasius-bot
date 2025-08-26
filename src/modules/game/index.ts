@@ -1,10 +1,10 @@
 import { BOT } from '~/core';
-import { DB } from '~/entities/db';
 import type { CallbackContextCallback } from '~/core';
+import { DB } from '~/entities/db';
+import { Game } from '~/entities/game';
 import { isRegistered } from '~/shared/lib';
 
 import * as handlers from './handlers';
-import { Game } from './model';
 
 const turnGuard = (ctx: CallbackContextCallback): boolean => {
 	const gameId = ctx.data.meta?.split('#')[1];
