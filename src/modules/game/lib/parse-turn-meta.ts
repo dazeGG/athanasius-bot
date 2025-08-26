@@ -1,8 +1,8 @@
-import type { CardName } from '~/core';
-import { DB } from '~/core';
+import { DB } from '~/entities/db';
+import type { CardName } from '~/entities/deck';
 
-import type { Suits, TurnMeta } from '../types';
-import { TurnStage } from '../types';
+import { TurnStage } from '~/entities/game';
+import type { Suits, TurnMeta } from '~/entities/game';
 
 const getCount = (countData: string): [number, string] => {
 	return [+countData.replace(/\D/g, ''), countData.replace(/\d/g, '')];

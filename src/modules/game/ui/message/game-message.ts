@@ -1,11 +1,10 @@
 import _ from 'lodash';
 
 import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } from '~/core';
-import { CARDS_VIEW_MAP } from '~/core/config';
+import { CARDS_VIEW_MAP } from '~/entities/deck';
+import type { Game, TurnMeta, Suits, SuitsStageMeta } from '~/entities/game';
 
 import { txt, gkb } from '..';
-import type { Game } from '../../model';
-import type { TurnMeta, Suits, SuitsStageMeta } from '../../types';
 
 export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {

@@ -16,5 +16,5 @@
     }
   },
 
-  "include": ["src", "image-generator"]
+  "include": ["src"]
 }

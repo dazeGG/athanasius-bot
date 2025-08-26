@@ -1,4 +1,4 @@
-import { registerGlobalKeyboard } from '~/lib';
+import { registerGlobalKeyboard } from '~/shared/lib';
 
 import registerGame from './game';
 import registerReg from './reg';

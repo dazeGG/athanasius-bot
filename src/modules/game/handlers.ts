@@ -1,11 +1,11 @@
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
-import { BaseDeck } from '~/core';
-import { BOT, DB } from '~/core';
+import { BOT } from '~/core';
+import { DB } from '~/entities/db';
+import { BaseDeck } from '~/entities/deck';
+import { Game, TurnStage } from '~/entities/game';
 
 import { DECKS_COUNT } from './config';
-import { TurnStage } from './types';
 import { parseTurnMeta } from './lib';
-import { Game } from './model';
 import { GameMessage, InfoMessage, txt, gkb, kb } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {

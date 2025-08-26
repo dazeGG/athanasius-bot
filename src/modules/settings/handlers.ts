@@ -1,5 +1,6 @@
-import { BOT, DB, STATES } from '~/core';
-import { validateName } from '~/lib';
+import { BOT, STATES } from '~/core';
+import { DB } from '~/entities/db';
+import { validateName } from '~/shared/lib';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as lib from './lib';
