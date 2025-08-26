@@ -21,7 +21,16 @@ const removeGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
 	});
 };
 
+const updateGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
+	await BOT.sendMessage({
+		ctx,
+		text: 'Обновил клавиатуру',
+		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+	});
+};
+
 export const registerGlobalKeyboard = () => {
 	BOT.registerCommand('/addglobalkeyboard', addGlobalKeyboardMessageHandler);
 	BOT.registerCommand('/removeglobalkeyboard', removeGlobalKeyboardMessageHandler);
+	BOT.registerCommand('/updateglobalkeyboard', updateGlobalKeyboardMessageHandler);
 };
