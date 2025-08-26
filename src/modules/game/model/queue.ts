@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { shuffleArray } from '~/lib';
+import { shuffleArray } from '~/shared/lib';
 
 import type { PlayerId } from '../types';
 

@@ -1,8 +1,8 @@
 import _ from 'lodash';
 
-import { BaseDeck } from '~/core';
-import type { CardId, Card, CardName, GameUtils } from '~/core';
-import { RED_SUITS } from '~/core/entities/deck/config';
+import { BaseDeck, RED_SUITS } from '~/entities/deck';
+import type { CardId, Card, CardName } from '~/entities/deck';
+import type { GameUtils } from '~/entities/db';
 
 import type { HandHasOptions } from './types';
 

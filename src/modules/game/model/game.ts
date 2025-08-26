@@ -1,9 +1,10 @@
 import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
-import type { GameId, GameLog, GameSchema, GameUtils } from '~/core';
-import { BOT, DB } from '~/core';
-import { dayjs } from '~/plugins';
+import { BOT } from '~/core';
+import { DB } from '~/entities/db';
+import type { GameId, GameLog, GameSchema, GameUtils } from '~/entities/db';
+import { dayjs } from '~/shared/plugins';
 
 import type {
 	CardStageMeta,

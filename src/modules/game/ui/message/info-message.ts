@@ -1,5 +1,6 @@
-import type { CallbackContext, EditMessageOptions, UserSchema } from '~/core';
-import { CARDS_VIEW_MAP } from '~/core/config';
+import type { CallbackContext, EditMessageOptions } from '~/core';
+import type { UserSchema } from '~/entities/db';
+import { CARDS_VIEW_MAP } from '~/entities/deck';
 
 import { txt } from '..';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '../../types';

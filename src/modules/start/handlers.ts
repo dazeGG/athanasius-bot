@@ -1,5 +1,5 @@
 import { BOT } from '~/core';
-import { isRegistered } from '~/lib';
+import { isRegistered } from '~/shared/lib';
 import type { MessageContext } from '~/core';
 
 import * as lib from './lib';

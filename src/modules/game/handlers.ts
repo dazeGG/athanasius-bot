@@ -1,6 +1,7 @@
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
-import { BaseDeck } from '~/core';
-import { BOT, DB } from '~/core';
+import { BOT } from '~/core';
+import { DB } from '~/entities/db';
+import { BaseDeck } from '~/entities/deck';
 
 import { DECKS_COUNT } from './config';
 import { TurnStage } from './types';

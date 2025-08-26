@@ -1,7 +1,8 @@
-import { BOT, DB } from '~/core';
+import { BOT } from '~/core';
+import { DB } from '~/entities/db';
 import type { MessageContext } from '~/core';
 
-import { GLOBAL_KEYBOARD, validateName } from '~/lib';
+import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
 
 import * as lib from './lib';
 

@@ -1,10 +1,11 @@
-import type { CardId, CardName, GameUtils } from '~/core';
-import { BaseDeck } from '~/core';
-import { shuffleArray } from '~/lib';
+import { BaseDeck } from '~/entities/deck';
+import type { CardId, CardName } from '~/entities/deck';
+import type { GameUtils } from '~/entities/db';
+import { shuffleArray } from '~/shared/lib';
 
-import type { PlayerId } from '../types';
 import { Hand } from './hand';
-import type { Queue } from '.';
+import type { Queue } from './queue';
+import type { PlayerId } from '../types';
 
 interface ConstructorOptionsInit {
 	hands?: never;

@@ -1,4 +1,6 @@
-import type { CardName, GameId, SendMessageByChatIdOptions, UserId, UserSchema } from '~/core';
+import type { SendMessageByChatIdOptions } from '~/core';
+import type { GameId, UserId, UserSchema } from '~/entities/db';
+import type { CardName } from '~/entities/deck';
 
 export type PlayerId = UserId;
 

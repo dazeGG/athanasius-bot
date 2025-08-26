@@ -1,6 +1,7 @@
-import { BOT, DB } from '~/core';
+import { BOT } from '~/core';
+import { DB } from '~/entities/db';
 import type { CallbackContextCallback } from '~/core';
-import { isRegistered } from '~/lib';
+import { isRegistered } from '~/shared/lib';
 
 import * as handlers from './handlers';
 import { Game } from './model';

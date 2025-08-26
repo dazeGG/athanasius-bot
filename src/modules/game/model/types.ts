@@ -1,4 +1,4 @@
-import type { CardName } from '~/core';
+import type { CardName } from '~/entities/deck';
 
 export interface HandHasOptions {
 	cardName: CardName;
