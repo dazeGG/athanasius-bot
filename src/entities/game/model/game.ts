@@ -119,6 +119,10 @@ export class Game {
 		return this.hands.getHand(playerId);
 	}
 
+	public getCountAthanasiuses (playerId: PlayerId): number {
+		return this.athanasiuses[playerId]?.length || 0;
+	}
+
 	private getLogMessage (log: GameLog): string {
 		const from = ORM.Users.get(log.from);
 		const to = ORM.Users.get(log.to);
@@ -236,4 +240,5 @@ export class Game {
 			return { success: false };
 		}
 	}
+
 }

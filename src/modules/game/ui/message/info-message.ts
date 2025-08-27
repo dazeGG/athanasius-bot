@@ -19,8 +19,13 @@ export class InfoMessage {
 		return txt.gameStarted;
 	}
 
-	public static gameEndedMailing (): string {
-		return txt.gameEnded;
+	public static gameEndedMailing (winners: string[], countAthanasiuses: number): string {
+		const txtGameEnded = txt.gameEnded +'\n';
+		if (winners.length === 1) {
+			return txtGameEnded + `Победитель: ${winners[0]} \nКоличество Афанасиев: ${countAthanasiuses}`;
+		} else {
+			return txtGameEnded + `Победители: ${winners.join(', ')} \nКоличество Афанасиев: ${countAthanasiuses}`;
+		}
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {

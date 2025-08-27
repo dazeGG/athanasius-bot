@@ -171,7 +171,21 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				}
 
 				if (gameEnded) {
-					await game.mailing({ text: InfoMessage.gameEndedMailing() });
+					const playerStats = game.allPlayers.map(playerId => {
+						const user = DB.data.users.find(u => u.id === playerId);
+						return {
+							playerId,
+							username: user?.username,
+							count: game.getCountAthanasiuses(playerId),
+						};
+					});
+					const maxCount = Math.max(...playerStats.map(stat => stat.count));
+					const winners = playerStats
+						.filter(stat => stat.count === maxCount && stat.count > 0)
+						.map(stat => stat.username)
+						.filter((name): name is string => name !== undefined);
+
+					await game.mailing({ text: InfoMessage.gameEndedMailing(winners, maxCount) });
 					return;
 				}
 			} else {
