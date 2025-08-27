@@ -2,9 +2,9 @@ import _ from 'lodash';
 
 import { BaseDeck, RED_SUITS } from '~/entities/deck';
 import type { CardId, Card, CardName } from '~/entities/deck';
-import type { GameUtils } from '~/entities/db';
+import type { GameUtils } from '~/db';
 
-import type { HandHasOptions } from './types';
+import type { HandHasOptions } from '../types';
 
 export class Hand {
 	private hand: CardId[];

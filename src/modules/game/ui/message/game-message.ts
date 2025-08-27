@@ -5,6 +5,7 @@ import { CARDS_VIEW_MAP } from '~/entities/deck';
 import type { Game, TurnMeta, Suits, SuitsStageMeta } from '~/entities/game';
 
 import { txt, gkb } from '..';
+import { ORM } from '~/db';
 
 export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {
@@ -32,11 +33,26 @@ export class GameMessage {
 	}
 
 	public static getFirstMessage (game: Game, initialMessage: boolean): SendMessageByChatIdOptions {
-		return {
-			chatId: game.activePlayer,
-			text: initialMessage ? txt.firstTurnMessage : txt.turnFirstMessage,
-			keyboard: gkb.playersSelect(game.activePlayer, game.gameId, game.allPlayers),
-		};
+		const player = ORM.Users.get(game.activePlayer);
+
+		let text: string;
+
+		if (initialMessage) {
+			text = txt.firstTurnMessage;
+		} else {
+			text = '<b>Твой ход!</b>' + '\n\n';
+
+			if (player.settings.updatesView === 'composed') {
+				text += 'Вот что было за последний круг:' + '\n';
+				text += game.getLastTurnLogs() + '\n\n';
+			}
+
+			text += 'Выбери у кого хочешь спросить карту';
+		}
+
+		const keyboard = gkb.playersSelect(game.activePlayer, game.gameId, game.allPlayers);
+
+		return { chatId: game.activePlayer, text, keyboard };
 	}
 
 	public static getCardSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta, game: Game): EditMessageOptions {

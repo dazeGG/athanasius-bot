@@ -1,4 +1,4 @@
-import { DB } from '~/entities/db';
+import { DB } from '~/db';
 import type { CardName } from '~/entities/deck';
 
 import { TurnStage } from '~/entities/game';

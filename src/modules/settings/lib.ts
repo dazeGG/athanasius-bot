@@ -7,6 +7,7 @@ const NAME_RULES = 'Правила для имени:\n' +
 export const txt = {
 	yourSettings: 'Твои настройки',
 	name: 'Имя',
+	updatesView: 'Вид обновлений',
 	chooseWhatToChange: 'Выбери что ты хочешь изменить',
 	changeName: 'Отлично, напиши мне новое имя в следующем сообщении\n' +
 		'\n' +
@@ -17,6 +18,7 @@ export const txt = {
 /* KEYBOARDS */
 export const kb: ModuleKeyboards = {
 	baseSettings: [
-		[{ text: 'Имя', callback_data: { module: 'settings', action: 'changeName' } }],
+		[{ text: 'Имя', callback_data: { module: 'settings', action: 'name' } }],
+		[{ text: 'Вид обновлений', callback_data: { module: 'settings', action: 'updatesView' } }],
 	],
 } as const;

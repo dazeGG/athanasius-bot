@@ -1,16 +1,14 @@
 import type TelegramBot from 'node-telegram-bot-api';
 import type { nanoid } from 'nanoid';
 
-import type { CardId, Card, CardName } from '~/entities/deck';
+import type { CardName } from '~/entities/deck';
 
 export type UserId = TelegramBot.User['id'];
 export type GameId = ReturnType<typeof nanoid>;
 
-export type UserSchema = {
-	id: UserId;
-	username: TelegramBot.User['username'];
-	name: string;
-};
+export interface UserSettings {
+	updatesView: 'instant' | 'composed';
+}
 
 export interface GameLog {
 	from: UserId;
@@ -23,14 +21,4 @@ export interface GameLog {
 export interface GameUtils {
 	cardsToAthanasius: number;
 	logs: GameLog[];
-}
-
-export interface GameSchema {
-	id: GameId;
-	started: number;
-	ended?: number;
-	players: UserId[];
-	hands: Record<UserId, CardId[]>;
-	athanasiuses: Record<UserId, Card['name'][]>;
-	utils: GameUtils;
 }

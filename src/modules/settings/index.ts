@@ -7,7 +7,7 @@ const registerSettings = () => {
 	BOT.registerMessageHandler(handlers.settingsStartMessageHandler, { exact: 'Настройки' }, isRegistered);
 	BOT.registerMessageHandler(handlers.settingsChangeNameStateMessageHandler, { state: 'SETTINGS_CHANGE_NAME' }, isRegistered);
 
-	BOT.registerCallbackHandler(handlers.settingsChangeNameCallbackHandler, { module: 'settings', action: 'changeName' }, isRegistered);
+	BOT.registerCallbackHandler(handlers.settingsCallbackHandler, { module: 'settings' }, isRegistered);
 };
 
 export default registerSettings;

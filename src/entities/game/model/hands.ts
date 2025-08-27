@@ -1,11 +1,11 @@
 import { BaseDeck } from '~/entities/deck';
 import type { CardId, CardName } from '~/entities/deck';
-import type { GameUtils } from '~/entities/db';
+import type { GameUtils } from '~/db';
 import { shuffleArray } from '~/shared/lib';
 
 import { Hand } from './hand';
 import type { Queue } from './queue';
-import type { PlayerId } from './types';
+import type { PlayerId } from '../types';
 
 interface ConstructorOptionsInit {
 	hands?: never;

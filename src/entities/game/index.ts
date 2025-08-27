@@ -1,2 +1,2 @@
-export * from './game';
+export * from './model/game';
 export * from './types';

@@ -1,5 +1,5 @@
 import { BOT } from '~/core';
-import { DB } from '~/entities/db';
+import { DB } from '~/db';
 import type { MessageContext } from '~/core';
 
 import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';

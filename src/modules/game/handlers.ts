@@ -1,6 +1,6 @@
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 import { BOT } from '~/core';
-import { DB } from '~/entities/db';
+import { DB, ORM } from '~/db';
 import { BaseDeck } from '~/entities/deck';
 import { Game, TurnStage } from '~/entities/game';
 
@@ -95,7 +95,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 	const turnMeta = parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
-	const me = DB.data.users.find(user => user.id === ctx.callback.from.id);
+	const me = DB.data.users.find(u => u.id === ctx.callback.from.id);
 
 	if (!me) {
 		return;
@@ -113,7 +113,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		} else {
 			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
-			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id]);
+			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 			await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 		}
 		break;
@@ -126,7 +126,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 			} else {
 				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id]);
+				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 			}
 		} else {
@@ -146,7 +146,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 			} else {
 				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id]);
+				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
 			}
 		} else {
@@ -167,7 +167,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 				if (composeAthanasius) {
 					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
-					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
+					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 				}
 
 				if (gameEnded) {
@@ -176,7 +176,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				}
 			} else {
 				await BOT.editMessage(InfoMessage.wrongSuitsMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id]);
+				await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 			}
 
 			await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));

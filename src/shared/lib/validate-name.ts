@@ -1,5 +1,5 @@
 /* VALIDATION TEXTS */
-import { DB } from '~/entities/db';
+import { DB } from '~/db';
 
 const validationTexts = {
 	nameLessThan4: 'Имя не должно быть короче 4 символов',

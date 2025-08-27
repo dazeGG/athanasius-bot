@@ -1,6 +1,6 @@
 import { BOT } from '~/core';
 import type { CallbackContextCallback } from '~/core';
-import { DB } from '~/entities/db';
+import { DB } from '~/db';
 import { Game } from '~/entities/game';
 import { isRegistered } from '~/shared/lib';
 

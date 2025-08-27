@@ -2,8 +2,8 @@ import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
 import { BOT } from '~/core';
-import { DB } from '~/entities/db';
-import type { GameId, GameLog, GameSchema, GameUtils } from '~/entities/db';
+import { DB, ORM } from '~/db';
+import type { GameId, GameLog, GameSchema, GameUtils } from '~/db';
 import { dayjs } from '~/shared/plugins';
 
 import { Queue } from './queue';
@@ -18,8 +18,9 @@ import type {
 	PlayerId,
 	SuitsStageMeta,
 	HandHasOptions,
-} from './types';
-import { TurnStage } from './types';
+} from '../types';
+import { TurnStage } from '../types';
+import { CARDS_VIEW_MAP } from '~/entities/deck';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -32,6 +33,8 @@ interface ConstructorOptionsInit {
 	players: PlayerId[];
 	decksCount: number;
 }
+
+type ConstructorOptions = ConstructorOptionsById | ConstructorOptionsInit;
 
 interface TurnOptions {
 	me: PlayerId;
@@ -65,7 +68,7 @@ export class Game {
 	private readonly athanasiuses: GameSchema['athanasiuses'];
 	private readonly utils: GameUtils;
 
-	constructor ({ id, players, decksCount }: ConstructorOptionsById | ConstructorOptionsInit) {
+	constructor ({ id, players, decksCount }: ConstructorOptions) {
 		if (id) {
 			const game = DB.data.games.find(game => game.id === id);
 
@@ -107,8 +110,56 @@ export class Game {
 		return this.queue.allPlayers;
 	}
 
+	get playersWithComposedUpdated (): PlayerId[] {
+		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
+		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
+	}
+
 	public getHand (playerId: PlayerId): Hand | undefined {
 		return this.hands.getHand(playerId);
+	}
+
+	private getLogMessage (log: GameLog): string {
+		const from = ORM.Users.get(log.from);
+		const to = ORM.Users.get(log.to);
+
+		let logMessage = `<b>${from.name} -> ${to.name}</b> | ${CARDS_VIEW_MAP[log.cardName]}`;
+
+		if (!log.steal && log.stealData?.length) {
+			logMessage += ' | Не ';
+
+			switch (log.stealData.length) {
+			case 1:
+				logMessage += `${log.stealData[0]}`;
+				break;
+			case 2:
+				logMessage += `🔴: ${log.stealData[0]} ⚫: ${log.stealData[1]}`;
+				break;
+			case 4:
+				logMessage += `♥️: ${log.stealData[0]} ♦️: ${log.stealData[1]} ♠️: ${log.stealData[2]} ♣️: ${log.stealData[3]}`;
+				break;
+			}
+		}
+
+		return logMessage;
+	}
+
+	public getLastTurnLogs (): string {
+		const logsMessages: string[] = [];
+		let i = 0;
+
+		while (true) {
+			const log = this.utils.logs[this.utils.logs.length - i - 1];
+
+			if (log.from === this.activePlayer) {
+				break;
+			}
+
+			logsMessages.push(this.getLogMessage(log));
+			++i;
+		}
+
+		return logsMessages.reverse().join('\n');
 	}
 
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
