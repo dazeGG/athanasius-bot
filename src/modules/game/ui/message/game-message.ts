@@ -42,7 +42,7 @@ export class GameMessage {
 		} else {
 			text = '<b>Твой ход!</b>' + '\n\n';
 
-			if (player.settings.updatedView === 'composed') {
+			if (player.settings.updatesView === 'composed') {
 				text += 'Вот что было за последний круг:' + '\n';
 				text += game.getLastTurnLogs() + '\n\n';
 			}

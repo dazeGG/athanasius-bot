@@ -112,7 +112,7 @@ export class Game {
 
 	get playersWithComposedUpdated (): PlayerId[] {
 		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
-		return players.filter(p => p.settings.updatedView === 'composed').map(p => p.id);
+		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
 	}
 
 	public getHand (playerId: PlayerId): Hand | undefined {

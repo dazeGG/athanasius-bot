@@ -7,7 +7,7 @@ export type UserId = TelegramBot.User['id'];
 export type GameId = ReturnType<typeof nanoid>;
 
 export interface UserSettings {
-	updatedView: 'instant' | 'composed';
+	updatesView: 'instant' | 'composed';
 }
 
 export interface GameLog {
