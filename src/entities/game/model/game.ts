@@ -48,17 +48,6 @@ interface TurnReturn {
 	gameEnded?: boolean;
 }
 
-const getStealData = (turnMeta: TurnOptions['turnMeta']): GameLog['stealData'] => {
-	switch (turnMeta.stage) {
-	case TurnStage.count:
-		return [turnMeta.count];
-	case TurnStage.colors:
-		return [turnMeta.redCount, turnMeta.blackCount];
-	case TurnStage.suits:
-		return [turnMeta.suits.hearts, turnMeta.suits.diamonds, turnMeta.suits.spades, turnMeta.suits.clubs];
-	}
-};
-
 export class Game {
 	private readonly id: GameId;
 	private readonly started: Dayjs;
@@ -68,9 +57,9 @@ export class Game {
 	private readonly athanasiuses: GameSchema['athanasiuses'];
 	private readonly utils: GameUtils;
 
-	constructor ({ id, players, decksCount }: ConstructorOptions) {
-		if (id) {
-			const game = DB.data.games.find(game => game.id === id);
+	constructor (options: ConstructorOptions) {
+		if ('id' in options) {
+			const game = DB.data.games.find(g => g.id === options.id);
 
 			if (!game) {
 				throw new Error('Game not found');
@@ -83,21 +72,19 @@ export class Game {
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
 			this.utils = game.utils;
-		} else if (players && decksCount) {
+		} else {
+			const { players, decksCount } = options;
+
 			this.id = nanoid(6);
 			this.started = dayjs();
-			this.queue = new Queue(players, true);
-			this.hands = new Hands({ players, decksCount, queue: this.queue });
-			this.athanasiuses = {};
-			players.forEach(playerId => {
-				this.athanasiuses[playerId] = [];
-			});
+			this.queue = new Queue(options.players, true);
+			this.hands = new Hands({ players: options.players, decksCount, queue: this.queue });
+			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
 			this.utils = { cardsToAthanasius: decksCount * 4, logs: [] };
-		} else {
-			throw new Error('Game options error');
 		}
 	}
 
+	/* GETTERS */
 	get gameId (): GameId {
 		return this.id;
 	}
@@ -119,121 +106,148 @@ export class Game {
 		return this.hands.getHand(playerId);
 	}
 
+	/* LOGS */
+	private formatStealData (stealData: number[]): string {
+		switch (stealData.length) {
+		case 1:
+			return `${stealData[0]}`;
+		case 2:
+			return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
+		case 4:
+			return `♥️: ${stealData[0]} ♦️: ${stealData[1]} ♠️: ${stealData[2]} ♣️: ${stealData[3]}`;
+		default:
+			return '';
+		}
+	}
+
 	private getLogMessage (log: GameLog): string {
 		const from = ORM.Users.get(log.from);
 		const to = ORM.Users.get(log.to);
 
-		let logMessage = `<b>${from.name} -> ${to.name}</b> | ${CARDS_VIEW_MAP[log.cardName]}`;
+		let msg = `<b>${from.name} -> ${to.name}</b> | ${CARDS_VIEW_MAP[log.cardName]}`;
 
 		if (!log.steal && log.stealData?.length) {
-			logMessage += ' | Не ';
-
-			switch (log.stealData.length) {
-			case 1:
-				logMessage += `${log.stealData[0]}`;
-				break;
-			case 2:
-				logMessage += `🔴: ${log.stealData[0]} ⚫: ${log.stealData[1]}`;
-				break;
-			case 4:
-				logMessage += `♥️: ${log.stealData[0]} ♦️: ${log.stealData[1]} ♠️: ${log.stealData[2]} ♣️: ${log.stealData[3]}`;
-				break;
-			}
+			msg += ` | Не ${this.formatStealData(log.stealData)}`;
 		}
 
-		return logMessage;
+		return msg;
 	}
 
 	public getLastTurnLogs (): string {
-		const logsMessages: string[] = [];
-		let i = 0;
+		const result: string[] = [];
 
-		while (true) {
-			const log = this.utils.logs[this.utils.logs.length - i - 1];
-
+		for (let i = this.utils.logs.length - 1; i >= 0; i--) {
+			const log = this.utils.logs[i];
 			if (log.from === this.activePlayer) {
 				break;
 			}
-
-			logsMessages.push(this.getLogMessage(log));
-			++i;
+			result.push(this.getLogMessage(log));
 		}
 
-		return logsMessages.reverse().join('\n');
+		return result.reverse().join('\n');
 	}
 
-	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		const actualPlayers = this.allPlayers.filter(playerId => !exclude.includes(playerId));
-		const methods = actualPlayers.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId }));
-
-		await Promise.all(methods);
+	/* PERSISTENCE */
+	private toSchema (): GameSchema {
+		return {
+			id: this.id,
+			started: this.started.valueOf(),
+			ended: this.ended?.valueOf(),
+			players: this.queue.allPlayers,
+			hands: this.hands.allHands,
+			athanasiuses: this.athanasiuses,
+			utils: this.utils,
+		};
 	}
 
 	public async save (): Promise<void> {
-		const game = DB.data.games.find(game => game.id === this.id);
+		const index = DB.data.games.findIndex(g => g.id === this.id);
 
-		if (game) {
-			game.players = this.queue.allPlayers;
-			game.hands = this.hands.allHands;
-			game.athanasiuses = this.athanasiuses;
-
+		if (index >= 0) {
+			DB.data.games[index] = this.toSchema();
 			await DB.write();
 		} else {
 			await DB.update(({ games }) => {
-				games.push({
-					id: this.id,
-					started: this.started.valueOf(),
-					ended: this.ended ? this.ended.valueOf() : this.ended,
-					players: this.queue.allPlayers,
-					hands: this.hands.allHands,
-					athanasiuses: this.athanasiuses,
-					utils: this.utils,
-				});
-
+				games.push(this.toSchema());
 				return { games };
 			});
 		}
 	}
 
+	/* MAILING */
+	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
+		const actualPlayers = this.allPlayers.filter(p => !exclude.includes(p));
+
+		await Promise.allSettled(
+			actualPlayers.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId })),
+		);
+	}
+
+	/* TURNS */
 	public async turn ({ me, turnMeta, options }: TurnOptions): Promise<TurnReturn> {
-		if (this.hands.hand(turnMeta.player.id).has(options)) {
-			if (turnMeta.stage === TurnStage.suits) {
-				const newAthanasiuses = this.hands.moveCards(me, turnMeta.player.id, turnMeta.cardName, this.utils);
-
-				if (newAthanasiuses.length > 0) {
-					this.athanasiuses[me].push(...newAthanasiuses);
-					this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
-				}
-
-				const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
-
-				if (gameEnded) {
-					this.ended = dayjs();
-				}
-
-				await this.save();
-				return {
-					success: true,
-					composeAthanasius: newAthanasiuses.length > 0,
-					gameEnded,
-				};
-			} else {
-				await this.save();
-				return { success: true };
-			}
+		const hand = this.hands.hand(turnMeta.player.id);
+		if (hand.has(options)) {
+			return this.handleSuccessfulTurn({ me, turnMeta });
 		} else {
-			this.queue.next();
+			return this.handleFailedTurn({ me, turnMeta });
+		}
+	}
 
-			this.utils.logs.push({
-				from: me,
-				to: turnMeta.player.id,
-				cardName: turnMeta.cardName,
-				steal: false,
-				stealData: getStealData(turnMeta),
-			});
+	private async handleSuccessfulTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
+		if (turnMeta.stage !== TurnStage.suits) {
+			return { success: true };
+		}
 
-			await this.save();
-			return { success: false };
+		const newAthanasiuses = this.hands.moveCards(me, turnMeta.player.id, turnMeta.cardName, this.utils);
+
+		if (newAthanasiuses.length > 0) {
+			this.athanasiuses[me].push(...newAthanasiuses);
+			this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
+		}
+
+		const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
+
+		if (gameEnded) {
+			this.ended = dayjs();
+		}
+
+		await this.save();
+
+		return {
+			success: true,
+			composeAthanasius: newAthanasiuses.length > 0,
+			gameEnded,
+		};
+	}
+
+	private async handleFailedTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
+		this.queue.next();
+
+		this.utils.logs.push({
+			from: me,
+			to: turnMeta.player.id,
+			cardName: turnMeta.cardName,
+			steal: false,
+			stealData: this.getStealData(turnMeta),
+		});
+
+		await this.save();
+		return { success: false };
+	}
+
+	private getStealData (turnMeta: TurnOptions['turnMeta']): GameLog['stealData'] {
+		switch (turnMeta.stage) {
+		case TurnStage.count:
+			return [turnMeta.count];
+		case TurnStage.colors:
+			return [turnMeta.redCount, turnMeta.blackCount];
+		case TurnStage.suits:
+			return [
+				turnMeta.suits.hearts,
+				turnMeta.suits.diamonds,
+				turnMeta.suits.spades,
+				turnMeta.suits.clubs,
+			];
 		}
 	}
 }
