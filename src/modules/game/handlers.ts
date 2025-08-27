@@ -175,14 +175,14 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 						const user = DB.data.users.find(u => u.id === playerId);
 						return {
 							playerId,
-							username: user?.username,
+							name: user?.name,
 							count: game.getCountAthanasiuses(playerId),
 						};
 					});
 					const maxCount = Math.max(...playerStats.map(stat => stat.count));
 					const winners = playerStats
 						.filter(stat => stat.count === maxCount && stat.count > 0)
-						.map(stat => stat.username)
+						.map(stat => stat.name)
 						.filter((name): name is string => name !== undefined);
 
 					await game.mailing({ text: InfoMessage.gameEndedMailing(winners, maxCount) });

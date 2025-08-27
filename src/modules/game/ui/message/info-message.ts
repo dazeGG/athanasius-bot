@@ -20,11 +20,14 @@ export class InfoMessage {
 	}
 
 	public static gameEndedMailing (winners: string[], countAthanasiuses: number): string {
-		const txtGameEnded = txt.gameEnded +'\n';
+		const txtGameEnded = txt.gameEnded + '\n\n';
+
 		if (winners.length === 1) {
-			return txtGameEnded + `Победитель: ${winners[0]} \nКоличество Афанасиев: ${countAthanasiuses}`;
+			return txtGameEnded + `Победитель: <b>${winners[0]}</b>\n` +
+				`Количество Афанасиев: <b>${countAthanasiuses}</b>`;
 		} else {
-			return txtGameEnded + `Победители: ${winners.join(', ')} \nКоличество Афанасиев: ${countAthanasiuses}`;
+			return txtGameEnded + `Победители: <b>${winners.join(', ')}</b>\n` +
+				`Количество Афанасиев: ${countAthanasiuses}`;
 		}
 	}
 
