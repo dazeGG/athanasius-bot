@@ -106,6 +106,10 @@ export class Game {
 		return this.hands.getHand(playerId);
 	}
 
+	public getCountAthanasiuses (playerId: PlayerId): number {
+		return this.athanasiuses[playerId]?.length || 0;
+	}
+
 	/* LOGS */
 	private formatStealData (stealData: number[]): string {
 		switch (stealData.length) {
