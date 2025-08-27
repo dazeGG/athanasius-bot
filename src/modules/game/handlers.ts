@@ -9,9 +9,9 @@ import { parseTurnMeta } from './lib';
 import { GameMessage, InfoMessage, txt, gkb, kb } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
-	const game = DB.data.games[0];
+	const activeGame = ORM.Games.getActive();
 
-	if (!game) {
+	if (!activeGame) {
 		const players = DB.data.users.map(user => user.id);
 
 		const gameInfoText = txt.notStarted + '\n' +
@@ -37,7 +37,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 		return;
 	}
 
-	await BOT.sendMessage({ ctx, text: txt.ongoing, keyboard: gkb.gameStarted(game.id) });
+	await BOT.sendMessage({ ctx, text: txt.ongoing, keyboard: gkb.gameStarted(activeGame.id) });
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {

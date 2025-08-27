@@ -1,6 +1,6 @@
 import { DB } from './db';
-import type { UserSchema } from './schemas';
-import type { UserId, UserSettings } from './types';
+import type { GameSchema, UserSchema } from './schemas';
+import type { GameId, UserId, UserSettings } from './types';
 
 class Users {
 	public static async add (user: UserSchema): Promise<UserSchema> {
@@ -38,8 +38,19 @@ class Users {
 	}
 }
 
+class Games {
+	public static getActive (): GameSchema | undefined {
+		return DB.data.games.find(g => !g.ended);
+	}
+
+	public static get (id: GameId): GameSchema | undefined {
+		return DB.data.games.find(g => g.id === id);
+	}
+}
+
 const ORM = {
 	Users,
+	Games,
 };
 
 export {
