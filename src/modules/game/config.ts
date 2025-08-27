@@ -1,1 +1,1 @@
-export const DECKS_COUNT = 2;
+export const DECKS_COUNT = 4;

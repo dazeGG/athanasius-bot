@@ -1,8 +1,9 @@
-import type { CallbackContext, EditMessageOptions, UserSchema } from '~/core';
-import { CARDS_VIEW_MAP } from '~/core/config';
+import type { CallbackContext, EditMessageOptions } from '~/core';
+import type { UserSchema } from '~/db';
+import { CARDS_VIEW_MAP } from '~/entities/deck';
+import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
 import { txt } from '..';
-import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '../../types';
 
 export class InfoMessage {
 	/* MAILING */
@@ -18,8 +19,16 @@ export class InfoMessage {
 		return txt.gameStarted;
 	}
 
-	public static gameEndedMailing (): string {
-		return txt.gameEnded;
+	public static gameEndedMailing (winners: string[], countAthanasiuses: number): string {
+		const txtGameEnded = txt.gameEnded + '\n\n';
+
+		if (winners.length === 1) {
+			return txtGameEnded + `Победитель: <b>${winners[0]}</b>\n` +
+				`Количество Афанасиев: <b>${countAthanasiuses}</b>`;
+		} else {
+			return txtGameEnded + `Победители: <b>${winners.join(', ')}</b>\n` +
+				`Количество Афанасиев: ${countAthanasiuses}`;
+		}
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {

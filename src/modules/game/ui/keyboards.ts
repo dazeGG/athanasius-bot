@@ -1,12 +1,12 @@
-import { DB } from '~/core';
-import type { RawButtons , GameId , CardName } from '~/core';
-import { CARDS_VIEW_MAP } from '~/core/config';
-import { RANKS_MAP } from '~/core/entities/deck/config';
+import type { RawButtons } from '~/core';
+import { DB } from '~/db';
+import type { GameId } from '~/db';
+import type { CardName } from '~/entities/deck';
+import { CARDS_VIEW_MAP, RANKS_MAP } from '~/entities/deck';
+import type { Game, PlayerId, Suits } from '~/entities/game';
+import { TurnStage } from '~/entities/game';
 
 import { DECKS_COUNT } from '../config';
-import type { Game } from '../model';
-import type { PlayerId, Suits } from '../types';
-import { TurnStage } from '../types';
 
 /* KEYBOARDS */
 export const kb: ModuleKeyboards = {
