@@ -1,6 +1,6 @@
 import type TelegramBot from 'node-telegram-bot-api';
 
-import type { CardId, Card } from '~/entities/deck';
+import type { CardId, CardName } from '~/entities/deck';
 
 import type { UserId, GameId, GameUtils, UserSettings } from './types';
 
@@ -17,6 +17,6 @@ export interface GameSchema {
 	ended?: number;
 	players: UserId[];
 	hands: Record<UserId, CardId[]>;
-	athanasiuses: Record<UserId, Card['name'][]>;
+	athanasiuses: Record<UserId, CardName[]>;
 	utils: GameUtils;
 }
