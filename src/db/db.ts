@@ -1,6 +1,6 @@
 import { JSONFilePreset } from 'lowdb/node';
 
-import type { GameSchema, UserSchema } from './types';
+import type { GameSchema, UserSchema } from './schemas';
 
 type DatabaseSchema = {
 	users: UserSchema[];
