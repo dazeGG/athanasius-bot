@@ -1,8 +1,13 @@
 import { DB } from './db';
 import type { UserSchema } from './schemas';
-import type { UserId } from './types';
+import type { UserId, UserSettings } from './types';
 
 class Users {
+	public static async add (user: UserSchema) {
+		DB.data.users.push(user);
+		await DB.write();
+	}
+
 	public static get (id: UserId): UserSchema {
 		const user = DB.data.users.find(user => user.id === id);
 
@@ -13,8 +18,9 @@ class Users {
 		return user;
 	}
 
-	public static async add (user: UserSchema) {
-		DB.data.users.push(user);
+	public static async update (id: UserId, newSettings: UserSettings) {
+		const user = this.get(id);
+		user.settings = newSettings;
 		await DB.write();
 	}
 
