@@ -27,7 +27,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 
 		const sendMessageOptions: SendMessageOptions = { ctx, text: gameInfoText };
 
-		if (players.length >= 1) {
+		if (players.length >= 3) {
 			sendMessageOptions.keyboard = kb.start;
 		} else {
 			sendMessageOptions.text += '\n\n' + txt.playersCountError;
