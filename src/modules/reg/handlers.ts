@@ -1,5 +1,5 @@
 import { BOT } from '~/core';
-import { DB } from '~/db';
+import { DB, ORM } from '~/db';
 import type { MessageContext } from '~/core';
 
 import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
@@ -7,9 +7,9 @@ import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
 import * as lib from './lib';
 
 export const regStartMessageHandler = async (ctx: MessageContext) => {
-	const user = DB.data.users.find(user => user.id === ctx.message.from.id);
+	const u = DB.data.users.find(u => u.id === ctx.message.from.id);
 
-	if (user) {
+	if (u) {
 		await BOT.sendMessage({
 			ctx,
 			text: lib.txt.alreadyRegistered,
@@ -27,14 +27,15 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		return;
 	}
 
-	await DB.update(({ users }) => {
-		const { from: user } = ctx.message;
+	const { from: user } = ctx.message;
 
-		users.push({ id: user.id, username: user.username, name });
-
-		return {
-			users,
-		};
+	await ORM.Users.add({
+		id: user.id,
+		username: user.username,
+		name,
+		settings: {
+			updatesView: 'instant',
+		},
 	});
 
 	await BOT.sendMessage({
