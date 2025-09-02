@@ -6,9 +6,11 @@ import { Game, TurnStage } from '~/entities/game';
 
 import { DECKS_COUNT } from './config';
 import { parseTurnMeta } from './lib';
-import { GameMessage, InfoMessage, playersList, txt, gkb, kb } from './ui';
+import { GameMessage, InfoMessage, playersList, txt, gkb, kb, athanasiusesList } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
+	await BOT.deleteMessage(ctx);
+
 	const activeGame = ORM.Games.getActive();
 	const players = DB.data.users.map(user => user.id);
 
@@ -74,6 +76,9 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 		}
 
 		await BOT.editMessage({ ctx, text: BaseDeck.displayDeck(BaseDeck.sortByValue(hand.cardsInHand)).join(' ') });
+		break;
+	case 'a':
+		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
 		break;
 	case 'rgm':
 		await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));

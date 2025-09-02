@@ -97,6 +97,10 @@ export class Game {
 		return this.queue.allPlayers;
 	}
 
+	public getAthanasiuses (): GameSchema['athanasiuses'] {
+		return this.athanasiuses;
+	}
+
 	get playersWithComposedUpdated (): PlayerId[] {
 		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
 		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
