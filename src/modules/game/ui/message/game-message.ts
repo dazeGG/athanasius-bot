@@ -220,7 +220,10 @@ export class GameMessage {
 	public static getCardsStealMessage (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
 		return {
 			ctx,
-			text: `<b>Поздравляю!</b> Ты успешно украл карты ${CARDS_VIEW_MAP[turnMeta.cardName]} у ${turnMeta.player.name}`,
+			text: '<b>Поздравляю! Ты успешно украл карты :)</b>\n' +
+				'\n' +
+				`Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
+				`Масти: ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`,
 		};
 	}
 }
