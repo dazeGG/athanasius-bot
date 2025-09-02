@@ -20,7 +20,7 @@ const turnGuard = (ctx: CallbackContextCallback): boolean => {
 		return false;
 	}
 
-	return game.activePlayer === user.id && isRegistered(ctx);
+	return game.activePlayer.id === user.id && isRegistered(ctx);
 };
 
 const registerGame = () => {
