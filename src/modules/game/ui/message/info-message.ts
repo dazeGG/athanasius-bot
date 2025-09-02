@@ -45,11 +45,11 @@ export class InfoMessage {
 	}
 
 	public static wrongColorsMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}`;
+		return this.playersCard(turnMeta, me) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount} (${turnMeta.count})`;
 	}
 
 	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} (${turnMeta.count})`;
 	}
 
 	public static stealCardsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
