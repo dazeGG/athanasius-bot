@@ -18,6 +18,8 @@ const getBaseSettingsMessage = (me: UserSchema) => {
 };
 
 export const settingsStartMessageHandler = async (ctx: MessageContext) => {
+	await BOT.deleteMessage(ctx);
+
 	const me = ORM.Users.get(ctx.message.from.id);
 	await BOT.sendMessage({ ctx, ...getBaseSettingsMessage(me) });
 };
@@ -38,6 +40,9 @@ export const settingsCallbackHandler = async (ctx: CallbackContext) => {
 			{ updatesView: me.settings.updatesView === 'instant' ? 'composed' : 'instant' },
 		);
 		await BOT.editMessage({ ctx, ...getBaseSettingsMessage(me) });
+		break;
+	case 'exit':
+		await BOT.deleteMessage(ctx);
 		break;
 	}
 };
