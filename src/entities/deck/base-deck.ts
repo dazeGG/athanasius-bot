@@ -52,6 +52,19 @@ export class BaseDeck {
 		});
 	}
 
+	public static groupByValue (cards: Card[]): string {
+		const grouped = cards.reduce((acc, card) => {
+			acc[card.value] = acc[card.value] || [];
+			acc[card.value].push(card.displayName);
+			return acc;
+		}, {} as Record<number, string[]>);	
+
+		return Object.entries(grouped)
+        .sort(([a], [b]) => parseInt(a) - parseInt(b))
+        .map(([_, cards]) => cards.join(' '))
+        .join('\n');
+	}
+
 	public static displayDeck (cards: Card[]): string[] {
 		return cards.map(card => card.displayName);
 	}

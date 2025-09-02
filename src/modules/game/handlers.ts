@@ -78,7 +78,7 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 			throw new Error('Could not find player\'s hand!');
 		}
 
-		await BOT.editMessage({ ctx, text: BaseDeck.displayDeck(BaseDeck.sortByValue(hand.cardsInHand)).join(' ') });
+		await BOT.editMessage({ ctx, text: BaseDeck.groupByValue(BaseDeck.sortByValue(hand.cardsInHand)) });
 		break;
 	case 'rgm':
 		await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
