@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs';
 
 import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
-import type { GameId, GameLog, GameSchema, GameUtils } from '~/db';
+import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
 import { dayjs } from '~/shared/plugins';
 
 import { Queue } from './queue';
@@ -89,8 +89,8 @@ export class Game {
 		return this.id;
 	}
 
-	get activePlayer (): PlayerId {
-		return this.queue.activePlayer;
+	get activePlayer (): UserSchema {
+		return ORM.Users.get(this.queue.activePlayer);
 	}
 
 	get allPlayers (): PlayerId[] {
@@ -142,7 +142,7 @@ export class Game {
 
 		for (let i = this.utils.logs.length - 1; i >= 0; i--) {
 			const log = this.utils.logs[i];
-			if (log.from === this.activePlayer) {
+			if (log.from === this.activePlayer.id) {
 				break;
 			}
 			result.push(this.getLogMessage(log));
