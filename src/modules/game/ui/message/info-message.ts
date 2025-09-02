@@ -52,6 +52,11 @@ export class InfoMessage {
 		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
 	}
 
+	public static stealCardsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		return this.playersCard(turnMeta, me) + '\n' +
+			`Украл ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+	}
+
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
 		return `У <b>${me.name}</b> новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
