@@ -15,8 +15,14 @@ export class InfoMessage {
 		return this.players(turnMeta, me) + `<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
-	public static gameStartedMailing (): string {
-		return txt.gameStarted;
+	public static gameStartedMailing (players: string, deckCount: number): string {
+		const gameStarted = txt.gameStarted + '\n' +
+			txt.players + ':\n' +
+			players + '\n' +
+			'\n' +
+			txt.gameSettings + ':\n' +
+			'• ' + txt.decksCount + ': ' + deckCount;
+		return gameStarted;
 	}
 
 	public static gameEndedMailing (winners: string[], countAthanasiuses: number): string {
@@ -44,7 +50,7 @@ export class InfoMessage {
 	}
 
 	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.hearts} ♠️: ${turnMeta.suits.hearts} ♣️: ${turnMeta.suits.hearts}`;
+		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {

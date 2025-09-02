@@ -44,11 +44,15 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
 	const players = DB.data.users.map(user => user.id);
+	const playersNames =         players.map(playerId => {
+            const user = DB.data.users.find(user => user.id === playerId);
+            return '• ' + (user ? user.name : `Игрок (id: ${playerId})`);
+        }).join('\n');
 	const game = new Game({ players, decksCount: DECKS_COUNT });
 
 	await game.save();
 
-	await game.mailing({ text: InfoMessage.gameStartedMailing() });
+	await game.mailing({ text: InfoMessage.gameStartedMailing(playersNames, DECKS_COUNT) });
 	await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, true));
 };
 
