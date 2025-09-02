@@ -6,26 +6,20 @@ import { Game, TurnStage } from '~/entities/game';
 
 import { DECKS_COUNT } from './config';
 import { parseTurnMeta } from './lib';
-import { GameMessage, InfoMessage, txt, gkb, kb } from './ui';
+import { GameMessage, InfoMessage, playersList, txt, gkb, kb } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
 	const activeGame = ORM.Games.getActive();
+	const players = DB.data.users.map(user => user.id);
+
+	const gameInfoText = txt.players + ':\n' +
+		playersList(players) + '\n' +
+		'\n' +
+		txt.gameSettings + ':\n' +
+		'• ' + txt.decksCount + ': ' + DECKS_COUNT;
 
 	if (!activeGame) {
-		const players = DB.data.users.map(user => user.id);
-
-		const gameInfoText = txt.notStarted + '\n' +
-			'\n' +
-			txt.players + ':\n' +
-			players.map(playerId => {
-				const user = DB.data.users.find(user => user.id === playerId);
-				return '• ' + (user ? user.name : `Игрок не найден (id: ${playerId})`);
-			}).join('\n') + '\n' +
-			'\n' +
-			txt.gameSettings + ':\n' +
-			'• ' + txt.decksCount + ': ' + DECKS_COUNT;
-
-		const sendMessageOptions: SendMessageOptions = { ctx, text: gameInfoText };
+		const sendMessageOptions: SendMessageOptions = { ctx, text: txt.notStarted + '\n\n' + gameInfoText };
 
 		if (players.length >= 3) {
 			sendMessageOptions.keyboard = kb.start;
@@ -34,25 +28,26 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 		}
 
 		await BOT.sendMessage(sendMessageOptions);
-		return;
-	}
+	} else {
+		const activePlayer = ORM.Users.get(activeGame.players[0]);
 
-	await BOT.sendMessage({ ctx, text: txt.ongoing, keyboard: gkb.gameStarted(activeGame.id) });
+		await BOT.sendMessage({
+			ctx,
+			text: txt.ongoing + '\n\n' + gameInfoText + '\n\n' + `Сейчас ход игрока <b>${activePlayer.name}</b>`,
+			keyboard: gkb.gameStarted(activeGame.id),
+		});
+	}
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
 	const players = DB.data.users.map(user => user.id);
-	const playersNames =         players.map(playerId => {
-            const user = DB.data.users.find(user => user.id === playerId);
-            return '• ' + (user ? user.name : `Игрок (id: ${playerId})`);
-        }).join('\n');
 	const game = new Game({ players, decksCount: DECKS_COUNT });
 
 	await game.save();
 
-	await game.mailing({ text: InfoMessage.gameStartedMailing(playersNames, DECKS_COUNT) });
+	await game.mailing({ text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT) });
 	await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, true));
 };
 
