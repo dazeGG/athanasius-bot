@@ -15,14 +15,13 @@ export class InfoMessage {
 		return this.players(turnMeta, me) + `<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
-	public static gameStartedMailing (players: string, deckCount: number): string {
-		const gameStarted = txt.gameStarted + '\n' +
+	public static gameStartedMailing (playersList: string, deckCount: number): string {
+		return txt.gameStarted + '\n' +
 			txt.players + ':\n' +
-			players + '\n' +
+			playersList + '\n' +
 			'\n' +
 			txt.gameSettings + ':\n' +
 			'• ' + txt.decksCount + ': ' + deckCount;
-		return gameStarted;
 	}
 
 	public static gameEndedMailing (winners: string[], countAthanasiuses: number): string {
