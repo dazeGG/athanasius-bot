@@ -46,11 +46,11 @@ export class InfoMessage {
 	}
 
 	public static wrongColorsMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}`;
+		return this.playersCard(turnMeta, me) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount} (${turnMeta.count})`;
 	}
 
 	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} (${turnMeta.count})`;
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
@@ -78,14 +78,14 @@ export class InfoMessage {
 	public static wrongColorsMe (ctx: CallbackContext, turnMeta: ColorsStageMeta): EditMessageOptions {
 		return {
 			ctx,
-			text: this.meWrong(turnMeta) + ` количество красных ${CARDS_VIEW_MAP[turnMeta.cardName]} не ${turnMeta.redCount} :(`,
+			text: this.meWrong(turnMeta) + ` количество красных ${CARDS_VIEW_MAP[turnMeta.cardName]} не ${turnMeta.redCount} (${turnMeta.count}) :(`,
 		};
 	}
 
 	public static wrongSuitsMe (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
 		return {
 			ctx,
-			text: this.meWrong(turnMeta) + ` масти не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} :(`,
+			text: this.meWrong(turnMeta) + ` масти не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} (${turnMeta.count}) :(`,
 		};
 	}
 
