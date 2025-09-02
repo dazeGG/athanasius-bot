@@ -32,7 +32,7 @@ export class GameMessage {
 		return choiceMessage;
 	}
 
-	public static getFirstMessage (game: Game, initialMessage: boolean): SendMessageByChatIdOptions {
+	public static async getFirstMessage (game: Game, initialMessage: boolean): Promise<SendMessageByChatIdOptions> {
 		let text: string;
 
 		if (initialMessage) {
@@ -41,8 +41,8 @@ export class GameMessage {
 			text = '<b>Твой ход!</b>' + '\n\n';
 
 			// TODO УБРАТЬ КОСТЫЛЬ
-			if (game.activePlayer.settings.updatesView === 'composed') {
-				BOT.sendMessageByChatId({ chatId: game.activePlayer.id, text: 'Вот что было за последний круг:' + '\n' + game.getLastTurnLogs() });
+			if (game.activePlayer.settings.updatesView === 'composed' && game.hasLogs) {
+				await BOT.sendMessageByChatId({ chatId: game.activePlayer.id, text: 'Вот что было за последний круг:' + '\n' + game.getLastTurnLogs() });
 			}
 
 			text += 'Выбери у кого хочешь спросить карту';

@@ -48,7 +48,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await game.save();
 
 	await game.mailing({ text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT) });
-	await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, true));
+	await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, true));
 };
 
 export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
@@ -76,7 +76,7 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 		await BOT.editMessage({ ctx, text: BaseDeck.displayDeck(BaseDeck.sortByValue(hand.cardsInHand)).join(' ') });
 		break;
 	case 'rgm':
-		await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
+		await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
 		await BOT.editMessage({ ctx, text: txt.gameMessageResendSuccess });
 		break;
 	}
@@ -113,7 +113,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		} else {
 			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
 			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-			await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
+			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
 		}
 		break;
 
@@ -126,7 +126,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			} else {
 				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
 				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
+				await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
 			}
 		} else {
 			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
@@ -146,7 +146,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 			} else {
 				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
 				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
+				await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
 			}
 		} else {
 			await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
@@ -163,6 +163,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 
 			if (success) {
 				await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));
+				await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 
 				if (composeAthanasius) {
 					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
@@ -192,7 +193,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 				await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 			}
 
-			await BOT.sendMessageByChatId(GameMessage.getFirstMessage(game, false));
+			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
 		} else {
 			await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
 		}

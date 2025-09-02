@@ -130,11 +130,19 @@ export class Game {
 
 		let msg = `<b>${from.name} -> ${to.name}</b> | ${CARDS_VIEW_MAP[log.cardName]}`;
 
-		if (!log.steal && log.stealData?.length) {
-			msg += ` | Не ${this.formatStealData(log.stealData)}`;
+		if (log.stealData?.length) {
+			if (log.steal) {
+				msg += ' | ' + this.formatStealData(log.stealData);
+			} else {
+				msg += ` | Не ${this.formatStealData(log.stealData)}`;
+			}
 		}
 
 		return msg;
+	}
+
+	get hasLogs (): boolean {
+		return this.utils.logs[this.utils.logs.length - 1].from !== this.activePlayer.id;
 	}
 
 	public getLastTurnLogs (): string {
@@ -206,7 +214,13 @@ export class Game {
 
 		if (newAthanasiuses.length > 0) {
 			this.athanasiuses[me].push(...newAthanasiuses);
-			this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
+			this.utils.logs.push({
+				from: me,
+				to: turnMeta.player.id,
+				cardName: turnMeta.cardName,
+				steal: true,
+				stealData: this.getStealData(turnMeta),
+			});
 		}
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
