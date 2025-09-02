@@ -20,6 +20,13 @@ const getBaseSettingsMessage = (me: UserSchema) => {
 export const settingsStartMessageHandler = async (ctx: MessageContext) => {
 	await BOT.deleteMessage(ctx);
 
+	const activeGame = ORM.Games.getActive();
+
+	if (activeGame) {
+		await BOT.sendMessage({ ctx, text: 'Нельзя менять настройки во время игры :(' });
+		return;
+	}
+
 	const me = ORM.Users.get(ctx.message.from.id);
 	await BOT.sendMessage({ ctx, ...getBaseSettingsMessage(me) });
 };
