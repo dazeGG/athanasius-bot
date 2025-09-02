@@ -75,7 +75,7 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 			throw new Error('Could not find player\'s hand!');
 		}
 
-		await BOT.editMessage({ ctx, text: BaseDeck.displayDeck(BaseDeck.sortByValue(hand.cardsInHand)).join(' ') });
+		await BOT.editMessage({ ctx, text: BaseDeck.groupByValue(hand.cardsInHand) });
 		break;
 	case 'a':
 		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
