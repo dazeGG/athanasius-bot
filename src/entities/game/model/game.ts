@@ -243,7 +243,9 @@ export class Game {
 	}
 
 	private async handleFailedTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
-		this.queue.next();
+		do {
+			this.queue.next();
+		} while (this.hands.hand(this.activePlayer.id).cardsInHand.length === 0);
 
 		this.utils.logs.push({
 			from: me,
