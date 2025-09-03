@@ -3,6 +3,13 @@ import _ from 'lodash';
 import { SUITS, SUIT_WEIGHT_MAP, RANKS, CARDS_VIEW_MAP } from './config';
 import type { Card, CardName, SuitName } from './types';
 
+const SUIT_VIEW_MAP: Record<SuitName, string> = {
+	Hearts: '♥️',
+	Diamonds: '♦️',
+	Spades: '♠️',
+	Clubs: '♣️',
+} as const;
+
 export class BaseDeck {
 	private static readonly deck: Card[] = BaseDeck.generateDeck();
 	private static readonly cardCache: Map<number, Card> = new Map(BaseDeck.deck.map(card => [card.id, card]));
@@ -52,7 +59,7 @@ export class BaseDeck {
 		});
 	}
 
-	public static groupByValue (cards: Card[]): string {
+	public static getMyHandView (cards: Card[]): string {
 		if (cards.length === 0) {
 			return 'У тебя закончились карты, подожди пока игра закончится :)';
 		}
@@ -63,23 +70,33 @@ export class BaseDeck {
 			if (!groupedCounts[card.name]) {
 				groupedCounts[card.name] = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
 			}
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-expect-error
-			++groupedCounts[card.name][card.suit];
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-expect-error
-			++groupedCounts[card.name].total;
+
+			groupedCounts[card.name]![card.suit]++;
+			groupedCounts[card.name]!.total++;
 		}
 
 		let result = '<code>';
 
-		for (const cardName of Object.keys(groupedCounts)) {
-			result += CARDS_VIEW_MAP[cardName as CardName] + '\t|\t';
-			result += (groupedCounts[cardName as CardName]?.Hearts || '-') + '♥️' + '\t';
-			result += (groupedCounts[cardName as CardName]?.Diamonds || '-') + '♦️' + '\t';
-			result += (groupedCounts[cardName as CardName]?.Spades || '-') + '♠️' + '\t';
-			result += (groupedCounts[cardName as CardName]?.Clubs || '-') + '♣️' + '\t';
-			result += `(${groupedCounts[cardName as CardName]?.total})\n`;
+		for (const cardName of Object.keys(groupedCounts) as CardName[]) {
+			const counts = groupedCounts[cardName]!;
+			result += CARDS_VIEW_MAP[cardName] + ' | ';
+
+			for (const suit of Object.keys(SUIT_VIEW_MAP) as SuitName[]) {
+				const count = counts[suit];
+				if (!count) {
+					result += '  -';
+				} else {
+					if (count < 10) {
+						result += '  ';
+					} else if (count < 100) {
+						result += ' ';
+					}
+					result += count;
+				}
+				result += SUIT_VIEW_MAP[suit] + ' ';
+			}
+
+			result += `(${counts.total})\n`;
 		}
 
 		return result + '</code>';
