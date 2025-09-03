@@ -43,6 +43,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
+	await BOT.deleteMessage(ctx);
 
 	const players = DB.data.users.map(user => user.id);
 	const game = new Game({ players, decksCount: DECKS_COUNT });
@@ -75,7 +76,7 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 			throw new Error('Could not find player\'s hand!');
 		}
 
-		await BOT.editMessage({ ctx, text: BaseDeck.groupByValue(hand.cardsInHand) });
+		await BOT.editMessage({ ctx, text: BaseDeck.getMyHandView(hand.cardsInHand) });
 		break;
 	case 'a':
 		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
