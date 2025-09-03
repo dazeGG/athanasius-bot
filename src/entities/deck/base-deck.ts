@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
-import { SUITS, SUIT_WEIGHT_MAP, RANKS } from './config';
-import type { Card } from './types';
+import { SUITS, SUIT_WEIGHT_MAP, RANKS, CARDS_VIEW_MAP } from './config';
+import type { Card, CardName, SuitName } from './types';
 
 export class BaseDeck {
 	private static readonly deck: Card[] = BaseDeck.generateDeck();
@@ -53,44 +53,36 @@ export class BaseDeck {
 	}
 
 	public static groupByValue (cards: Card[]): string {
-		const sortedCards = this.sortByValue(cards);
-		const grouped: Record<number, Card[]> = {};
-    
-		for (const card of sortedCards) {
-			if (!grouped[card.value]) {
-				grouped[card.value] = [];
+		if (cards.length === 0) {
+			return 'У тебя закончились карты, подожди пока игра закончится :)';
+		}
+
+		const groupedCounts: Partial<Record<CardName, Record<SuitName | 'total', number>>> = {};
+
+		for (const card of this.sortByValue(cards)) {
+			if (!groupedCounts[card.name]) {
+				groupedCounts[card.name] = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
 			}
-			grouped[card.value].push(card);
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			++groupedCounts[card.name][card.suit];
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-expect-error
+			++groupedCounts[card.name].total;
 		}
 
-		let result = '';
+		let result = '<code>';
 
-		const sortedValues = Object.keys(grouped).map(Number).sort((a, b) => a - b);
-		
-		for (const value of sortedValues) {
-			const cardsInGroup = grouped[value];
-			
-			const diamonds = cardsInGroup.filter(c => c.suit === 'Diamonds').length;
-			const clubs = cardsInGroup.filter(c => c.suit === 'Clubs').length;
-			const hearts = cardsInGroup.filter(c => c.suit === 'Hearts').length;
-			const spades = cardsInGroup.filter(c => c.suit === 'Spades').length;
-			
-
-			let valueName = value.toString();
-			if (value === 11) valueName = 'J';
-			if (value === 12) valueName = 'Q';
-			if (value === 13) valueName = 'K';
-			if (value === 14) valueName = 'A';
-			
-			result += `${valueName}: `;
-			if (diamonds > 0) result += `${diamonds}♦️`;
-			if (clubs > 0) result += `${clubs}♣️ `;
-			if (hearts > 0) result += `${hearts}♥️ `;
-			if (spades > 0) result += `${spades}♠️ (${cardsInGroup.length})`;
-			result += '\n';
+		for (const cardName of Object.keys(groupedCounts)) {
+			result += CARDS_VIEW_MAP[cardName as CardName] + '\t|\t';
+			result += (groupedCounts[cardName as CardName]?.Hearts || '-') + '♥️' + '\t';
+			result += (groupedCounts[cardName as CardName]?.Diamonds || '-') + '♦️' + '\t';
+			result += (groupedCounts[cardName as CardName]?.Spades || '-') + '♠️' + '\t';
+			result += (groupedCounts[cardName as CardName]?.Clubs || '-') + '♣️' + '\t';
+			result += `(${groupedCounts[cardName as CardName]?.total})\n`;
 		}
-		
-		return result;
+
+		return result + '</code>';
 	}
 
 	public static displayDeck (cards: Card[]): string[] {
