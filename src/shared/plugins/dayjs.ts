@@ -12,4 +12,6 @@ dayjs.extend(isSameOrBefore);
 
 dayjs.tz.setDefault('Asia/Yakutsk');
 
-export default dayjs;
+export {
+	dayjs,
+};
