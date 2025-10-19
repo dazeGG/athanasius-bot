@@ -4,7 +4,7 @@ import { DB, ORM } from '~/db';
 import { BaseDeck } from '~/entities/deck';
 import { Game, TurnStage } from '~/entities/game';
 
-import { DECKS_COUNT } from './config';
+import { DECKS_COUNT, PLAYERS_TO_START } from './config';
 import { parseTurnMeta } from './lib';
 import { GameMessage, InfoMessage, playersList, txt, gkb, kb, athanasiusesList } from './ui';
 
@@ -23,7 +23,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 	if (!activeGame) {
 		const sendMessageOptions: SendMessageOptions = { ctx, text: txt.notStarted + '\n\n' + gameInfoText };
 
-		if (players.length >= 3) {
+		if (players.length >= PLAYERS_TO_START) {
 			sendMessageOptions.keyboard = kb.start;
 		} else {
 			sendMessageOptions.text += '\n\n' + txt.playersCountError;
