@@ -4,7 +4,7 @@ import { DB, ORM } from '~/db';
 import { BaseDeck } from '~/entities/deck';
 import { Game, TurnStage } from '~/entities/game';
 
-import { DECKS_COUNT } from './config';
+import { DECKS_COUNT, PLAYERS_TO_START } from './config';
 import { parseTurnMeta } from './lib';
 import { GameMessage, InfoMessage, playersList, txt, gkb, kb, athanasiusesList } from './ui';
 
@@ -23,7 +23,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 	if (!activeGame) {
 		const sendMessageOptions: SendMessageOptions = { ctx, text: txt.notStarted + '\n\n' + gameInfoText };
 
-		if (players.length >= 3) {
+		if (players.length >= PLAYERS_TO_START) {
 			sendMessageOptions.keyboard = kb.start;
 		} else {
 			sendMessageOptions.text += '\n\n' + txt.playersCountError;
@@ -43,6 +43,7 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
+	await BOT.deleteMessage(ctx);
 
 	const players = DB.data.users.map(user => user.id);
 	const game = new Game({ players, decksCount: DECKS_COUNT });
@@ -75,7 +76,7 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 			throw new Error('Could not find player\'s hand!');
 		}
 
-		await BOT.editMessage({ ctx, text: BaseDeck.groupByValue(hand.cardsInHand) });
+		await BOT.editMessage({ ctx, text: BaseDeck.getMyHandView(hand.cardsInHand) });
 		break;
 	case 'a':
 		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
