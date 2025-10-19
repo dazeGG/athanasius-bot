@@ -20,11 +20,10 @@ const turnGuard = (ctx: CallbackContextCallback): boolean => {
 		return false;
 	}
 
-	return game.activePlayer === user.id && isRegistered(ctx);
+	return game.activePlayer.id === user.id && isRegistered(ctx);
 };
 
 const registerGame = () => {
-	BOT.registerCommand('/game', handlers.gameCommandHandler, isRegistered);
 	BOT.registerMessageHandler(handlers.gameCommandHandler, { exact: 'Игра' }, isRegistered);
 	BOT.registerCallbackHandler(handlers.gameStartCallbackHandler, { module: 'game', action: 'start' }, isRegistered);
 	BOT.registerCallbackHandler(handlers.gameStartedCallbackHandler, { module: 'game', action: 'started' }, isRegistered);

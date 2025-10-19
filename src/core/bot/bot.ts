@@ -2,7 +2,7 @@ import 'dotenv/config';
 
 import TelegramBot from 'node-telegram-bot-api';
 
-import type { CallbackContextCallback, CallbackHandler } from '~/core';
+import type { CallbackContextCallback, CallbackHandler, MessageContext } from '~/core';
 import { logError } from '~/core';
 
 import { composeCallbackData, MessageHandlers, CallbackHandlers, CallbackUtils } from './lib';
@@ -182,9 +182,13 @@ class Bot {
 		}
 	}
 
-	async deleteMessage (ctx: CallbackContext) {
+	async deleteMessage (ctx: MessageContext & { callback?: never } | CallbackContext & { message?: never }) {
 		try {
-			await this.bot.deleteMessage(ctx.chatId, ctx.callback.message.message_id);
+			if (ctx.message) {
+				await this.bot.deleteMessage(ctx.chatId, ctx.message.message_id);
+			} else {
+				await this.bot.deleteMessage(ctx.chatId, ctx.callback.message.message_id);
+			}
 		} catch (error) {
 			logError({ error, errorText: 'Delete message error', chatId: ctx.chatId });
 		}

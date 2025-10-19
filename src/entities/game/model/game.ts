@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs';
 
 import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
-import type { GameId, GameLog, GameSchema, GameUtils } from '~/db';
+import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
 import { dayjs } from '~/shared/plugins';
 
 import { Queue } from './queue';
@@ -89,12 +89,16 @@ export class Game {
 		return this.id;
 	}
 
-	get activePlayer (): PlayerId {
-		return this.queue.activePlayer;
+	get activePlayer (): UserSchema {
+		return ORM.Users.get(this.queue.activePlayer);
 	}
 
 	get allPlayers (): PlayerId[] {
 		return this.queue.allPlayers;
+	}
+
+	public getAthanasiuses (): GameSchema['athanasiuses'] {
+		return this.athanasiuses;
 	}
 
 	get playersWithComposedUpdated (): PlayerId[] {
@@ -130,11 +134,19 @@ export class Game {
 
 		let msg = `<b>${from.name} -> ${to.name}</b> | ${CARDS_VIEW_MAP[log.cardName]}`;
 
-		if (!log.steal && log.stealData?.length) {
-			msg += ` | Не ${this.formatStealData(log.stealData)}`;
+		if (log.stealData?.length) {
+			if (log.steal) {
+				msg += ' | ' + this.formatStealData(log.stealData);
+			} else {
+				msg += ` | Не ${this.formatStealData(log.stealData)}`;
+			}
 		}
 
 		return msg;
+	}
+
+	get hasLogs (): boolean {
+		return this.utils.logs[this.utils.logs.length - 1].from !== this.activePlayer.id;
 	}
 
 	public getLastTurnLogs (): string {
@@ -142,7 +154,7 @@ export class Game {
 
 		for (let i = this.utils.logs.length - 1; i >= 0; i--) {
 			const log = this.utils.logs[i];
-			if (log.from === this.activePlayer) {
+			if (log.from === this.activePlayer.id) {
 				break;
 			}
 			result.push(this.getLogMessage(log));
@@ -206,7 +218,13 @@ export class Game {
 
 		if (newAthanasiuses.length > 0) {
 			this.athanasiuses[me].push(...newAthanasiuses);
-			this.utils.logs.push({ from: me, to: turnMeta.player.id, cardName: turnMeta.cardName, steal: true });
+			this.utils.logs.push({
+				from: me,
+				to: turnMeta.player.id,
+				cardName: turnMeta.cardName,
+				steal: true,
+				stealData: this.getStealData(turnMeta),
+			});
 		}
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
@@ -225,7 +243,9 @@ export class Game {
 	}
 
 	private async handleFailedTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
-		this.queue.next();
+		do {
+			this.queue.next();
+		} while (this.hands.hand(this.activePlayer.id).cardsInHand.length === 0);
 
 		this.utils.logs.push({
 			from: me,

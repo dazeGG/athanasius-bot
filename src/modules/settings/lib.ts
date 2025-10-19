@@ -20,5 +20,6 @@ export const kb: ModuleKeyboards = {
 	baseSettings: [
 		[{ text: 'Имя', callback_data: { module: 'settings', action: 'name' } }],
 		[{ text: 'Вид обновлений', callback_data: { module: 'settings', action: 'updatesView' } }],
+		[{ text: 'Выход', callback_data: { module: 'settings', action: 'exit' } }],
 	],
 } as const;

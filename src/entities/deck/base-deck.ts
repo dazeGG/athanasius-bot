@@ -1,7 +1,14 @@
 import _ from 'lodash';
 
-import { SUITS, SUIT_WEIGHT_MAP, RANKS } from './config';
-import type { Card } from './types';
+import { SUITS, SUIT_WEIGHT_MAP, RANKS, CARDS_VIEW_MAP } from './config';
+import type { Card, CardName, SuitName } from './types';
+
+const SUIT_VIEW_MAP: Record<SuitName, string> = {
+	Hearts: '♥️',
+	Diamonds: '♦️',
+	Spades: '♠️',
+	Clubs: '♣️',
+} as const;
 
 export class BaseDeck {
 	private static readonly deck: Card[] = BaseDeck.generateDeck();
@@ -50,6 +57,49 @@ export class BaseDeck {
 
 			return sortType === 'asc' ? aSuitWeight - bSuitWeight : bSuitWeight - aSuitWeight;
 		});
+	}
+
+	public static getMyHandView (cards: Card[]): string {
+		if (cards.length === 0) {
+			return 'У тебя закончились карты, подожди пока игра закончится :)';
+		}
+
+		const groupedCounts: Partial<Record<CardName, Record<SuitName | 'total', number>>> = {};
+
+		for (const card of this.sortByValue(cards)) {
+			if (!groupedCounts[card.name]) {
+				groupedCounts[card.name] = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
+			}
+
+			groupedCounts[card.name]![card.suit]++;
+			groupedCounts[card.name]!.total++;
+		}
+
+		let result = '<code>';
+
+		for (const cardName of Object.keys(groupedCounts) as CardName[]) {
+			const counts = groupedCounts[cardName]!;
+			result += CARDS_VIEW_MAP[cardName] + ' | ';
+
+			for (const suit of Object.keys(SUIT_VIEW_MAP) as SuitName[]) {
+				const count = counts[suit];
+				if (!count) {
+					result += '  -';
+				} else {
+					if (count < 10) {
+						result += '  ';
+					} else if (count < 100) {
+						result += ' ';
+					}
+					result += count;
+				}
+				result += SUIT_VIEW_MAP[suit] + ' ';
+			}
+
+			result += `(${counts.total})\n`;
+		}
+
+		return result + '</code>';
 	}
 
 	public static displayDeck (cards: Card[]): string[] {

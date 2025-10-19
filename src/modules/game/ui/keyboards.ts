@@ -19,6 +19,7 @@ export const kb: ModuleKeyboards = {
 export const gkb = {
 	gameStarted: (gameId: GameId) => [
 		[{ text: 'Посмотреть мои карты', callback_data: { module: 'game', action: 'started', meta: `${gameId}#mc` } }],
+		[{ text: 'Собранные Афанасии', callback_data: { module: 'game', action: 'started', meta: `${gameId}#a` } }],
 		// [{ text: 'Отправить игровое сообщение повторно', callback_data: { module: 'game', action: 'started', meta: `${gameId}#rgm` } }],
 	],
 
