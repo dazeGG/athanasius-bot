@@ -1,14 +1,7 @@
 import _ from 'lodash';
 
-import { SUITS, SUIT_WEIGHT_MAP, RANKS, CARDS_VIEW_MAP } from './config';
+import { DeckConfig } from './config';
 import type { Card, CardName, SuitName } from './types';
-
-const SUIT_VIEW_MAP: Record<SuitName, string> = {
-	Hearts: '♥️',
-	Diamonds: '♦️',
-	Spades: '♠️',
-	Clubs: '♣️',
-} as const;
 
 export class BaseDeck {
 	private static readonly deck: Card[] = BaseDeck.generateDeck();
@@ -18,8 +11,8 @@ export class BaseDeck {
 		const deck: Card[] = [];
 		let id = 1;
 
-		for (const suit of SUITS) {
-			for (const rank of RANKS) {
+		for (const suit of DeckConfig.SUITS) {
+			for (const rank of DeckConfig.RANKS) {
 				deck.push({
 					id: id++,
 					name: rank.name,
@@ -52,8 +45,8 @@ export class BaseDeck {
 				return sortType === 'asc' ? a.value - b.value : b.value - a.value;
 			}
 
-			const aSuitWeight = SUIT_WEIGHT_MAP[a.suit];
-			const bSuitWeight = SUIT_WEIGHT_MAP[b.suit];
+			const aSuitWeight = DeckConfig.SUIT_WEIGHT_MAP[a.suit];
+			const bSuitWeight = DeckConfig.SUIT_WEIGHT_MAP[b.suit];
 
 			return sortType === 'asc' ? aSuitWeight - bSuitWeight : bSuitWeight - aSuitWeight;
 		});
@@ -79,9 +72,9 @@ export class BaseDeck {
 
 		for (const cardName of Object.keys(groupedCounts) as CardName[]) {
 			const counts = groupedCounts[cardName]!;
-			result += CARDS_VIEW_MAP[cardName] + ' | ';
+			result += DeckConfig.CARDS_VIEW_MAP[cardName] + ' | ';
 
-			for (const suit of Object.keys(SUIT_VIEW_MAP) as SuitName[]) {
+			for (const suit of Object.keys(DeckConfig.SUIT_VIEW_MAP) as SuitName[]) {
 				const count = counts[suit];
 				if (!count) {
 					result += '  -';
@@ -93,7 +86,7 @@ export class BaseDeck {
 					}
 					result += count;
 				}
-				result += SUIT_VIEW_MAP[suit] + ' ';
+				result += DeckConfig.SUIT_VIEW_MAP[suit] + ' ';
 			}
 
 			result += `(${counts.total})\n`;

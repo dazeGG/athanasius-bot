@@ -1,7 +1,6 @@
 import type { CallbackContext, EditMessageOptions } from '~/core';
 import type { UserSchema } from '~/db';
-import { ORM } from '~/db';
-import { CARDS_VIEW_MAP } from '~/entities/deck';
+import { DeckConfig } from '~/entities/deck';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
 import { txt } from '..';
@@ -13,7 +12,7 @@ export class InfoMessage {
 	}
 
 	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) + `<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
+		return this.players(turnMeta, me) + `<b>Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
 	public static gameStartedMailing (playersList: string, deckCount: number): string {
@@ -38,7 +37,7 @@ export class InfoMessage {
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) + 'Карта не ' + CARDS_VIEW_MAP[turnMeta.cardName];
+		return this.players(turnMeta, me) + 'Карта не ' + DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName];
 	}
 
 	public static wrongCountMailing (turnMeta: CountStageMeta, me: UserSchema): string {
@@ -58,7 +57,7 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return `У <b>${me.name}</b> новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!`;
+		return `У <b>${me.name}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
 
 	/* ME */
@@ -67,7 +66,7 @@ export class InfoMessage {
 	}
 
 	private static meWrongWithCard (turnMeta: CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {
-		return this.meWrongBase(turnMeta) + `Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}\n`;
+		return this.meWrongBase(turnMeta) + `Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n`;
 	}
 
 	private static meWrongWithCount (turnMeta: ColorsStageMeta | SuitsStageMeta): string {
@@ -75,7 +74,7 @@ export class InfoMessage {
 	}
 
 	public static wrongCardMe (ctx: CallbackContext, turnMeta: CardStageMeta): EditMessageOptions {
-		return { ctx, text: this.meWrongBase(turnMeta) + `У ${turnMeta.player.name} нет ${CARDS_VIEW_MAP[turnMeta.cardName]}` };
+		return { ctx, text: this.meWrongBase(turnMeta) + `У ${turnMeta.player.name} нет ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}` };
 	}
 
 	public static wrongCountMe (ctx: CallbackContext, turnMeta: CountStageMeta): EditMessageOptions {
@@ -94,6 +93,6 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMe (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
-		return { ctx, text: `<b>Поздравляю!</b> У тебя новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!` };
+		return { ctx, text: `<b>Поздравляю!</b> У тебя новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!` };
 	}
 }

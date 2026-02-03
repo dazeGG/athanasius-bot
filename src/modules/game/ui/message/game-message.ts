@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { BOT } from '~/core';
 import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } from '~/core';
-import { CARDS_VIEW_MAP } from '~/entities/deck';
+import { DeckConfig } from '~/entities/deck';
 import type { Game, TurnMeta, Suits, SuitsStageMeta } from '~/entities/game';
 
 import { txt, gkb } from '..';
@@ -14,7 +14,7 @@ export class GameMessage {
 		choiceMessage += '• ' + txt.player + ': ' + '<b>' + turnMeta.player.name + '</b>\n';
 
 		if (turnMeta.cardName) {
-			choiceMessage += '• ' + txt.card + ': ' + '<b>' + CARDS_VIEW_MAP[turnMeta.cardName] + '</b>\n';
+			choiceMessage += '• ' + txt.card + ': ' + '<b>' + DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName] + '</b>\n';
 		}
 
 		if (turnMeta.count && (turnMeta.countAction === undefined || turnMeta.countAction === 'select')) {
@@ -222,7 +222,7 @@ export class GameMessage {
 			ctx,
 			text: '<b>Поздравляю! Ты успешно украл карты :)</b>\n' +
 				'\n' +
-				`Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
+				`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
 				`Масти: ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`,
 		};
 	}

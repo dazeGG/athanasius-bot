@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { BaseDeck, RED_SUITS } from '~/entities/deck';
+import { BaseDeck, DeckConfig } from '~/entities/deck';
 import type { CardId, Card, CardName } from '~/entities/deck';
 import type { GameUtils } from '~/db';
 
@@ -46,7 +46,7 @@ export class Hand {
 
 		if (colors) {
 			const counts: [number, number] = neededCardsInHand.reduce(
-				(a, c) => RED_SUITS.includes(c.suit) ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
+				(a, c) => DeckConfig.RED_SUITS.includes(c.suit) ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
 				[0, 0],
 			);
 

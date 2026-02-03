@@ -20,7 +20,7 @@ import type {
 	HandHasOptions,
 } from '../types';
 import { TurnStage } from '../types';
-import { CARDS_VIEW_MAP } from '~/entities/deck';
+import { DeckConfig } from '~/entities/deck';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -132,7 +132,7 @@ export class Game {
 		const from = ORM.Users.get(log.from);
 		const to = ORM.Users.get(log.to);
 
-		let msg = `<b>${from.name} -> ${to.name}</b> | ${CARDS_VIEW_MAP[log.cardName]}`;
+		let msg = `<b>${from.name} -> ${to.name}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
 
 		if (log.stealData?.length) {
 			if (log.steal) {
