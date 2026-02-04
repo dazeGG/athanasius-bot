@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { BaseDeck, DeckConfig } from '~/entities/deck';
+import { Deck, DeckConfig } from '~/entities/deck';
 import type { CardId, Card, CardName } from '~/entities/deck';
 import type { GameUtils } from '~/db';
 
@@ -18,7 +18,7 @@ export class Hand {
 	}
 
 	get cardsInHand (): Card[] {
-		return this.hand.map(cardId => BaseDeck.getCardById(cardId)).filter(Boolean) as Card[];
+		return this.hand.map(cardId => Deck.getCardById(cardId)).filter(Boolean) as Card[];
 	}
 
 	public pushCards (cardIds: CardId[]): void {
@@ -110,6 +110,6 @@ export class Hand {
 	}
 
 	[Symbol.for('nodejs.util.inspect.custom')] (): string {
-		return `Hand(${this.hand.length} cards): [${BaseDeck.displayDeck(BaseDeck.sortByValue(this.cardsInHand)).join(', ')}]`;
+		return `Hand(${this.hand.length} cards): [${Deck.displayDeck(Deck.sortByValue(this.cardsInHand)).join(', ')}]`;
 	}
 }

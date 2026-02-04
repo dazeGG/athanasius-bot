@@ -1,7 +1,7 @@
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
-import { BaseDeck } from '~/entities/deck';
+import { Deck } from '~/entities/deck';
 import { Game, TurnStage } from '~/entities/game';
 
 import { DECKS_COUNT, PLAYERS_TO_START } from './config';
@@ -76,7 +76,7 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 			throw new Error('Could not find player\'s hand!');
 		}
 
-		await BOT.editMessage({ ctx, text: BaseDeck.getMyHandView(hand.cardsInHand) });
+		await BOT.editMessage({ ctx, text: Deck.getMyHandView(hand.cardsInHand) });
 		break;
 	case 'a':
 		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });

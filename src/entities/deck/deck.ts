@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import { DeckConfig } from './config';
-import type { Card, CardName, SuitName } from './types';
+import type { Card, CardId, CardName, SuitName } from './types';
 
 const generateDeck = (): Card[] => {
 	const deck: Card[] = [];
@@ -23,20 +23,20 @@ const generateDeck = (): Card[] => {
 	return deck;
 };
 
-export class BaseDeck {
+export class Deck {
 	private static readonly deck: Card[] = generateDeck();
-	private static readonly cardCache: Map<number, Card> = new Map(BaseDeck.deck.map(card => [card.id, card]));
+	private static readonly cardCache: Map<CardId, Card> = new Map(Deck.deck.map(card => [card.id, card]));
 
 	public static getDeck (): Card[] {
-		return _.cloneDeep(BaseDeck.deck);
+		return _.cloneDeep(Deck.deck);
 	}
 
-	public static getCardById (id: number): Card | undefined {
-		return BaseDeck.cardCache.get(id);
+	public static getCardById (id: CardId): Card | undefined {
+		return Deck.cardCache.get(id);
 	}
 
-	public static getCardsByIds (ids: number[]): Card[] {
-		return ids.map(id => BaseDeck.cardCache.get(id)).filter(Boolean) as Card[];
+	public static getCardsByIds (ids: CardId[]): Card[] {
+		return ids.map(id => Deck.cardCache.get(id)).filter(Boolean) as Card[];
 	}
 
 	public static sortByValue (cards: Card[], sortType: 'asc' | 'desc' = 'asc'): Card[] {
@@ -59,7 +59,7 @@ export class BaseDeck {
 
 		const groupedCounts: Partial<Record<CardName, Record<SuitName | 'total', number>>> = {};
 
-		for (const card of BaseDeck.sortByValue(cards)) {
+		for (const card of Deck.sortByValue(cards)) {
 			if (!groupedCounts[card.name]) {
 				groupedCounts[card.name] = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
 			}
@@ -100,14 +100,14 @@ export class BaseDeck {
 	}
 
 	public static getSortedDeck (sortType: 'asc' | 'desc' = 'asc'): Card[] {
-		return BaseDeck.sortByValue(BaseDeck.getDeck(), sortType);
+		return Deck.sortByValue(Deck.getDeck(), sortType);
 	}
 
 	public static isValidCardId (id: number): boolean {
-		return BaseDeck.cardCache.has(id);
+		return Deck.cardCache.has(id);
 	}
 
 	public static get deckSize (): number {
-		return BaseDeck.deck.length;
+		return Deck.deck.length;
 	}
 }

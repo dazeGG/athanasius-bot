@@ -1,4 +1,4 @@
-import { BaseDeck } from '~/entities/deck';
+import { Deck } from '~/entities/deck';
 import type { CardId, CardName } from '~/entities/deck';
 import type { GameUtils } from '~/db';
 import { shuffleArray } from '~/shared/lib';
@@ -32,7 +32,7 @@ export class Hands {
 				this.hands.set(playerId, new Hand(hands[playerId]));
 			});
 		} else if (players && decksCount && queue) {
-			const cardsIds = BaseDeck.getDeck().map(card => card.id);
+			const cardsIds = Deck.getDeck().map(card => card.id);
 			const mainDeck = shuffleArray<CardId>(Array(decksCount).fill(cardsIds).flat());
 
 			this.hands = new Map();
