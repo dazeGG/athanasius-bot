@@ -77,7 +77,7 @@ export class Hands {
 		}
 	}
 
-	get allHands (): Record<PlayerId, CardId[]> {
+	public get allHands (): Record<PlayerId, CardId[]> {
 		const preResult = Object.fromEntries(this.hands);
 		const result: Record<PlayerId, CardId[]> = {};
 
