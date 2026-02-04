@@ -3,29 +3,29 @@ import _ from 'lodash';
 import { DeckConfig } from './config';
 import type { Card, CardName, SuitName } from './types';
 
-export class BaseDeck {
-	private static readonly deck: Card[] = BaseDeck.generateDeck();
-	private static readonly cardCache: Map<number, Card> = new Map(BaseDeck.deck.map(card => [card.id, card]));
+const generateDeck = (): Card[] => {
+	const deck: Card[] = [];
+	let id = 1;
 
-	private static generateDeck (): Card[] {
-		const deck: Card[] = [];
-		let id = 1;
-
-		for (const suit of DeckConfig.SUITS) {
-			for (const rank of DeckConfig.RANKS) {
-				deck.push({
-					id: id++,
-					name: rank.name,
-					suit: suit.name,
-					symbol: suit.symbol,
-					value: rank.value,
-					displayName: `${rank.name}${suit.symbol}`,
-				});
-			}
+	for (const suit of DeckConfig.SUITS) {
+		for (const rank of DeckConfig.RANKS) {
+			deck.push({
+				id: id++,
+				name: rank.name,
+				suit: suit.name,
+				symbol: suit.symbol,
+				value: rank.value,
+				displayName: `${rank.name}${suit.symbol}`,
+			});
 		}
-
-		return deck;
 	}
+
+	return deck;
+};
+
+export class BaseDeck {
+	private static readonly deck: Card[] = generateDeck();
+	private static readonly cardCache: Map<number, Card> = new Map(BaseDeck.deck.map(card => [card.id, card]));
 
 	public static getDeck (): Card[] {
 		return _.cloneDeep(this.deck);
