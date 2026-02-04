@@ -28,15 +28,15 @@ export class BaseDeck {
 	private static readonly cardCache: Map<number, Card> = new Map(BaseDeck.deck.map(card => [card.id, card]));
 
 	public static getDeck (): Card[] {
-		return _.cloneDeep(this.deck);
+		return _.cloneDeep(BaseDeck.deck);
 	}
 
 	public static getCardById (id: number): Card | undefined {
-		return this.cardCache.get(id);
+		return BaseDeck.cardCache.get(id);
 	}
 
 	public static getCardsByIds (ids: number[]): Card[] {
-		return ids.map(id => this.cardCache.get(id)).filter(Boolean) as Card[];
+		return ids.map(id => BaseDeck.cardCache.get(id)).filter(Boolean) as Card[];
 	}
 
 	public static sortByValue (cards: Card[], sortType: 'asc' | 'desc' = 'asc'): Card[] {
@@ -59,7 +59,7 @@ export class BaseDeck {
 
 		const groupedCounts: Partial<Record<CardName, Record<SuitName | 'total', number>>> = {};
 
-		for (const card of this.sortByValue(cards)) {
+		for (const card of BaseDeck.sortByValue(cards)) {
 			if (!groupedCounts[card.name]) {
 				groupedCounts[card.name] = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
 			}
@@ -100,14 +100,14 @@ export class BaseDeck {
 	}
 
 	public static getSortedDeck (sortType: 'asc' | 'desc' = 'asc'): Card[] {
-		return this.sortByValue(this.getDeck(), sortType);
+		return BaseDeck.sortByValue(BaseDeck.getDeck(), sortType);
 	}
 
 	public static isValidCardId (id: number): boolean {
-		return this.cardCache.has(id);
+		return BaseDeck.cardCache.has(id);
 	}
 
 	public static get deckSize (): number {
-		return this.deck.length;
+		return BaseDeck.deck.length;
 	}
 }
