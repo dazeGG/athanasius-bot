@@ -1,17 +1,15 @@
 import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
-import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
-import { DeckConfig } from '~/entities/deck';
+import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
-import type { Hand } from './model/hand';
-
+import { GameLogs, GameMailing } from './utils';
 import { TurnStage } from './types';
-import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
+import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
 
 interface ConstructorOptionsById {
@@ -93,52 +91,12 @@ export class Game {
 	}
 
 	/* LOGS */
-	private formatStealData (stealData: number[]): string {
-		switch (stealData.length) {
-		case 1:
-			return `${stealData[0]}`;
-		case 2:
-			return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
-		case 4:
-			return `♥️: ${stealData[0]} ♦️: ${stealData[1]} ♠️: ${stealData[2]} ♣️: ${stealData[3]}`;
-		default:
-			throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
-		}
-	}
-
-	private getLogMessage (log: GameLog): string {
-		const from = ORM.Users.get(log.from);
-		const to = ORM.Users.get(log.to);
-
-		let msg = `<b>${from.name} -> ${to.name}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
-
-		if (log.stealData?.length) {
-			if (log.steal) {
-				msg += ' | ' + this.formatStealData(log.stealData);
-			} else {
-				msg += ` | Не ${this.formatStealData(log.stealData)}`;
-			}
-		}
-
-		return msg;
-	}
-
 	public get hasLogs (): boolean {
-		return this.utils.logs[this.utils.logs.length - 1].from !== this.activePlayer.id;
+		return GameLogs.hasLogs(this.utils, this.activePlayer.id);
 	}
 
 	public getLastRoundLogs (): string {
-		const result: string[] = [];
-
-		for (let i = this.utils.logs.length - 1; i >= 0; i--) {
-			const log = this.utils.logs[i];
-			if (log.from === this.activePlayer.id) {
-				break;
-			}
-			result.push(this.getLogMessage(log));
-		}
-
-		return result.reverse().join('\n');
+		return GameLogs.getLastRoundLogs(this.utils, this.activePlayer.id);
 	}
 
 	/* PERSISTENCE */
@@ -170,11 +128,7 @@ export class Game {
 
 	/* MAILING */
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		const playersToMailing = this.allPlayers.filter(p => !exclude.includes(p));
-
-		await Promise.allSettled(
-			playersToMailing.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId })),
-		);
+		await GameMailing.mailing(options, this.allPlayers, exclude);
 	}
 
 	/* TURNS */
@@ -196,6 +150,7 @@ export class Game {
 
 		if (newAthanasiuses.length > 0) {
 			this.athanasiuses[me].push(...newAthanasiuses);
+
 			this.utils.logs.push({
 				from: me,
 				to: turnMeta.player.id,
