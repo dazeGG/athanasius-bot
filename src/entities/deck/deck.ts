@@ -72,24 +72,23 @@ export class Deck {
 
 		for (const cardName of Object.keys(groupedCounts) as CardName[]) {
 			const counts = groupedCounts[cardName]!;
-			result += DeckConfig.CARDS_VIEW_MAP[cardName] + ' | ';
+			result += DeckConfig.CARDS_VIEW_MAP[cardName];
+			result += cardName === '10' ? '  |' : '   |';
 
 			for (const suit of Object.keys(DeckConfig.SUIT_VIEW_MAP) as SuitName[]) {
 				const count = counts[suit];
-				if (!count) {
-					result += '  -';
-				} else {
-					if (count < 10) {
-						result += '  ';
-					} else if (count < 100) {
-						result += ' ';
-					}
-					result += count;
+
+				if (count < 10) {
+					result += '   ';
+				} else if (count < 100) {
+					result += '  ';
 				}
-				result += DeckConfig.SUIT_VIEW_MAP[suit] + ' ';
+
+				result += count === 0 ? '-' : count;
+				result += DeckConfig.SUIT_VIEW_MAP[suit];
 			}
 
-			result += `(${counts.total})\n`;
+			result += ` (${counts.total})\n`;
 		}
 
 		return result + '</code>';
