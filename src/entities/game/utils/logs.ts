@@ -3,7 +3,6 @@ import { DeckConfig } from '~/entities/deck';
 import type { GameLog, GameUtils } from '~/db';
 
 import type { PlayerId } from '../types';
-import { TurnMeta, TurnOptions } from '../types';
 
 export class GameLogs {
 	private static formatStealData (stealData: number[]): string {
