@@ -3,24 +3,16 @@ import type { Dayjs } from 'dayjs';
 
 import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
-import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
 import { dayjs } from '~/shared/plugins';
-
-import { Queue } from './queue';
-import { Hands } from './hands';
-import type { Hand } from './hand';
-
-import type {
-	CardStageMeta,
-	ColorsStageMeta,
-	CountStageMeta,
-	MailingOptions,
-	PlayerId,
-	SuitsStageMeta,
-	HandHasOptions,
-} from '../types';
-import { TurnStage } from '../types';
 import { DeckConfig } from '~/entities/deck';
+
+import { Queue } from './model/queue';
+import { Hands } from './model/hands';
+import type { Hand } from './model/hand';
+
+import { TurnStage } from './types';
+import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
+import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -34,20 +26,6 @@ interface ConstructorOptionsInit {
 	decksCount: number;
 }
 
-type ConstructorOptions = ConstructorOptionsById | ConstructorOptionsInit;
-
-interface TurnOptions {
-	me: PlayerId;
-	turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;
-	options: HandHasOptions;
-}
-
-interface TurnReturn {
-	success: boolean;
-	composeAthanasius?: boolean;
-	gameEnded?: boolean;
-}
-
 export class Game {
 	private readonly id: GameId;
 	private readonly started: Dayjs;
@@ -57,7 +35,7 @@ export class Game {
 	private readonly athanasiuses: GameSchema['athanasiuses'];
 	private readonly utils: GameUtils;
 
-	constructor (options: ConstructorOptions) {
+	constructor (options: ConstructorOptionsById | ConstructorOptionsInit) {
 		if ('id' in options) {
 			const game = DB.data.games.find(g => g.id === options.id);
 
@@ -85,25 +63,25 @@ export class Game {
 	}
 
 	/* GETTERS */
-	get gameId (): GameId {
+	public get gameId (): GameId {
 		return this.id;
 	}
 
-	get activePlayer (): UserSchema {
+	public get activePlayer (): UserSchema {
 		return ORM.Users.get(this.queue.activePlayer);
 	}
 
-	get allPlayers (): PlayerId[] {
+	public get allPlayers (): PlayerId[] {
 		return this.queue.allPlayers;
+	}
+
+	public get playersWithComposedUpdated (): PlayerId[] {
+		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
+		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
 	}
 
 	public getAthanasiuses (): GameSchema['athanasiuses'] {
 		return this.athanasiuses;
-	}
-
-	get playersWithComposedUpdated (): PlayerId[] {
-		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
-		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
 	}
 
 	public getHand (playerId: PlayerId): Hand | undefined {
@@ -124,7 +102,7 @@ export class Game {
 		case 4:
 			return `♥️: ${stealData[0]} ♦️: ${stealData[1]} ♠️: ${stealData[2]} ♣️: ${stealData[3]}`;
 		default:
-			return '';
+			throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
 		}
 	}
 
@@ -145,11 +123,11 @@ export class Game {
 		return msg;
 	}
 
-	get hasLogs (): boolean {
+	public get hasLogs (): boolean {
 		return this.utils.logs[this.utils.logs.length - 1].from !== this.activePlayer.id;
 	}
 
-	public getLastTurnLogs (): string {
+	public getLastRoundLogs (): string {
 		const result: string[] = [];
 
 		for (let i = this.utils.logs.length - 1; i >= 0; i--) {
@@ -192,10 +170,10 @@ export class Game {
 
 	/* MAILING */
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		const actualPlayers = this.allPlayers.filter(p => !exclude.includes(p));
+		const playersToMailing = this.allPlayers.filter(p => !exclude.includes(p));
 
 		await Promise.allSettled(
-			actualPlayers.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId })),
+			playersToMailing.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId })),
 		);
 	}
 

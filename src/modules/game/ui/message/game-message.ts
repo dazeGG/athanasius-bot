@@ -42,7 +42,7 @@ export class GameMessage {
 
 			// TODO УБРАТЬ КОСТЫЛЬ
 			if (game.activePlayer.settings.updatesView === 'composed' && game.hasLogs) {
-				await BOT.sendMessageByChatId({ chatId: game.activePlayer.id, text: 'Вот что было за последний круг:' + '\n' + game.getLastTurnLogs() });
+				await BOT.sendMessageByChatId({ chatId: game.activePlayer.id, text: 'Вот что было за последний круг:' + '\n' + game.getLastRoundLogs() });
 			}
 
 			text += 'Выбери у кого хочешь спросить карту';
