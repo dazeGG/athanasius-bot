@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "nodemon",
     "start": "tsx src/index.ts",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
     "generate-images": "tsx image-generator/index.ts"
   },
   "keywords": [],
