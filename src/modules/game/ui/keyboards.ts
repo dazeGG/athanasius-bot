@@ -17,12 +17,6 @@ export const kb: ModuleKeyboards = {
 
 /* GENERABLE KEYBOARDS */
 export const gkb = {
-	gameStarted: (gameId: GameId) => [
-		[{ text: 'Посмотреть мои карты', callback_data: { module: 'game', action: 'started', meta: `${gameId}#mc` } }],
-		[{ text: 'Собранные Афанасии', callback_data: { module: 'game', action: 'started', meta: `${gameId}#a` } }],
-		// [{ text: 'Отправить игровое сообщение повторно', callback_data: { module: 'game', action: 'started', meta: `${gameId}#rgm` } }],
-	],
-
 	playersSelect: (me: PlayerId, gameId: GameId, playerIds: PlayerId[]): RawButtons => {
 		const playersExceptMe = playerIds.filter(playerId => playerId !== me);
 		const players = DB.data.users.filter(user => playersExceptMe.includes(user.id));

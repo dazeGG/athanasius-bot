@@ -1,5 +1,6 @@
 import { BOT } from '~/core';
 import { TurnStage } from '~/entities/game';
+import { GLOBAL_KEYBOARD } from '~/shared/lib';
 import type { Game } from '~/entities/game';
 
 import { txt, gkb, InfoMessage, GameMessage } from '../ui';
@@ -121,6 +122,9 @@ export class GameNotificationsService {
 	}
 
 	public static async notifyEndGameMessage (game: Game, winners: string[], maxCount: number) {
-		await game.mailing({ text: InfoMessage.gameEndedMailing(winners, maxCount) });
+		await game.mailing({
+			text: InfoMessage.gameEndedMailing(winners, maxCount),
+			options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+		});
 	}
 }
