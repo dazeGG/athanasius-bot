@@ -11,7 +11,7 @@ export class Queue {
 		this.queue = shuffle ? shuffleArray(players) : players;
 	}
 
-	public get allPlayers (): PlayerId[] {
+	public get actualQueue (): PlayerId[] {
 		return _.cloneDeep(this.queue);
 	}
 

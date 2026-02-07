@@ -107,102 +107,113 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	}
 
 	switch (turnMeta.stage) {
-	case TurnStage.player:
+	case TurnStage.player: {
 		await BOT.editMessage(GameMessage.getCardSelectMessageOptions(ctx, turnMeta, game));
 		break;
+	}
 
-	case TurnStage.card:
+	case TurnStage.card: {
 		const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName } });
 
-		if (success) {
-			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
-		} else {
-			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
+		if (!success) {
+			await BOT.editMessage({ ctx, text: InfoMessage.wrongCardMe(turnMeta) });
 			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
+			break;
 		}
+
+		await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
 		break;
+	}
 
-	case TurnStage.count:
-		if (turnMeta.countAction === 'select') {
-			const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName, count: turnMeta.count } });
-
-			if (success) {
-				await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
-			} else {
-				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-			}
-		} else {
+	case TurnStage.count: {
+		if (turnMeta.countAction !== 'select') {
 			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
+			break;
 		}
-		break;
 
-	case TurnStage.colors:
-		if (turnMeta.redCountAction === 'select') {
-			const { success } = await game.turn({
-				me: me.id,
-				turnMeta,
-				options: { cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
-			});
+		const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName, count: turnMeta.count } });
 
-			if (success) {
-				await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
-			} else {
-				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-			}
-		} else {
-			await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
-		}
-		break;
-
-	case TurnStage.suits:
-		if (turnMeta.suits?.action === 'select') {
-			const { success, composeAthanasius, gameEnded } = await game.turn({
-				me: me.id,
-				turnMeta,
-				options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
-			});
-
-			if (success) {
-				await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-
-				if (composeAthanasius) {
-					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
-					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				}
-
-				if (gameEnded) {
-					const playerStats = game.allPlayers.map(playerId => {
-						const user = DB.data.users.find(u => u.id === playerId);
-						return {
-							playerId,
-							name: user?.name,
-							count: game.getCountAthanasiuses(playerId),
-						};
-					});
-					const maxCount = Math.max(...playerStats.map(stat => stat.count));
-					const winners = playerStats
-						.filter(stat => stat.count === maxCount && stat.count > 0)
-						.map(stat => stat.name)
-						.filter((name): name is string => name !== undefined);
-
-					await game.mailing({ text: InfoMessage.gameEndedMailing(winners, maxCount) });
-					return;
-				}
-			} else {
-				await BOT.editMessage(InfoMessage.wrongSuitsMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-			}
-
+		if (!success) {
+			await BOT.editMessage({ ctx, text: InfoMessage.wrongCountMe(turnMeta) });
+			await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-		} else {
-			await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+			break;
 		}
+
+		await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
 		break;
+	}
+
+	case TurnStage.colors: {
+		if (turnMeta.redCountAction !== 'select') {
+			await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
+			break;
+		}
+
+		const { success } = await game.turn({
+			me: me.id,
+			turnMeta,
+			options: { cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
+		});
+
+		if (!success) {
+			await BOT.editMessage({ ctx, text: InfoMessage.wrongColorsMe(turnMeta) });
+			await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
+			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
+			break;
+		}
+
+		await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+		break;
+	}
+
+	case TurnStage.suits: {
+		if (turnMeta.suits?.action !== 'select') {
+			await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
+			break;
+		}
+
+		const { success, composeAthanasius, gameEnded } = await game.turn({
+			me: me.id,
+			turnMeta,
+			options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
+		});
+
+		if (!success) {
+			await BOT.editMessage({ ctx, text: InfoMessage.wrongSuitsMe(turnMeta) });
+			await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
+			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
+		}
+
+		await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));
+		await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
+
+		if (composeAthanasius) {
+			await BOT.editMessage({ ctx, text: InfoMessage.newAthanasiusMe(turnMeta) });
+			await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
+		}
+
+		if (gameEnded) {
+			const playerStats = game.allPlayers.map(playerId => {
+				const user = DB.data.users.find(u => u.id === playerId);
+				return {
+					playerId,
+					name: user?.name,
+					count: game.getCountAthanasiuses(playerId),
+				};
+			});
+			const maxCount = Math.max(...playerStats.map(stat => stat.count));
+			const winners = playerStats
+				.filter(stat => stat.count === maxCount && stat.count > 0)
+				.map(stat => stat.name ?? 'noname');
+
+			await game.mailing({ text: InfoMessage.gameEndedMailing(winners, maxCount) });
+			return;
+		}
+
+		await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
+		break;
+	}
 	}
 };

@@ -70,7 +70,7 @@ export class Game {
 	}
 
 	public get allPlayers (): PlayerId[] {
-		return this.queue.allPlayers;
+		return this.queue.actualQueue;
 	}
 
 	public get playersWithComposedUpdated (): PlayerId[] {
@@ -105,7 +105,7 @@ export class Game {
 			id: this.id,
 			started: this.started.valueOf(),
 			ended: this.ended?.valueOf(),
-			players: this.queue.allPlayers,
+			players: this.queue.actualQueue,
 			hands: this.hands.allHands,
 			athanasiuses: this.athanasiuses,
 			utils: this.utils,
@@ -160,7 +160,7 @@ export class Game {
 			});
 		}
 
-		const gameEnded = this.hands.handleGameEnd(this.queue.allPlayers);
+		const gameEnded = this.hands.handleGameEnd(this.queue.actualQueue);
 
 		if (gameEnded) {
 			this.ended = dayjs();
@@ -178,7 +178,7 @@ export class Game {
 	private async handleFailedTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
 		do {
 			this.queue.next();
-		} while (this.hands.hand(this.activePlayer.id).cardsInHand.length === 0);
+		} while (this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0);
 
 		this.utils.logs.push({
 			from: me,

@@ -5,7 +5,8 @@ import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } 
 import { DeckConfig } from '~/entities/deck';
 import type { Game, TurnMeta, Suits, SuitsStageMeta } from '~/entities/game';
 
-import { txt, gkb } from '..';
+import { txt } from './texts';
+import { gkb } from './keyboards';
 
 export class GameMessage {
 	public static generateChoiceMessage (turnMeta: TurnMeta): string {
