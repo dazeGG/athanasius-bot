@@ -11,11 +11,11 @@ export class Queue {
 		this.queue = shuffle ? shuffleArray(players) : players;
 	}
 
-	get allPlayers (): PlayerId[] {
+	public get actualQueue (): PlayerId[] {
 		return _.cloneDeep(this.queue);
 	}
 
-	get activePlayer (): PlayerId {
+	public get activePlayer (): PlayerId {
 		if (this.queue.length === 0) {
 			throw new Error('Queue is empty, no active player');
 		}
@@ -23,7 +23,7 @@ export class Queue {
 		return this.queue[0];
 	}
 
-	next (): void {
+	public next (): void {
 		if (this.queue.length === 0) {
 			throw new Error('Queue is empty, cannot move to next player');
 		}

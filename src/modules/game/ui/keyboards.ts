@@ -2,7 +2,7 @@ import type { RawButtons } from '~/core';
 import { DB } from '~/db';
 import type { GameId } from '~/db';
 import type { CardName } from '~/entities/deck';
-import { CARDS_VIEW_MAP, RANKS_MAP } from '~/entities/deck';
+import { DeckConfig } from '~/entities/deck';
 import type { Game, PlayerId, Suits } from '~/entities/game';
 import { TurnStage } from '~/entities/game';
 
@@ -42,7 +42,7 @@ export const gkb = {
 
 		const uniqueCardNames = Array.from(new Set(myHand.cardsInHand.map(card => card.name)));
 
-		uniqueCardNames.sort((a, b) => RANKS_MAP[a] - RANKS_MAP[b]);
+		uniqueCardNames.sort((a, b) => DeckConfig.RANKS_MAP[a] - DeckConfig.RANKS_MAP[b]);
 
 		const distributedCardNames = uniqueCardNames.reduce((acc: [CardName[]], cardName) => {
 			if (acc[acc.length - 1].length === 4) {
@@ -55,7 +55,7 @@ export const gkb = {
 		}, [[]]);
 
 		return distributedCardNames.map(row => row.map(cardName => ({
-			text: CARDS_VIEW_MAP[cardName],
+			text: DeckConfig.CARDS_VIEW_MAP[cardName],
 			callback_data: { module: 'g', action: 't', meta: `${TurnStage.card}#${game.gameId}#${playerId}#${cardName}` },
 		})));
 	},

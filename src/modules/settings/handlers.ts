@@ -62,20 +62,21 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageContext)
 
 	if (!validationData.success) {
 		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
-	} else {
-		await DB.update(({ users }) => {
-			const user = DB.data.users.find(user => user.id === ctx.message.from.id);
-
-			if (user) {
-				user.name = newName;
-			}
-
-			return { users };
-		});
-
-		await BOT.sendMessage({ ctx, text: lib.txt.success });
-		await BOT.sendMessage({ ctx, ...getBaseSettingsMessage(me) });
-
-		STATES.clearState(ctx.message.from.id);
+		return;
 	}
+
+	await DB.update(({ users }) => {
+		const user = DB.data.users.find(user => user.id === ctx.message.from.id);
+
+		if (user) {
+			user.name = newName;
+		}
+
+		return { users };
+	});
+
+	await BOT.sendMessage({ ctx, text: lib.txt.success });
+	await BOT.sendMessage({ ctx, ...getBaseSettingsMessage(me) });
+
+	STATES.clearState(ctx.message.from.id);
 };
