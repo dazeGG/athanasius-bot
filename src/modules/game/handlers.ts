@@ -2,18 +2,18 @@ import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
 import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
+import { GAME_KEYBOARD } from '~/shared/lib';
 
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 
 import { GameLogicService, GameNotificationsService } from './services';
 import { DECKS_COUNT, PLAYERS_TO_START } from './config';
 import { parseTurnMeta } from './lib';
-import { InfoMessage, playersList, txt, gkb, kb, athanasiusesList } from './ui';
+import { InfoMessage, playersList, txt, kb, athanasiusesList } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
 	await BOT.deleteMessage(ctx);
 
-	const activeGame = ORM.Games.getActive();
 	const players = DB.data.users.map(user => user.id);
 
 	const gameInfoText = txt.players + ':\n' +
@@ -22,25 +22,15 @@ export const gameCommandHandler = async (ctx: MessageContext) => {
 		txt.gameSettings + ':\n' +
 		'• ' + txt.decksCount + ': ' + DECKS_COUNT;
 
-	if (!activeGame) {
-		const sendMessageOptions: SendMessageOptions = { ctx, text: txt.notStarted + '\n\n' + gameInfoText };
+	const sendMessageOptions: SendMessageOptions = { ctx, text: txt.notStarted + '\n\n' + gameInfoText };
 
-		if (players.length >= PLAYERS_TO_START) {
-			sendMessageOptions.keyboard = kb.start;
-		} else {
-			sendMessageOptions.text += '\n\n' + txt.playersCountError;
-		}
-
-		await BOT.sendMessage(sendMessageOptions);
+	if (players.length >= PLAYERS_TO_START) {
+		sendMessageOptions.keyboard = kb.start;
 	} else {
-		const activePlayer = ORM.Users.get(activeGame.players[0]);
-
-		await BOT.sendMessage({
-			ctx,
-			text: txt.ongoing + '\n\n' + gameInfoText + '\n\n' + `Сейчас ход игрока <b>${activePlayer.name}</b>`,
-			keyboard: gkb.gameStarted(activeGame.id),
-		});
+		sendMessageOptions.text += '\n\n' + txt.playersCountError;
 	}
+
+	await BOT.sendMessage(sendMessageOptions);
 };
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
@@ -52,42 +42,53 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await game.save();
 
-	await game.mailing({ text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT) });
+	await game.mailing({
+		text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT),
+		options: { reply_markup: { keyboard: GAME_KEYBOARD, resize_keyboard: true } },
+	});
 	await GameNotificationsService.sendFirstMessage(game, true);
 };
 
-export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
-	await BOT.answerCallbackQuery(ctx);
-
-	if (!ctx.callback.data.meta) {
-		throw new Error('Game started meta is required!');
-	}
-
-	const [gameId, action] = ctx.callback.data.meta?.split('#');
+export const gameAthanasiusesMessageHandler = async (ctx: MessageContext) => {
+	await BOT.deleteMessage(ctx);
+	const gameId = ORM.Games.getActive()?.id;
 	const game = gameId ? new Game({ id: gameId }) : null;
 
 	if (!game) {
-		throw new Error('Could not find the game!');
+		return;
 	}
 
-	switch (action) {
-	case 'mc':
-		const hand = game.getHand(ctx.callback.from.id);
+	await BOT.sendMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
+};
 
-		if (!hand) {
-			throw new Error('Could not find player\'s hand!');
-		}
+export const gameHandMessageHandler = async (ctx: MessageContext) => {
+	await BOT.deleteMessage(ctx);
+	const gameId = ORM.Games.getActive()?.id;
+	const game = gameId ? new Game({ id: gameId }) : null;
 
-		await BOT.editMessage({ ctx, text: Deck.getMyHandView(hand.cardsInHand) });
-		break;
-	case 'a':
-		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
-		break;
-	case 'rgm':
-		await GameNotificationsService.sendFirstMessage(game);
-		await BOT.editMessage({ ctx, text: txt.gameMessageResendSuccess });
-		break;
+	if (!game) {
+		return;
 	}
+
+	const hand = game.getHand(ctx.message.from.id);
+
+	if (!hand) {
+		return;
+	}
+
+	await BOT.sendMessage({ ctx, text: Deck.getMyHandView(hand.cardsInHand) });
+};
+
+export const gameWhoseTurnMessageHandler = async (ctx: MessageContext) => {
+	await BOT.deleteMessage(ctx);
+	const gameId = ORM.Games.getActive()?.id;
+	const game = gameId ? new Game({ id: gameId }) : null;
+
+	if (!game) {
+		return;
+	}
+
+	await BOT.sendMessage({ ctx, text: game.activePlayer.name });
 };
 
 export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
