@@ -1,16 +1,22 @@
-import _ from 'lodash';
-
 import { BOT } from '~/core';
-import type { EditMessageOptions, CallbackContext, SendMessageByChatIdOptions } from '~/core';
+import type { SendMessageByChatIdOptions } from '~/core';
 import { DeckConfig } from '~/entities/deck';
-import type { Game, TurnMeta, Suits, SuitsStageMeta } from '~/entities/game';
+import type {
+	Game,
+	TurnMeta,
+	Suits,
+	CardStageMeta,
+	CountStageMeta,
+	ColorsStageMeta,
+	SuitsStageMeta,
+} from '~/entities/game';
 
 import { txt } from './texts';
 import { gkb } from './keyboards';
 
 export class GameMessage {
-	public static generateChoiceMessage (turnMeta: TurnMeta): string {
-		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n';
+	private static generateChoiceMessage (turnMeta: TurnMeta): string {
+		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n\n';
 
 		choiceMessage += '• ' + txt.player + ': ' + '<b>' + turnMeta.player.name + '</b>\n';
 
@@ -33,95 +39,29 @@ export class GameMessage {
 		return choiceMessage;
 	}
 
-	public static async getFirstMessage (game: Game, initialMessage: boolean): Promise<SendMessageByChatIdOptions> {
-		let text: string;
-
-		if (initialMessage) {
-			text = txt.firstTurnMessage;
-		} else {
-			text = '<b>Твой ход!</b>' + '\n\n';
-
-			// TODO УБРАТЬ КОСТЫЛЬ
-			if (game.activePlayer.settings.updatesView === 'composed' && game.hasLogs) {
-				await BOT.sendMessageByChatId({ chatId: game.activePlayer.id, text: 'Вот что было за последний круг:' + '\n' + game.getLastRoundLogs() });
-			}
-
-			text += 'Выбери у кого хочешь спросить карту';
-		}
-
-		const keyboard = gkb.playersSelect(game.activePlayer.id, game.gameId, game.allPlayers);
-
-		return { chatId: game.activePlayer.id, text, keyboard };
+	public static getFirstMessage (initialMessage: boolean): string {
+		return initialMessage ? txt.firstTurnMessage : '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
 	}
 
-	public static getCardSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta, game: Game): EditMessageOptions {
-		return {
-			ctx,
-			text: this.generateChoiceMessage(turnMeta) + '\n' + txt.turnCardSelect,
-			keyboard: gkb.cardSelect(ctx.callback.from.id, game, turnMeta.player.id),
-		};
+	public static getCardSelectMessage (turnMeta: TurnMeta): string {
+		return this.generateChoiceMessage(turnMeta) + '\n' + txt.turnCardSelect;
 	}
 
-	public static getCountSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta): EditMessageOptions {
-		if (turnMeta.cardName && turnMeta.count && turnMeta.countAction) {
-			const newCount = turnMeta.countAction === '-' ? turnMeta.count - 1 : turnMeta.count + 1;
-
-			return {
-				ctx,
-				text: this.generateChoiceMessage(turnMeta) +
-					'\n' +
-					txt.turnCountSelect + '\n' +
-					'\n' +
-					txt.nowSelected + ': <b>' + newCount + '</b>',
-				keyboard: gkb.countSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, newCount),
-			};
-		} else if (turnMeta.cardName) {
-			const initialCount = 1;
-
-			return {
-				ctx,
-				text: this.generateChoiceMessage(turnMeta) +
-					'\n' +
-					txt.turnCountSelect + '\n' +
-					'\n' +
-					txt.nowSelected + ': <b>' + initialCount + '</b>',
-				keyboard: gkb.countSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, initialCount),
-			};
-		} else {
-			throw new Error('Card name is required!');
-		}
+	public static getCountSelectMessage (turnMeta: CardStageMeta | CountStageMeta, count: number): string {
+		return this.generateChoiceMessage(turnMeta) +
+			'\n' +
+			txt.turnCountSelect + '\n' +
+			'\n' +
+			txt.nowSelected + ': <b>' + count + '</b>';
 	}
 
-	public static getColorsSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta): EditMessageOptions {
-		if (turnMeta.cardName && turnMeta.count && turnMeta.redCount !== undefined && turnMeta.redCountAction) {
-			const newRedCount = turnMeta.redCountAction === '-' ? turnMeta.redCount - 1 : turnMeta.redCount + 1;
-
-			return {
-				ctx,
-				text: this.generateChoiceMessage(turnMeta) +
-					'\n' +
-					txt.turnColorsSelect + '\n' +
-					'\n' +
-					txt.nowSelected + ':\n' +
-					'🔴: <b>' + newRedCount + '</b> ⚫: <b>' + (turnMeta.count - newRedCount) + '</b>\n',
-				keyboard: gkb.colorsSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, turnMeta.count, newRedCount),
-			};
-		} else if (turnMeta.cardName && turnMeta.count) {
-			const initialRedCount = 0;
-
-			return {
-				ctx,
-				text: this.generateChoiceMessage(turnMeta) +
-					'\n' +
-					txt.turnColorsSelect + '\n' +
-					'\n' +
-					txt.nowSelected + ':\n' +
-					'🔴: <b>' + initialRedCount + '</b> ⚫️: <b>' + (turnMeta.count - initialRedCount) + '</b>\n',
-				keyboard: gkb.colorsSelect(turnMeta.gameId, turnMeta.player.id, turnMeta.cardName, turnMeta.count, initialRedCount),
-			};
-		} else {
-			throw new Error('Card name and count is required!');
-		}
+	public static getColorsSelectMessage (turnMeta: CountStageMeta | ColorsStageMeta, redCount: number): string {
+		return this.generateChoiceMessage(turnMeta) +
+			'\n' +
+			txt.turnColorsSelect + '\n' +
+			'\n' +
+			txt.nowSelected + ':\n' +
+			'🔴: <b>' + redCount + '</b> ⚫: <b>' + (turnMeta.count - redCount) + '</b>\n';
 	}
 
 	private static getSuitsNowSelected (turnMeta: TurnMeta, suits: Suits, showRed: boolean, showBlack: boolean): string {
@@ -154,77 +94,19 @@ export class GameMessage {
 		return text;
 	}
 
-	public static getSuitsSelectMessageOptions (ctx: CallbackContext, turnMeta: TurnMeta): EditMessageOptions {
-		if (turnMeta.cardName && turnMeta.count && turnMeta.redCount !== undefined && turnMeta.suits) {
-			const newSuits = _.cloneDeep(turnMeta.suits);
-
-			const { mode, action } = turnMeta.suits;
-
-			const actionSuitMap = { h: 'hearts', d: 'diamonds', s: 'spades', c: 'clubs' } as const;
-
-			switch (action) {
-			case 'h':
-			case 'd':
-			case 's':
-			case 'c':
-				newSuits[actionSuitMap[action]] = mode === '+'
-					? newSuits[actionSuitMap[action]] + 1
-					: newSuits[actionSuitMap[action]] !== 0 ? newSuits[actionSuitMap[action]] - 1 : newSuits[actionSuitMap[action]];
-				break;
-			case 'm':
-				newSuits.mode = newSuits.mode === '+' ? '-' : '+';
-				break;
-			}
-
-			return {
-				ctx,
-				text: this.generateChoiceMessage(turnMeta) +
-					'\n' +
-					txt.turnColorsSelect + '\n' +
-					'\n' +
-					txt.nowSelected + ':\n' +
-					this.getSuitsNowSelected(turnMeta, newSuits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count),
-				keyboard: gkb.suitsSelect(
-					turnMeta.gameId,
-					turnMeta.player.id,
-					turnMeta.cardName,
-					turnMeta.count,
-					turnMeta.redCount,
-					newSuits,
-				),
-			};
-		} else if (turnMeta.cardName && turnMeta.count && turnMeta.redCount !== undefined) {
-			const initialSuits: Suits = { hearts: 0, diamonds: 0, spades: 0, clubs: 0, mode: '+' };
-
-			return {
-				ctx,
-				text: this.generateChoiceMessage(turnMeta) +
-					'\n' +
-					txt.turnSuitsSelect + '\n' +
-					'\n' +
-					txt.nowSelected + ':\n' +
-					this.getSuitsNowSelected(turnMeta, initialSuits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count),
-				keyboard: gkb.suitsSelect(
-					turnMeta.gameId,
-					turnMeta.player.id,
-					turnMeta.cardName,
-					turnMeta.count,
-					turnMeta.redCount,
-					initialSuits,
-				),
-			};
-		} else {
-			throw new Error('Card name, count and red count is required!');
-		}
+	public static getSuitsSelectMessage (turnMeta: ColorsStageMeta | SuitsStageMeta, suits: Suits): string {
+		return this.generateChoiceMessage(turnMeta) +
+			'\n' +
+			txt.turnSuitsSelect + '\n' +
+			'\n' +
+			txt.nowSelected + ':\n' +
+			this.getSuitsNowSelected(turnMeta, suits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count);
 	}
 
-	public static getCardsStealMessage (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
-		return {
-			ctx,
-			text: '<b>Поздравляю! Ты успешно украл карты :)</b>\n' +
-				'\n' +
-				`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-				`Масти: ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`,
-		};
+	public static getCardsStealMessage (turnMeta: SuitsStageMeta): string {
+		return '<b>Поздравляю! Ты успешно украл карты :)</b>\n' +
+			'\n' +
+			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
+			`Масти: ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
 	}
 }
