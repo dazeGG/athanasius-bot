@@ -7,18 +7,6 @@ import type { ColorsStageMeta, CountStageMeta, Game, Suits, SuitsStageMeta } fro
 import { GameNotificationsService } from '.';
 import type { GameServiceOptions, GameServiceOptionsStage } from './types';
 
-const isCardStage = (options: GameServiceOptions): options is GameServiceOptionsStage['Card'] =>
-	options.turnMeta.stage === TurnStage.card;
-
-const isCountStage = (options: GameServiceOptions): options is GameServiceOptionsStage['Count'] =>
-	options.turnMeta.stage === TurnStage.count;
-
-const isColorsStage = (options: GameServiceOptions): options is GameServiceOptionsStage['Colors'] =>
-	options.turnMeta.stage === TurnStage.colors;
-
-const isSuitsStage = (options: GameServiceOptions): options is GameServiceOptionsStage['Suits'] =>
-	options.turnMeta.stage === TurnStage.suits;
-
 export class GameLogicService {
 	private static getWinners (game: Game): [string[], number] {
 		const playerStats = game.allPlayers.map(playerId => {
@@ -69,8 +57,16 @@ export class GameLogicService {
 		return newSuits;
 	}
 
+	private static isPlayerStage (options: GameServiceOptions): options is GameServiceOptions {
+		return options.turnMeta.stage === TurnStage.player;
+	}
+
 	private static async processPlayerStage ({ ctx, game, me, turnMeta }: GameServiceOptions) {
 		await GameNotificationsService.notifyNextStage({ ctx, game, me, turnMeta });
+	}
+
+	private static isCardStage (options: GameServiceOptions): options is GameServiceOptionsStage['Card'] {
+		return options.turnMeta.stage === TurnStage.card;
 	}
 
 	private static async processCardStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Card']) {
@@ -82,6 +78,10 @@ export class GameLogicService {
 		}
 
 		await GameNotificationsService.notifyNextStage({ ctx, game, me, turnMeta });
+	}
+
+	private static isCountStage (options: GameServiceOptions): options is GameServiceOptionsStage['Count'] {
+		return options.turnMeta.stage === TurnStage.count;
 	}
 
 	private static async processCountStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Count']) {
@@ -105,6 +105,10 @@ export class GameLogicService {
 		await GameNotificationsService.notifyNextStage({ ctx, game, me, turnMeta });
 	}
 
+	private static isColorsStage (options: GameServiceOptions): options is GameServiceOptionsStage['Colors'] {
+		return options.turnMeta.stage === TurnStage.colors;
+	}
+
 	private static async processColorsStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Colors']) {
 		if (turnMeta.redCountAction !== 'select') {
 			const newRedCount = this.getNewRedCount(turnMeta);
@@ -124,6 +128,10 @@ export class GameLogicService {
 		}
 
 		await GameNotificationsService.notifyNextStage({ ctx, game, me, turnMeta });
+	}
+
+	private static isSuitsStage (options: GameServiceOptions): options is GameServiceOptionsStage['Suits'] {
+		return options.turnMeta.stage === TurnStage.suits;
 	}
 
 	private static async processSuitsStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
@@ -160,16 +168,29 @@ export class GameLogicService {
 	}
 
 	public static async processTurn (options: GameServiceOptions) {
-		if (isCardStage(options)) {
-			await this.processCardStage(options);
-		} else if (isCountStage(options)) {
-			await this.processCountStage(options);
-		} else if (isColorsStage(options)) {
-			await this.processColorsStage(options);
-		} else if (isSuitsStage(options)) {
-			await this.processSuitsStage(options);
-		} else {
+		if (this.isPlayerStage(options)) {
 			await this.processPlayerStage(options);
+			return;
+		}
+
+		if (this.isCardStage(options)) {
+			await this.processCardStage(options);
+			return;
+		}
+
+		if (this.isCountStage(options)) {
+			await this.processCountStage(options);
+			return;
+		}
+
+		if (this.isColorsStage(options)) {
+			await this.processColorsStage(options);
+			return;
+		}
+
+		if (this.isSuitsStage(options)) {
+			await this.processSuitsStage(options);
+			return;
 		}
 	}
 }
