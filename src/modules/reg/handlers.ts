@@ -1,4 +1,4 @@
-import { BOT } from '~/core';
+import { BOT, STATES } from '~/core';
 import { DB, ORM } from '~/db';
 import type { MessageContext } from '~/core';
 
@@ -18,12 +18,18 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		return;
 	}
 
-	const name = ctx.message.text.slice(5, ctx.message.text.length);
+	const { from: user } = ctx.message;
+	STATES.setState(user.id, 'REGISTRATION');
 
+	await BOT.sendMessage({ ctx, text: lib.txt.registerStart });
+};
+
+export const regNameStateMessageHandler = async (ctx: MessageContext) => {
+	const name = ctx.message.text;
 	const validationData = validateName(name);
 
 	if (!validationData.success) {
-		await BOT.sendMessage({ ctx, text: validationData.message });
+		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
 		return;
 	}
 
@@ -38,9 +44,6 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 		},
 	});
 
-	await BOT.sendMessage({
-		ctx,
-		text: lib.txt.successfulRegistration,
-		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
-	});
+	await BOT.sendMessage({ ctx, text: lib.txt.successfulRegistration });
+	STATES.clearState(ctx.message.from.id);
 };

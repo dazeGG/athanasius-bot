@@ -93,3 +93,15 @@ export interface SuitsStageMeta extends Omit<BaseTurnMeta, SuitsStageOmitOptions
 export type TurnMeta = PlayerStageMeta | CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;
 
 export type MailingOptions = Omit<SendMessageByChatIdOptions, 'chatId'>;
+
+export interface TurnOptions {
+	me: PlayerId;
+	turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;
+	options: HandHasOptions;
+}
+
+export interface TurnReturn {
+	success: boolean;
+	composeAthanasius?: boolean;
+	gameEnded?: boolean;
+}

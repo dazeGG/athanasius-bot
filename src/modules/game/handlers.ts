@@ -1,12 +1,14 @@
-import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
-import { BaseDeck } from '~/entities/deck';
-import { Game, TurnStage } from '~/entities/game';
+import { Deck } from '~/entities/deck';
+import { Game } from '~/entities/game';
 
+import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
+
+import { GameLogicService, GameNotificationsService } from './services';
 import { DECKS_COUNT, PLAYERS_TO_START } from './config';
 import { parseTurnMeta } from './lib';
-import { GameMessage, InfoMessage, playersList, txt, gkb, kb, athanasiusesList } from './ui';
+import { InfoMessage, playersList, txt, gkb, kb, athanasiusesList } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
 	await BOT.deleteMessage(ctx);
@@ -51,7 +53,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await game.save();
 
 	await game.mailing({ text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT) });
-	await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, true));
+	await GameNotificationsService.sendFirstMessage(game, true);
 };
 
 export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
@@ -76,13 +78,13 @@ export const gameStartedCallbackHandler = async (ctx: CallbackContext) => {
 			throw new Error('Could not find player\'s hand!');
 		}
 
-		await BOT.editMessage({ ctx, text: BaseDeck.getMyHandView(hand.cardsInHand) });
+		await BOT.editMessage({ ctx, text: Deck.getMyHandView(hand.cardsInHand) });
 		break;
 	case 'a':
 		await BOT.editMessage({ ctx, text: '<b>Собранные Афанасии:</b>\n' + athanasiusesList(game) });
 		break;
 	case 'rgm':
-		await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
+		await GameNotificationsService.sendFirstMessage(game);
 		await BOT.editMessage({ ctx, text: txt.gameMessageResendSuccess });
 		break;
 	}
@@ -106,103 +108,5 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		return;
 	}
 
-	switch (turnMeta.stage) {
-	case TurnStage.player:
-		await BOT.editMessage(GameMessage.getCardSelectMessageOptions(ctx, turnMeta, game));
-		break;
-
-	case TurnStage.card:
-		const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName } });
-
-		if (success) {
-			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
-		} else {
-			await BOT.editMessage(InfoMessage.wrongCardMe(ctx, turnMeta));
-			await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-		}
-		break;
-
-	case TurnStage.count:
-		if (turnMeta.countAction === 'select') {
-			const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName, count: turnMeta.count } });
-
-			if (success) {
-				await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
-			} else {
-				await BOT.editMessage(InfoMessage.wrongCountMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-			}
-		} else {
-			await BOT.editMessage(GameMessage.getCountSelectMessageOptions(ctx, turnMeta));
-		}
-		break;
-
-	case TurnStage.colors:
-		if (turnMeta.redCountAction === 'select') {
-			const { success } = await game.turn({
-				me: me.id,
-				turnMeta,
-				options: { cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
-			});
-
-			if (success) {
-				await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
-			} else {
-				await BOT.editMessage(InfoMessage.wrongColorsMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-			}
-		} else {
-			await BOT.editMessage(GameMessage.getColorsSelectMessageOptions(ctx, turnMeta));
-		}
-		break;
-
-	case TurnStage.suits:
-		if (turnMeta.suits?.action === 'select') {
-			const { success, composeAthanasius, gameEnded } = await game.turn({
-				me: me.id,
-				turnMeta,
-				options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
-			});
-
-			if (success) {
-				await BOT.editMessage(GameMessage.getCardsStealMessage(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-
-				if (composeAthanasius) {
-					await BOT.sendMessage(InfoMessage.newAthanasiusMe(ctx, turnMeta));
-					await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-				}
-
-				if (gameEnded) {
-					const playerStats = game.allPlayers.map(playerId => {
-						const user = DB.data.users.find(u => u.id === playerId);
-						return {
-							playerId,
-							name: user?.name,
-							count: game.getCountAthanasiuses(playerId),
-						};
-					});
-					const maxCount = Math.max(...playerStats.map(stat => stat.count));
-					const winners = playerStats
-						.filter(stat => stat.count === maxCount && stat.count > 0)
-						.map(stat => stat.name)
-						.filter((name): name is string => name !== undefined);
-
-					await game.mailing({ text: InfoMessage.gameEndedMailing(winners, maxCount) });
-					return;
-				}
-			} else {
-				await BOT.editMessage(InfoMessage.wrongSuitsMe(ctx, turnMeta));
-				await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-			}
-
-			await BOT.sendMessageByChatId(await GameMessage.getFirstMessage(game, false));
-		} else {
-			await BOT.editMessage(GameMessage.getSuitsSelectMessageOptions(ctx, turnMeta));
-		}
-		break;
-	}
+	await GameLogicService.processTurn({ ctx, game, me, turnMeta });
 };

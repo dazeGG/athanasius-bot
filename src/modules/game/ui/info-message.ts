@@ -1,10 +1,8 @@
-import type { CallbackContext, EditMessageOptions } from '~/core';
 import type { UserSchema } from '~/db';
-import { ORM } from '~/db';
-import { CARDS_VIEW_MAP } from '~/entities/deck';
+import { DeckConfig } from '~/entities/deck';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
-import { txt } from '..';
+import { txt } from './texts';
 
 export class InfoMessage {
 	/* MAILING */
@@ -13,11 +11,12 @@ export class InfoMessage {
 	}
 
 	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) + `<b>Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
+		return this.players(turnMeta, me) + `<b>Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
 	public static gameStartedMailing (playersList: string, deckCount: number): string {
-		return txt.gameStarted + '\n' +
+		return '<b>' + txt.gameStarted + '</b>\n' +
+			'\n' +
 			txt.players + ':\n' +
 			playersList + '\n' +
 			'\n' +
@@ -25,24 +24,24 @@ export class InfoMessage {
 			'• ' + txt.decksCount + ': ' + deckCount;
 	}
 
-	public static gameEndedMailing (winners: string[], countAthanasiuses: number): string {
-		const txtGameEnded = txt.gameEnded + '\n\n';
+	public static gameEndedMailing (winners: string[], athanasiusesCount: number): string {
+		let txtGameEnded = '<b>' + txt.gameEnded + '</b>\n\n';
 
 		if (winners.length === 1) {
-			return txtGameEnded + `Победитель: <b>${winners[0]}</b>\n` +
-				`Количество Афанасиев: <b>${countAthanasiuses}</b>`;
+			txtGameEnded += `Победитель: <b>${winners[0]}</b>\n`;
 		} else {
-			return txtGameEnded + `Победители: <b>${winners.join(', ')}</b>\n` +
-				`Количество Афанасиев: ${countAthanasiuses}`;
+			txtGameEnded += `Победители: <b>${winners.join(', ')}</b>\n`;
 		}
+
+		return txtGameEnded + `Количество Афанасиев: ${athanasiusesCount}`;
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) + 'Карта не ' + CARDS_VIEW_MAP[turnMeta.cardName];
+		return this.players(turnMeta, me) + `Нет карт ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
 	}
 
 	public static wrongCountMailing (turnMeta: CountStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + 'Количество не ' + turnMeta.count;
+		return this.playersCard(turnMeta, me) + `Количество не ${turnMeta.count}`;
 	}
 
 	public static wrongColorsMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
@@ -58,7 +57,7 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return `У <b>${me.name}</b> новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!`;
+		return `У <b>${me.name}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
 
 	/* ME */
@@ -67,33 +66,30 @@ export class InfoMessage {
 	}
 
 	private static meWrongWithCard (turnMeta: CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {
-		return this.meWrongBase(turnMeta) + `Карта: ${CARDS_VIEW_MAP[turnMeta.cardName]}\n`;
+		return this.meWrongBase(turnMeta) + `Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n`;
 	}
 
 	private static meWrongWithCount (turnMeta: ColorsStageMeta | SuitsStageMeta): string {
 		return this.meWrongWithCard(turnMeta) + `Количество: <b>${turnMeta.count}</b>\n`;
 	}
 
-	public static wrongCardMe (ctx: CallbackContext, turnMeta: CardStageMeta): EditMessageOptions {
-		return { ctx, text: this.meWrongBase(turnMeta) + `У ${turnMeta.player.name} нет ${CARDS_VIEW_MAP[turnMeta.cardName]}` };
+	public static wrongCardMe (turnMeta: CardStageMeta): string {
+		return this.meWrongBase(turnMeta) + `Нет карт ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
 	}
 
-	public static wrongCountMe (ctx: CallbackContext, turnMeta: CountStageMeta): EditMessageOptions {
-		return { ctx, text: this.meWrongWithCard(turnMeta) + `Не ${turnMeta.count}` };
+	public static wrongCountMe (turnMeta: CountStageMeta): string {
+		return this.meWrongWithCard(turnMeta) + `Количество не ${turnMeta.count}`;
 	}
 
-	public static wrongColorsMe (ctx: CallbackContext, turnMeta: ColorsStageMeta): EditMessageOptions {
-		return { ctx, text: this.meWrongWithCount(turnMeta) + `Не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}` };
+	public static wrongColorsMe (turnMeta: ColorsStageMeta): string {
+		return this.meWrongWithCount(turnMeta) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}`;
 	}
 
-	public static wrongSuitsMe (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
-		return {
-			ctx,
-			text: this.meWrongWithCount(turnMeta) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`,
-		};
+	public static wrongSuitsMe (turnMeta: SuitsStageMeta): string {
+		return this.meWrongWithCount(turnMeta) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
 	}
 
-	public static newAthanasiusMe (ctx: CallbackContext, turnMeta: SuitsStageMeta): EditMessageOptions {
-		return { ctx, text: `<b>Поздравляю!</b> У тебя новый Афанасий ${CARDS_VIEW_MAP[turnMeta.cardName]}!` };
+	public static newAthanasiusMe (turnMeta: SuitsStageMeta): string {
+		return `<b>Поздравляю!</b> У тебя новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
 }

@@ -1,10 +1,12 @@
 import _ from 'lodash';
 
-import { BaseDeck, RED_SUITS } from '~/entities/deck';
-import type { CardId, Card, CardName } from '~/entities/deck';
+import { Deck, DeckConfig } from '~/entities/deck';
+import type { CardId, Card, CardName, SuitName } from '~/entities/deck';
 import type { GameUtils } from '~/db';
 
 import type { HandHasOptions } from '../types';
+
+const isRedSuit = (suit: SuitName): boolean => DeckConfig.RED_SUITS.some(s => s === suit);
 
 export class Hand {
 	private hand: CardId[];
@@ -13,12 +15,12 @@ export class Hand {
 		this.hand = hand ?? [];
 	}
 
-	get cardIds (): CardId[] {
+	public get cardIds (): CardId[] {
 		return _.cloneDeep(this.hand);
 	}
 
-	get cardsInHand (): Card[] {
-		return this.hand.map(cardId => BaseDeck.getCardById(cardId)).filter(Boolean) as Card[];
+	public get cardsInHand (): Card[] {
+		return this.hand.map(cardId => Deck.getCardById(cardId)).filter(Boolean) as Card[];
 	}
 
 	public pushCards (cardIds: CardId[]): void {
@@ -46,7 +48,7 @@ export class Hand {
 
 		if (colors) {
 			const counts: [number, number] = neededCardsInHand.reduce(
-				(a, c) => RED_SUITS.includes(c.suit) ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
+				(a, c) => isRedSuit(c.suit) ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
 				[0, 0],
 			);
 
@@ -56,16 +58,15 @@ export class Hand {
 		if (suits) {
 			const counts: [number, number, number, number] = neededCardsInHand.reduce(
 				(a, c) => {
-					if (c.suit === 'Hearts') {
+					switch (c.suit) {
+					case 'Hearts':
 						return [a[0] + 1, a[1], a[2], a[3]];
-					} else if (c.suit === 'Diamonds') {
+					case 'Diamonds':
 						return [a[0], a[1] + 1, a[2], a[3]];
-					} else if (c.suit === 'Spades') {
+					case 'Spades':
 						return [a[0], a[1], a[2] + 1, a[3]];
-					} else if (c.suit === 'Clubs') {
+					case 'Clubs':
 						return [a[0], a[1], a[2], a[3] + 1];
-					} else {
-						return a;
 					}
 				},
 				[0, 0, 0, 0],
@@ -90,9 +91,9 @@ export class Hand {
 
 		const athanasiusCards: CardName[] = [];
 
-		Object.keys(cardsCounts).forEach(cardName => {
-			if (cardsCounts[cardName as CardName] === cardsToAthanasius) {
-				athanasiusCards.push(cardName as CardName);
+		(Object.keys(cardsCounts) as CardName[]).forEach(cardName => {
+			if (cardsCounts[cardName] === cardsToAthanasius) {
+				athanasiusCards.push(cardName);
 			}
 		});
 
@@ -110,6 +111,6 @@ export class Hand {
 	}
 
 	[Symbol.for('nodejs.util.inspect.custom')] (): string {
-		return `Hand(${this.hand.length} cards): [${BaseDeck.displayDeck(BaseDeck.sortByValue(this.cardsInHand)).join(', ')}]`;
+		return `Hand(${this.hand.length} cards): [${Deck.displayDeck(Deck.sortByValue(this.cardsInHand)).join(', ')}]`;
 	}
 }
