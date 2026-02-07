@@ -2,6 +2,7 @@ import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
 import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
+import { GAME_KEYBOARD } from '~/shared/lib';
 
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 
@@ -52,7 +53,10 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await game.save();
 
-	await game.mailing({ text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT) });
+	await game.mailing({
+		text: InfoMessage.gameStartedMailing(playersList(players), DECKS_COUNT),
+		options: { reply_markup: { keyboard: GAME_KEYBOARD, resize_keyboard: true } },
+	});
 	await GameNotificationsService.sendFirstMessage(game, true);
 };
 
