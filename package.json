@@ -1,13 +1,13 @@
 {
   "name": "athanasius-bot",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
     "dev": "nodemon",
     "start": "tsx src/index.ts",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
     "generate-images": "tsx image-generator/index.ts"
   },
   "keywords": [],
