@@ -1,8 +1,5 @@
-import { BOT } from '~/core';
-import type { SendMessageByChatIdOptions } from '~/core';
 import { DeckConfig } from '~/entities/deck';
 import type {
-	Game,
 	TurnMeta,
 	Suits,
 	CardStageMeta,
@@ -12,7 +9,6 @@ import type {
 } from '~/entities/game';
 
 import { txt } from './texts';
-import { gkb } from './keyboards';
 
 export class GameMessage {
 	private static generateChoiceMessage (turnMeta: TurnMeta): string {
