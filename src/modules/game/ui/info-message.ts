@@ -7,7 +7,7 @@ import { txt } from './texts';
 export class InfoMessage {
 	/* MAILING */
 	private static players (turnMeta: TurnMeta, me: UserSchema): string {
-		return `<b>${me.name} -> ${turnMeta.player.name}</b>\n\n`;
+		return `🟨 <b>${me.name} -> ${turnMeta.player.name}</b>\n\n`;
 	}
 
 	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
@@ -15,7 +15,7 @@ export class InfoMessage {
 	}
 
 	public static gameStartedMailing (playersList: string, deckCount: number): string {
-		return '<b>' + txt.gameStarted + '</b>\n' +
+		return '🦎 <b>' + txt.gameStarted + '</b>\n' +
 			'\n' +
 			txt.players + ':\n' +
 			playersList + '\n' +
@@ -25,7 +25,7 @@ export class InfoMessage {
 	}
 
 	public static gameEndedMailing (winners: string[], athanasiusesCount: number): string {
-		let txtGameEnded = '<b>' + txt.gameEnded + '</b>\n\n';
+		let txtGameEnded = '🦎 <b>' + txt.gameEnded + '</b>\n\n';
 
 		if (winners.length === 1) {
 			txtGameEnded += `Победитель: <b>${winners[0]}</b>\n`;
@@ -57,12 +57,12 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return `У <b>${me.name}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
+		return `🟨 У <b>${me.name}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
 
 	/* ME */
 	private static meWrongBase (turnMeta: TurnMeta): string {
-		return `<b>К сожалению, ты не угадал :(</b>\n\nИгрок: ${turnMeta.player.name}\n`;
+		return `🟥 <b>К сожалению, ты не угадал :(</b>\n\nИгрок: ${turnMeta.player.name}\n`;
 	}
 
 	private static meWrongWithCard (turnMeta: CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {
@@ -90,6 +90,6 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMe (turnMeta: SuitsStageMeta): string {
-		return `<b>Поздравляю!</b> У тебя новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
+		return `🟩 У тебя новый Афанасий <b>${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}</b>!`;
 	}
 }

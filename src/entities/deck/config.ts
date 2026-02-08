@@ -1,4 +1,12 @@
+import type { CardName } from './types';
+
 export class DeckConfig {
+	public static CARD_NAMES: CardName[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+	public static isCardName (value: string): value is CardName {
+		return this.CARD_NAMES.includes(value as CardName);
+	}
+
 	public static SUITS = [
 		{ name: 'Hearts', symbol: '♥' },
 		{ name: 'Diamonds', symbol: '♦' },
