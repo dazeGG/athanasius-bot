@@ -3,7 +3,7 @@ import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
-import type { GameId, GameLog, GameSchema, UserSchema , GameUtilsParsed } from '~/db';
+import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
@@ -14,14 +14,12 @@ import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types'
 
 interface ConstructorOptionsById {
 	id: string;
-	players?: never;
-	decksCount?: never;
+	room?: never;
 }
 
 interface ConstructorOptionsInit {
 	id?: never;
-	players: PlayerId[];
-	decksCount: number;
+	room: RoomSchema;
 }
 
 export class Game {
@@ -49,14 +47,14 @@ export class Game {
 			this.athanasiuses = game.athanasiuses;
 			this.utils = GameUtilsService.parseGameUtils(game.utils);
 		} else {
-			const { players, decksCount } = options;
+			const { players, settings } = options.room;
 
 			this.id = nanoid(6);
 			this.started = dayjs();
-			this.queue = new Queue(options.players, true);
-			this.hands = new Hands({ players: options.players, decksCount, queue: this.queue });
+			this.queue = new Queue(players, true);
+			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
-			this.utils = { cardsToAthanasius: decksCount * 4, logs: [] };
+			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
 		}
 	}
 
@@ -84,10 +82,6 @@ export class Game {
 
 	public getHand (playerId: PlayerId): Hand | undefined {
 		return this.hands.getHand(playerId);
-	}
-
-	public getCountAthanasiuses (playerId: PlayerId): number {
-		return this.athanasiuses[playerId]?.length || 0;
 	}
 
 	/* LOGS */

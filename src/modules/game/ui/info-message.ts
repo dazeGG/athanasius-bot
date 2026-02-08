@@ -1,5 +1,6 @@
 import { DeckConfig } from '~/entities/deck';
-import type { UserSchema } from '~/db';
+import { playersList } from '~/shared/ui';
+import type { RoomSchema, UserSchema } from '~/db';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
 import { txt } from './texts';
@@ -14,14 +15,14 @@ export class InfoMessage {
 		return this.players(turnMeta, me) + `<b>Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
 	}
 
-	public static gameStartedMailing (playersList: string, deckCount: number): string {
-		return '🦎 <b>' + txt.gameStarted + '</b>\n' +
+	public static gameStartedMailing (room: RoomSchema): string {
+		return `Комната ${room.name} | ${txt.gameStarted}\n` +
 			'\n' +
 			txt.players + ':\n' +
-			playersList + '\n' +
+			playersList(room.players) + '\n' +
 			'\n' +
 			txt.gameSettings + ':\n' +
-			'• ' + txt.decksCount + ': ' + deckCount;
+			'• ' + txt.decksCount + ': ' + room.settings.decksCount;
 	}
 
 	private static athanasiusRightText (count: number): string {

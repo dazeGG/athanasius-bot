@@ -1,5 +1,8 @@
 import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
+import { Game } from '~/entities/game';
+import { InfoMessage } from '~/modules/game/ui';
+import { GameNotificationsService } from '~/modules/game/services';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as ui from './ui';
@@ -120,6 +123,19 @@ export const kickCallbackHandler = async (ctx: CallbackContext) => {
 	}
 
 	await BOT.editMessage({ ctx, text: ui.txt.kickPlayer, keyboard: ui.gkb.kickList(me.id, room) });
+};
+
+export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+	await BOT.deleteMessage(ctx);
+
+	const room = utils.getRoomFromMeta(ctx);
+
+	const game = new Game({ room });
+	await game.save();
+	await game.mailing({ text: InfoMessage.gameStartedMailing(room) });
+
+	await GameNotificationsService.sendFirstMessage(game, true);
 };
 
 export const backCallbackHandler = async (ctx: CallbackContext) => {

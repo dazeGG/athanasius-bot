@@ -39,8 +39,8 @@ export const gkb = {
 				kb.push([{ text: 'Выгнать игроков', callback_data: { module: 'room', action: 'kick', meta: `${room.id}:` } }]);
 			}
 
-			if (room.players.length >= 3) {
-				kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start' } }]);
+			if (room.players.length >= 2) {
+				kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start', meta: room.id } }]);
 			}
 		} else {
 			kb.push([{ text: 'Выйти', callback_data: { module: 'room', action: 'leave', meta: room.id } }]);
