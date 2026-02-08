@@ -51,6 +51,23 @@ export const gkb = {
 		return kb;
 	},
 
+	roomOngoing: (myId: UserId, room: RoomSchema): RawButtons => {
+		const kb = [];
+
+		// if (room.owner === myId) {
+		// 	kb.push([{ text: 'Завершить игру', callback_data: { module: 'room', action: 'end', meta: room.id } }]);
+		// }
+
+		kb.push([
+			{ text: 'Афанасии', callback_data: { module: 'room', action: 'getathanasiuses', meta: room.id } },
+			{ text: 'Чей ход', callback_data: { module: 'room', action: 'whoseturn', meta: room.id } },
+		]);
+
+		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
+
+		return kb;
+	},
+
 	kickList: (myId: UserId, room: RoomSchema): RawButtons => {
 		return [
 			...room.players.filter(p => p !== myId).map(playerId => {

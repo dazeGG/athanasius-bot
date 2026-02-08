@@ -3,11 +3,51 @@ import type TelegramBot from 'node-telegram-bot-api';
 import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { playersList } from '~/shared/ui';
+import { txt } from '~/shared/ui/game';
 import type { CallbackContext, MessageContext } from '~/core';
 import type { RoomSchema } from '~/db';
 import type { PlayerId } from '~/entities/game';
 
 import * as ui from './ui';
+
+class RoomTexts {
+	private readonly room: RoomSchema;
+	private readonly gameStarted: boolean;
+
+	constructor (room: RoomSchema, gameStarted?: boolean) {
+		this.room = room;
+		this.gameStarted = gameStarted ?? false;
+	}
+
+	private header (): string {
+		return `Комната ${this.room.name}`;
+	}
+
+	private gameStatus (): string {
+		return this.gameStarted ? txt.ongoing : txt.notStarted;
+	}
+
+	private joinCode (): string {
+		return `Код подключения: <code>${this.room.settings.joinCode}</code>`;
+	}
+
+	private players (): string {
+		return `Список игроков:\n${playersList(this.room.players)}`;
+	}
+
+	private settings (): string {
+		return 'Настройки игры:\n' +
+			`Количество колод: ${this.room.settings.decksCount}`;
+	}
+
+	public roomBaseText (): string {
+		return this.header() + '\n' +
+			this.gameStatus() + '\n\n' +
+			this.joinCode() + '\n\n' +
+			this.players() + '\n\n' +
+			this.settings();
+	}
+}
 
 export const mailing = async (text: string, room: RoomSchema, exclude: PlayerId[] = []) => {
 	const playersToMailing = room.players.filter(playerId => !exclude.includes(playerId));
@@ -21,17 +61,17 @@ export const getRoomsListOptions = (me: TelegramBot.User) => {
 	return { text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(ORM.Rooms.getWithMe(me.id)) };
 };
 
-export const getRoomText = (room: RoomSchema) => {
-	return `Комната ${room.name}\n` +
-        `Код подключения: <code>${room.settings.joinCode}</code>\n\n` +
-        'Список игроков:\n' +
-        `${playersList(room.players)}\n\n` +
-        'Настройки игры:\n' +
-        `Количество колод: ${room.settings.decksCount}`;
+export const getRoomBaseText = (room: RoomSchema, gameStarted?: boolean): string => {
+	const roomTexts = new RoomTexts(room, gameStarted);
+	return roomTexts.roomBaseText();
 };
 
 export const getRoomOptions = (me: TelegramBot.User, room: RoomSchema) => {
-	return { text: getRoomText(room), keyboard: ui.gkb.room(me.id, room) };
+	const gameStarted = !!ORM.Games.getActive(room.id);
+	return {
+		text: getRoomBaseText(room, gameStarted),
+		keyboard: gameStarted ? ui.gkb.roomOngoing(me.id, room) : ui.gkb.room(me.id, room),
+	};
 };
 
 export const getRoomFromMeta = (ctx: CallbackContext): RoomSchema => {
@@ -47,7 +87,7 @@ export const getRoomFromMeta = (ctx: CallbackContext): RoomSchema => {
 export const getSettingsStartOptions = (ctx: MessageContext | CallbackContext, room: RoomSchema) => {
 	return {
 		ctx,
-		text: getRoomText(room) + '\n\nВыбери что хочешь изменить',
+		text: getRoomBaseText(room) + '\n\nВыбери что хочешь изменить',
 		keyboard: ui.gkb.settings(room),
 	};
 };
