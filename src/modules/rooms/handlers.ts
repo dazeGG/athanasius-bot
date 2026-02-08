@@ -33,21 +33,21 @@ export const joinRoomCallbackHandler = async (ctx: CallbackContext) => {
 	STATES.setState(me.id, 'ROOMS_JOIN');
 };
 
-export const joinRoomNameMessageHandler = async (ctx: MessageContext) => {
+export const joinRoomCodeMessageHandler = async (ctx: MessageContext) => {
 	const { from: me, text: joinCode } = ctx.message;
 
 	try {
 		const room = await ORM.Rooms.joinRoom(me.id, joinCode);
 		const meUser = ORM.Users.get(me.id);
 
-		await BOT.sendMessage({ ctx, text: `Ты успешно подключился к комнате ${room.name}` });
+		await BOT.sendMessage({ ctx, text: `Ты успешно зашел в комнату ${room.name}` });
 		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
 
 		for (const playerId of room.players) {
 			if (playerId !== me.id) {
 				await BOT.sendMessageByChatId({
 					chatId: playerId,
-					text: `Комната ${room.name} | ${meUser.name} подключился`,
+					text: `Комната ${room.name} | ${meUser.name} зашел`,
 				});
 			}
 		}
@@ -55,9 +55,22 @@ export const joinRoomNameMessageHandler = async (ctx: MessageContext) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
 		await BOT.sendMessage({ ctx, text: e.message });
+		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
 	}
 
 	STATES.clearState(me.id);
+};
+
+export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+	const { from: me, data: { meta: roomId } } = ctx.callback;
+
+	if (!roomId) {
+		throw new Error('Room id required');
+	}
+
+	await ORM.Rooms.leaveRoom(me.id, roomId);
+	await BOT.editMessage({ ctx, ...getRoomsListOptions(me) });
 };
 
 export const createRoomCallbackHandler = async (ctx: CallbackContext) => {
@@ -86,7 +99,7 @@ export const createRoomNameMessageHandler = async (ctx: MessageContext) => {
 
 export const openRoomCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
-	const { data: { meta: roomId } } = ctx.callback;
+	const { from: me, data: { meta: roomId } } = ctx.callback;
 
 	if (!roomId) {
 		throw new Error('Room id required');
@@ -107,7 +120,7 @@ export const openRoomCallbackHandler = async (ctx: CallbackContext) => {
 			`${playersList(room.players)}\n\n` +
 			'Настройки игры:\n' +
 			`Количество колод: ${room.settings.decksCount}`,
-		keyboard: ui.gkb.room(room),
+		keyboard: ui.gkb.room(me.id, room),
 	});
 };
 

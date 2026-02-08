@@ -127,6 +127,17 @@ class Rooms {
 
 		return room;
 	}
+
+	public static async leaveRoom (myId: UserId, roomId: RoomId): Promise<void> {
+		await DB.update(({ rooms }) => {
+			for (const r of rooms) {
+				if (r.id === roomId) {
+					r.players.splice(r.players.indexOf(myId), 1);
+				}
+			}
+			return { rooms };
+		});
+	}
 }
 
 const ORM = {
