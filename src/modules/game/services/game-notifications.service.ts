@@ -1,7 +1,6 @@
 import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { TurnStage } from '~/entities/game';
-import { GLOBAL_KEYBOARD } from '~/shared/lib';
 import type { GameSchema } from '~/db';
 import type { Game } from '~/entities/game';
 
@@ -150,9 +149,6 @@ export class GameNotificationsService {
 	}
 
 	public static async notifyEndGameMessage (game: Game) {
-		await game.mailing({
-			text: InfoMessage.gameEndedMailing(this.getSortedAthanasiusesMap(game.getAthanasiuses())),
-			options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
-		});
+		await game.mailing({ text: InfoMessage.gameEndedMailing(this.getSortedAthanasiusesMap(game.getAthanasiuses())) });
 	}
 }
