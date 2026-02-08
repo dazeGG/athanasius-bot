@@ -40,16 +40,6 @@ class Users {
 	}
 }
 
-class Games {
-	public static getActive (): GameSchema | undefined {
-		return DB.data.games.find(g => !g.ended);
-	}
-
-	public static get (id: GameId): GameSchema | undefined {
-		return DB.data.games.find(g => g.id === id);
-	}
-}
-
 class Rooms {
 	public static getAll (): RoomSchema[] {
 		return DB.data.rooms;
@@ -121,24 +111,34 @@ class Rooms {
 		return room;
 	}
 
-	public static async leaveRoom (myId: UserId, roomId: RoomId): Promise<RoomSchema> {
+	public static async removePlayer (playerId: number, roomId: RoomId): Promise<RoomSchema> {
 		const room = this.getById(roomId);
 
 		if (!room) {
 			throw new Error('Room not found');
 		}
 
-		room.players.splice(room.players.indexOf(myId), 1);
+		room.players.splice(room.players.indexOf(playerId), 1);
 		await DB.write();
 
 		return room;
 	}
 }
 
+class Games {
+	public static getActive (): GameSchema | undefined {
+		return DB.data.games.find(g => !g.ended);
+	}
+
+	public static get (id: GameId): GameSchema | undefined {
+		return DB.data.games.find(g => g.id === id);
+	}
+}
+
 const ORM = {
 	Users,
-	Games,
 	Rooms,
+	Games,
 };
 
 export {

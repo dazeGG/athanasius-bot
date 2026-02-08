@@ -4,8 +4,8 @@ import type { nanoid } from 'nanoid';
 import type { CardName } from '~/entities/deck';
 
 export type UserId = TelegramBot.User['id'];
-export type GameId = ReturnType<typeof nanoid>;
 export type RoomId = ReturnType<typeof nanoid>;
+export type GameId = ReturnType<typeof nanoid>;
 
 export interface UserSettings {
 	updatesView: 'instant' | 'composed';

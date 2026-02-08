@@ -4,14 +4,14 @@ import type { UserSchema, GameSchema, RoomSchema } from './schemas';
 
 type DatabaseSchema = {
 	users: UserSchema[];
-	games: GameSchema[];
 	rooms: RoomSchema[];
+	games: GameSchema[];
 };
 
 const DB = await JSONFilePreset<DatabaseSchema>('db.json', {
 	users: [],
-	games: [],
 	rooms: [],
+	games: [],
 });
 
 export {
