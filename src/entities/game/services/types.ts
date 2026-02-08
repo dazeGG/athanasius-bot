@@ -26,6 +26,6 @@ export interface GameServiceOptionsStage {
 
 export interface UpdateMessageOptionsStage {
     Count: Omit<GameServiceOptionsStage['Count'], 'me'> & { newCount: number };
-    Colors: Omit<GameServiceOptionsStage['Colors'], 'game' | 'me'> & { newRedCount: number };
-    Suits: Omit<GameServiceOptionsStage['Suits'], 'game' | 'me'> & { newSuits: Suits };
+    Colors: Omit<GameServiceOptionsStage['Colors'], 'me'> & { newRedCount: number };
+    Suits: Omit<GameServiceOptionsStage['Suits'], 'me'> & { newSuits: Suits };
 }

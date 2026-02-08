@@ -45,40 +45,21 @@ export class GameNotificationsService {
 			await BOT.editMessage({
 				ctx,
 				text: GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT),
-				keyboard: gkb.countSelect({
-					gameId: turnMeta.gameId,
-					playerId: turnMeta.player.id,
-					cardName: turnMeta.cardName,
-					count: SERVICES_CONFIG.INITIAL_COUNT,
-					cardsToAthanasius: game.cardsToAthanasius,
-				}),
+				keyboard: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }),
 			});
 			break;
 		case TurnStage.count:
 			await BOT.editMessage({
 				ctx,
 				text: GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT),
-				keyboard: gkb.colorsSelect({
-					gameId: turnMeta.gameId,
-					playerId: turnMeta.player.id,
-					cardName: turnMeta.cardName,
-					count: turnMeta.count,
-					redCount: SERVICES_CONFIG.INITIAL_RED_COUNT,
-				}),
+				keyboard: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }),
 			});
 			break;
 		case TurnStage.colors:
 			await BOT.editMessage({
 				ctx,
 				text: GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
-				keyboard: gkb.suitsSelect({
-					gameId: turnMeta.gameId,
-					playerId: turnMeta.player.id,
-					cardName: turnMeta.cardName,
-					count: turnMeta.count,
-					redCount: turnMeta.redCount,
-					suits: SERVICES_CONFIG.INITIAL_SUITS,
-				}),
+				keyboard: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }),
 			});
 			break;
 		}
@@ -88,42 +69,23 @@ export class GameNotificationsService {
 		await BOT.editMessage({
 			ctx,
 			text: GameMessage.getCountSelectMessage(turnMeta, newCount),
-			keyboard: gkb.countSelect({
-				gameId: turnMeta.gameId,
-				playerId: turnMeta.player.id,
-				cardName: turnMeta.cardName,
-				count: newCount,
-				cardsToAthanasius: game.cardsToAthanasius,
-			}),
+			keyboard: gkb.countSelect({ game, turnMeta, count: newCount }),
 		});
 	}
 
-	public static async updateColorsMessage ({ ctx, turnMeta, newRedCount }: UpdateMessageOptionsStage['Colors']) {
+	public static async updateColorsMessage ({ ctx, game, turnMeta, newRedCount }: UpdateMessageOptionsStage['Colors']) {
 		await BOT.editMessage({
 			ctx,
 			text: GameMessage.getColorsSelectMessage(turnMeta, newRedCount),
-			keyboard: gkb.colorsSelect({
-				gameId: turnMeta.gameId,
-				playerId: turnMeta.player.id,
-				cardName: turnMeta.cardName,
-				count: turnMeta.count,
-				redCount: newRedCount,
-			}),
+			keyboard: gkb.colorsSelect({ game, turnMeta, redCount: newRedCount }),
 		});
 	}
 
-	public static async updateSuitsMessage ({ ctx, turnMeta, newSuits }: UpdateMessageOptionsStage['Suits']) {
+	public static async updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: UpdateMessageOptionsStage['Suits']) {
 		await BOT.editMessage({
 			ctx,
 			text: GameMessage.getSuitsSelectMessage(turnMeta, newSuits),
-			keyboard: gkb.suitsSelect({
-				gameId: turnMeta.gameId,
-				playerId: turnMeta.player.id,
-				cardName: turnMeta.cardName,
-				count: turnMeta.count,
-				redCount: turnMeta.redCount,
-				suits: newSuits,
-			}),
+			keyboard: gkb.suitsSelect({ game, turnMeta, suits: newSuits }),
 		});
 	}
 
