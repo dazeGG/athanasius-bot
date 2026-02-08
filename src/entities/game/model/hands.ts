@@ -1,6 +1,6 @@
 import { Deck } from '~/entities/deck';
 import type { CardId, CardName } from '~/entities/deck';
-import type { GameUtils } from '~/db';
+import type { GameUtilsParsed } from '~/db';
 import { shuffleArray } from '~/shared/lib';
 
 import { Hand } from './hand';
@@ -92,7 +92,7 @@ export class Hands {
 		return this.hand(playerId);
 	}
 
-	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName, utils: GameUtils): CardName[] {
+	public moveCards (me: PlayerId, playerId: PlayerId, cardName: CardName, utils: GameUtilsParsed): CardName[] {
 		const cardIds = this.hand(playerId).getCardsByName(cardName).map(card => card.id);
 
 		this.hand(playerId).removeCards(cardIds);

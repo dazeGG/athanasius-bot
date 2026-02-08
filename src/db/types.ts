@@ -20,5 +20,10 @@ export interface GameLog {
 
 export interface GameUtils {
 	cardsToAthanasius: number;
+	logs: string[];
+}
+
+export interface GameUtilsParsed {
+	cardsToAthanasius: number;
 	logs: GameLog[];
 }
