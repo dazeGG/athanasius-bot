@@ -2,7 +2,7 @@ import { nanoid, customAlphabet } from 'nanoid';
 
 import { DB } from './db';
 import type { GameSchema, RoomSchema, UserSchema } from './schemas';
-import type { GameId, UserId, UserSettings } from './types';
+import type { GameId, RoomId, UserId, UserSettings } from './types';
 
 class Users {
 	public static async add (user: UserSchema): Promise<UserSchema> {
@@ -61,6 +61,10 @@ class Rooms {
 
 	public static getWithMe (myId: UserId): RoomSchema[] {
 		return DB.data.rooms.filter(r => r.players.includes(myId));
+	}
+
+	public static getById (roomId: RoomId): RoomSchema | undefined {
+		return DB.data.rooms.find(r => r.id === roomId);
 	}
 
 	private static generateJoinCodeBlock (): string {

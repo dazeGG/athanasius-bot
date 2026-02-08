@@ -1,4 +1,4 @@
-import type { CallbackData, RawButtons } from '~/core';
+import type { RawButtons } from '~/core';
 import type { RoomSchema } from '~/db';
 
 /* TEXTS */
@@ -24,5 +24,20 @@ export const gkb = {
 			}),
 			[{ text: 'Создать комнату', callback_data: { module: 'rooms', action: 'create' } }],
 		];
+	},
+
+	room: (room: RoomSchema): RawButtons => {
+		const kb = [];
+
+		// TODO: Сделать настройку игры
+		// kb.push([{ text: 'Настроить', callback_data: { module: 'room', action: 'settings' } }]);
+		//
+		if (room.players.length >= 3) {
+			kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start' } }]);
+		}
+
+		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
+
+		return kb;
 	},
 } as const;
