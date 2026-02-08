@@ -51,13 +51,4 @@ export const regNameStateMessageHandler = async (ctx: MessageContext) => {
 	});
 
 	STATES.clearState(ctx.message.from.id);
-
-	const usersExceptMe = DB.data.users.filter(u => u.id !== user.id);
-
-	for (const u of usersExceptMe) {
-		await BOT.sendMessageByChatId({
-			chatId: u.id,
-			text: `У нас новый игрок - ${name}`,
-		});
-	}
 };

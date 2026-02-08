@@ -1,13 +1,14 @@
+import type TelegramBot from 'node-telegram-bot-api';
+
 import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import type { MessageContext, CallbackContext } from '~/core';
-import type { RoomSchema } from '~/db';
 
 import * as ui from './ui';
 import { playersList } from '~/modules/game/ui';
 
-const getRoomsListOptions = (ctx: MessageContext | CallbackContext, rooms: RoomSchema[]) => {
-	return { ctx, text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(rooms) };
+const getRoomsListOptions = (me: TelegramBot.User) => {
+	return { text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(ORM.Rooms.getWithMe(me.id)) };
 };
 
 export const roomsMessageHandler = async (ctx: MessageContext) => {
@@ -15,13 +16,48 @@ export const roomsMessageHandler = async (ctx: MessageContext) => {
 
 	const { from: me } = ctx.message;
 
-	const myRooms = ORM.Rooms.getMine(me.id);
+	const roomsWithMe = ORM.Rooms.getWithMe(me.id);
 
-	if (myRooms.length === 0) {
-		await BOT.sendMessage({ ctx, text: ui.txt.noRooms, keyboard: ui.kb.noRooms });
+	if (roomsWithMe.length === 0) {
+		await BOT.sendMessage({ ctx, text: ui.txt.noRooms, keyboard: ui.kb.default });
 	} else {
-		await BOT.sendMessage(getRoomsListOptions(ctx, myRooms));
+		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
 	}
+};
+
+export const joinRoomCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+	const { from: me } = ctx.callback;
+
+	await BOT.editMessage({ ctx, text: 'Напиши код подключения' });
+	STATES.setState(me.id, 'ROOMS_JOIN');
+};
+
+export const joinRoomNameMessageHandler = async (ctx: MessageContext) => {
+	const { from: me, text: joinCode } = ctx.message;
+
+	try {
+		const room = await ORM.Rooms.joinRoom(me.id, joinCode);
+		const meUser = ORM.Users.get(me.id);
+
+		await BOT.sendMessage({ ctx, text: `Ты успешно подключился к комнате ${room.name}` });
+		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+
+		for (const playerId of room.players) {
+			if (playerId !== me.id) {
+				await BOT.sendMessageByChatId({
+					chatId: playerId,
+					text: `Комната ${room.name} | ${meUser.name} подключился`,
+				});
+			}
+		}
+	} catch (e) {
+		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+		// @ts-expect-error
+		await BOT.sendMessage({ ctx, text: e.message });
+	}
+
+	STATES.clearState(me.id);
 };
 
 export const createRoomCallbackHandler = async (ctx: CallbackContext) => {
@@ -40,12 +76,11 @@ export const createRoomNameMessageHandler = async (ctx: MessageContext) => {
 		await BOT.sendMessage({ ctx, text: ui.txt.createdRoom + ' ' + roomName });
 		STATES.clearState(me.id);
 
-		const myRooms = ORM.Rooms.getMine(me.id);
-		await BOT.sendMessage(getRoomsListOptions(ctx, myRooms));
-	} catch (error) {
+		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
-		await BOT.sendMessage({ ctx, text: error.message });
+		await BOT.sendMessage({ ctx, text: e.message });
 	}
 };
 
@@ -82,8 +117,7 @@ export const backToRoomsListCallbackHandler = async (ctx: CallbackContext) => {
 
 	switch (to) {
 	case 'list':
-		const myRooms = ORM.Rooms.getMine(me.id);
-		await BOT.editMessage(getRoomsListOptions(ctx, myRooms));
+		await BOT.editMessage({ ctx, ...getRoomsListOptions(me) });
 		break;
 	}
 };

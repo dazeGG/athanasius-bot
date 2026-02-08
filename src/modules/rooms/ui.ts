@@ -10,7 +10,8 @@ export const txt = {
 
 /* KEYBOARDS */
 export const kb: ModuleKeyboards = {
-	noRooms: [
+	default: [
+		[{ text: 'Присоединиться', callback_data: { module: 'rooms', action: 'join' } }],
 		[{ text: 'Создать комнату', callback_data: { module: 'rooms', action: 'create' } }],
 	],
 } as const;
@@ -22,7 +23,7 @@ export const gkb = {
 			...rooms.map(r => {
 				return [{ text: r.name, callback_data: { module: 'rooms', action: 'open', meta: r.id } }];
 			}),
-			[{ text: 'Создать комнату', callback_data: { module: 'rooms', action: 'create' } }],
+			...kb.default,
 		];
 	},
 

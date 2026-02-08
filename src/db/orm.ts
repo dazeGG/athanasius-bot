@@ -67,6 +67,10 @@ class Rooms {
 		return DB.data.rooms.find(r => r.id === roomId);
 	}
 
+	private static getByJoinCode (joinCode: string): RoomSchema | undefined {
+		return DB.data.rooms.find(r => r.settings.joinCode === joinCode);
+	}
+
 	private static generateJoinCodeBlock (): string {
 		return customAlphabet('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 4)();
 	}
@@ -98,6 +102,30 @@ class Rooms {
 
 			return { rooms };
 		});
+	}
+
+	public static async joinRoom (myId: UserId, joinCode: string): Promise<RoomSchema> {
+		const room = this.getByJoinCode(joinCode);
+
+		if (!room) {
+			throw new Error('Неправильный код подключения');
+		}
+
+		if (room.players.includes(myId)) {
+			throw new Error(`Ты уже в комнате ${room.name}`);
+		}
+
+		await DB.update(({ rooms }) => {
+			for (const r of rooms) {
+				if (r.id === room.id) {
+					r.players.push(myId);
+					break;
+				}
+			}
+			return { rooms };
+		});
+
+		return room;
 	}
 }
 
