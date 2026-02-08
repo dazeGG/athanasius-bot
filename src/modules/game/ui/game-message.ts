@@ -100,7 +100,7 @@ export class GameMessage {
 	}
 
 	public static getCardsStealMessage (turnMeta: SuitsStageMeta): string {
-		return '<b>Поздравляю! Ты успешно украл карты :)</b>\n' +
+		return '🟩 <b>Ты успешно украл карты :)</b>\n' +
 			'\n' +
 			`Игрок: ${turnMeta.player.name}\n` +
 			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
