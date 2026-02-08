@@ -3,7 +3,6 @@ import type { RoomId } from '~/db';
 import { ORM } from '~/db';
 import type { MessageContext, CallbackContext } from '~/core';
 
-import * as ui from './ui';
 import * as utils from './utils';
 
 export class SettingsHandlers {

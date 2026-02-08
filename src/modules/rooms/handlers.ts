@@ -37,14 +37,7 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageContext) => {
 		await BOT.sendMessage({ ctx, text: `Ты зашел в комнату ${room.name}` });
 		await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 
-		for (const playerId of room.players) {
-			if (playerId !== me.id) {
-				await BOT.sendMessageByChatId({
-					chatId: playerId,
-					text: `Комната ${room.name} | ${meUser.name} зашел`,
-				});
-			}
-		}
+		await utils.mailing(`Комната ${room.name} | ${meUser.name} зашел`, room, [me.id]);
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
@@ -69,14 +62,7 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.editMessage({ ctx, text: `Ты вышел из комнаты ${room.name}` });
 	await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 
-	for (const playerId of room.players) {
-		if (playerId !== me.id) {
-			await BOT.sendMessageByChatId({
-				chatId: playerId,
-				text: `Комната ${room.name} | ${meUser.name} вышел`,
-			});
-		}
-	}
+	await utils.mailing(`Комната ${room.name} | ${meUser.name} вышел`, room, [me.id]);
 };
 
 export const createRoomCallbackHandler = async (ctx: CallbackContext) => {
@@ -129,12 +115,14 @@ export const kickCallbackHandler = async (ctx: CallbackContext) => {
 
 	if (playerId) {
 		await ORM.Rooms.removePlayer(Number(playerId), roomId);
+		await BOT.sendMessageByChatId({ chatId: Number(playerId), text: `Комната ${room.name} | Тебя выгнали :(` });
+		await utils.mailing(`Комната ${room.name} | ${ORM.Users.get(Number(playerId)).name} был выгнан`, room);
 	}
 
 	await BOT.editMessage({ ctx, text: ui.txt.kickPlayer, keyboard: ui.gkb.kickList(me.id, room) });
 };
 
-export const backToRoomsListCallbackHandler = async (ctx: CallbackContext) => {
+export const backCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 	const { from: me, data: { meta } } = ctx.callback;
 

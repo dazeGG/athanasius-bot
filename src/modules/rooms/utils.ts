@@ -1,11 +1,21 @@
 import type TelegramBot from 'node-telegram-bot-api';
 
+import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { playersList } from '~/shared/ui';
+import type { CallbackContext, MessageContext } from '~/core';
 import type { RoomSchema } from '~/db';
+import type { PlayerId } from '~/entities/game';
 
 import * as ui from './ui';
-import type { CallbackContext, MessageContext } from '~/core';
+
+export const mailing = async (text: string, room: RoomSchema, exclude: PlayerId[] = []) => {
+	const playersToMailing = room.players.filter(playerId => !exclude.includes(playerId));
+
+	for (const playerId of playersToMailing) {
+		await BOT.sendMessageByChatId({ chatId: playerId, text: text });
+	}
+};
 
 export const getRoomsListOptions = (me: TelegramBot.User) => {
 	return { text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(ORM.Rooms.getWithMe(me.id)) };
