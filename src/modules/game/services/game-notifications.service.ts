@@ -9,9 +9,24 @@ import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsS
 
 export class GameNotificationsService {
 	public static async sendFirstMessage (game: Game, initial: boolean = false) {
+		let text = '';
+
+		if (initial) {
+			text = txt.firstTurnMessage;
+		} else {
+			text = '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
+
+			if (game.activePlayer.settings.updatesView === 'composed') {
+				await BOT.sendMessageByChatId({
+					chatId: game.activePlayer.id,
+					text: `🟨 Вот что было за последний круг:\n\n${game.getLastRoundLogs()}`,
+				});
+			}
+		}
+
 		await BOT.sendMessageByChatId({
 			chatId: game.activePlayer.id,
-			text: initial ? txt.firstTurnMessage : '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту',
+			text,
 			keyboard: gkb.playersSelect(game.activePlayer.id, game.gameId, game.allPlayers),
 		});
 	}
