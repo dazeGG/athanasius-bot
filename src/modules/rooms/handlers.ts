@@ -1,8 +1,6 @@
 import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
-import { InfoMessage } from '~/modules/game/ui';
-import { GameNotificationsService } from '~/modules/game/services';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as ui from './ui';
@@ -133,9 +131,6 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	const game = new Game({ room });
 	await game.save();
-	await game.mailing({ text: InfoMessage.gameStartedMailing(room) });
-
-	await GameNotificationsService.sendFirstMessage(game, true);
 };
 
 export const backCallbackHandler = async (ctx: CallbackContext) => {

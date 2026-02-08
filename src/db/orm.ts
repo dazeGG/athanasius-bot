@@ -146,12 +146,18 @@ class Rooms {
 }
 
 class Games {
-	public static getActive (): GameSchema | undefined {
-		return DB.data.games.find(g => !g.ended);
+	public static getActive (roomId: RoomId): GameSchema | undefined {
+		return DB.data.games.find(g => g.roomId === roomId && !g.ended);
 	}
 
-	public static get (id: GameId): GameSchema | undefined {
-		return DB.data.games.find(g => g.id === id);
+	public static getById (id: GameId): GameSchema {
+		const game = DB.data.games.find(g => g.id === id);
+
+		if (!game) {
+			throw new Error('Game not found');
+		}
+
+		return game;
 	}
 }
 

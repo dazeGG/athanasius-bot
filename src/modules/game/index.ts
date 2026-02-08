@@ -24,8 +24,6 @@ const turnGuard = (ctx: CallbackContextCallback): boolean => {
 };
 
 const registerGame = () => {
-	BOT.registerMessageHandler(handlers.gameHandMessageHandler, { exact: 'Рука' });
-	BOT.registerCallbackHandler(handlers.gameStartCallbackHandler, { module: 'game', action: 'start' }, isRegistered);
 	BOT.registerCallbackHandler(handlers.gameTurnCallbackHandler, { module: 'g', action: 't' }, turnGuard);
 };
 

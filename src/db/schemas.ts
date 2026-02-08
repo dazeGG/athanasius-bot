@@ -11,6 +11,7 @@ export interface UserSchema {
 
 export interface GameSchema {
 	id: GameId;
+	roomId: RoomId;
 	started: number;
 	ended?: number;
 	players: UserId[];

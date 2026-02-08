@@ -3,7 +3,9 @@ import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
-import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomSchema } from '~/db';
+import { InfoMessage } from '~/modules/game/ui';
+import { GameNotificationsService } from '~/modules/game/services';
+import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
@@ -24,6 +26,7 @@ interface ConstructorOptionsInit {
 
 export class Game {
 	private readonly id: GameId;
+	private readonly roomId: RoomId;
 	private readonly started: Dayjs;
 	private ended?: Dayjs;
 	private readonly queue: Queue;
@@ -33,13 +36,10 @@ export class Game {
 
 	constructor (options: ConstructorOptionsById | ConstructorOptionsInit) {
 		if ('id' in options) {
-			const game = DB.data.games.find(g => g.id === options.id);
-
-			if (!game) {
-				throw new Error('Game not found');
-			}
+			const game = ORM.Games.getById(options.id ?? '');
 
 			this.id = game.id;
+			this.roomId = game.roomId;
 			this.started = dayjs(game.started);
 			this.ended = game.ended ? dayjs(game.ended) : undefined;
 			this.queue = new Queue(game.players, false);
@@ -47,20 +47,33 @@ export class Game {
 			this.athanasiuses = game.athanasiuses;
 			this.utils = GameUtilsService.parseGameUtils(game.utils);
 		} else {
-			const { players, settings } = options.room;
+			const { room } = options;
+			const { id: roomId, players, settings } = room;
 
 			this.id = nanoid(6);
+			this.roomId = roomId;
 			this.started = dayjs();
 			this.queue = new Queue(players, true);
 			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
 			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
+
+			this.initialMailing(room);
 		}
+	}
+
+	private async initialMailing (room: RoomSchema) {
+		await this.mailing({ text: InfoMessage.gameStartedMailing(room) });
+		await GameNotificationsService.sendFirstMessage(this, true);
 	}
 
 	/* GETTERS */
 	public get gameId (): GameId {
 		return this.id;
+	}
+
+	public getRoomId (): RoomId {
+		return this.roomId;
 	}
 
 	public get activePlayer (): UserSchema {
@@ -97,6 +110,7 @@ export class Game {
 	private toSchema (): GameSchema {
 		return {
 			id: this.id,
+			roomId: this.roomId,
 			started: this.started.valueOf(),
 			ended: this.ended?.valueOf(),
 			players: this.queue.actualQueue,
