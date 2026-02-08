@@ -117,7 +117,7 @@ export class GameNotificationsService {
 	}
 
 	public static async notifyComposeAthanasiusMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.newAthanasiusMe(turnMeta) });
+		await BOT.sendMessage({ ctx, text: InfoMessage.newAthanasiusMe(turnMeta) });
 		await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 	}
 
