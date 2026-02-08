@@ -1,5 +1,7 @@
+import { nanoid, customAlphabet } from 'nanoid';
+
 import { DB } from './db';
-import type { GameSchema, UserSchema } from './schemas';
+import type { GameSchema, RoomSchema, UserSchema } from './schemas';
 import type { GameId, UserId, UserSettings } from './types';
 
 class Users {
@@ -48,9 +50,57 @@ class Games {
 	}
 }
 
+class Rooms {
+	public static getAll (): RoomSchema[] {
+		return DB.data.rooms;
+	}
+
+	public static getMine (myId: UserId): RoomSchema[] {
+		return DB.data.rooms.filter(r => r.leader === myId);
+	}
+
+	public static getWithMe (myId: UserId): RoomSchema[] {
+		return DB.data.rooms.filter(r => r.players.includes(myId));
+	}
+
+	private static generateJoinCodeBlock (): string {
+		return customAlphabet('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 4)();
+	}
+
+	private static generateJoinCode (): string {
+		return Array.from({ length: 4 }, () => this.generateJoinCodeBlock()).join('-');
+	}
+
+	public static async createRoom (name: string, myId: UserId): Promise<void> {
+		await DB.update(({ rooms }) => {
+			if (this.getAll().some(r => r.name === name)) {
+				throw new Error(`Комната ${name} уже есть, попробуй другое название`);
+			}
+
+			rooms.push({
+				id: nanoid(6),
+				name,
+				leader: myId,
+				players: [myId],
+				settings: {
+					joinCode: this.generateJoinCode(),
+					deckType: 52,
+					decksCount: 4,
+					towHands: false,
+					allowMailing: false,
+					allowMailingAtTurn: false,
+				},
+			});
+
+			return { rooms };
+		});
+	}
+}
+
 const ORM = {
 	Users,
 	Games,
+	Rooms,
 };
 
 export {
