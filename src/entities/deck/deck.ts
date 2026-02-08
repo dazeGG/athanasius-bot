@@ -74,7 +74,7 @@ export class Deck {
 
 		const maxCountsLengths: Record<SuitName | 'total', number> = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
 
-		for (const card of Deck.sortByValue(cards)) {
+		for (const card of cards) {
 			const counts = groupedCounts[card.name]!;
 			maxCountsLengths.Hearts = Math.max(maxCountsLengths.Hearts, counts.Hearts.toString().length);
 			maxCountsLengths.Diamonds = Math.max(maxCountsLengths.Diamonds, counts.Diamonds.toString().length);
