@@ -33,13 +33,13 @@ export const gkb = {
 		const kb = [];
 
 		if (room.owner === myId) {
-			// kb.push([{ text: 'Настроить', callback_data: { module: 'room', action: 'settings' } }]);
+			kb.push([{ text: 'Настройки', callback_data: { module: 'room', action: 'settings', meta: room.id } }]);
 
 			if (room.players.length > 1) {
 				kb.push([{ text: 'Выгнать игроков', callback_data: { module: 'room', action: 'kick', meta: `${room.id}:` } }]);
 			}
 
-			if (room.players.length >= 2) {
+			if (room.players.length >= 3) {
 				kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start' } }]);
 			}
 		} else {
@@ -59,6 +59,14 @@ export const gkb = {
 					callback_data: { module: 'room', action: 'kick', meta: `${room.id}:${playerId}` },
 				}];
 			}),
+			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${room.id}` } }],
+		];
+	},
+
+	settings: (room: RoomSchema): RawButtons => {
+		return [
+			[{ text: 'Код подключения', callback_data: { module: 'room', action: 'cjc', meta: room.id } }],
+			[{ text: 'Количество колод', callback_data: { module: 'room', action: 'cdc', meta: room.id } }],
 			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${room.id}` } }],
 		];
 	},

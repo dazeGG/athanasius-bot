@@ -2,7 +2,7 @@ import { nanoid, customAlphabet } from 'nanoid';
 
 import { DB } from './db';
 import type { GameSchema, RoomSchema, UserSchema } from './schemas';
-import type { GameId, RoomId, UserId, UserSettings } from './types';
+import type { GameId, RoomId, RoomSettings, UserId, UserSettings } from './types';
 
 class Users {
 	public static async add (user: UserSchema): Promise<UserSchema> {
@@ -53,8 +53,14 @@ class Rooms {
 		return DB.data.rooms.filter(r => r.players.includes(myId));
 	}
 
-	public static getById (roomId: RoomId): RoomSchema | undefined {
-		return DB.data.rooms.find(r => r.id === roomId);
+	public static getById (roomId: RoomId): RoomSchema {
+		const room = DB.data.rooms.find(r => r.id === roomId);
+
+		if (!room) {
+			throw new Error(`Room with id ${roomId} not found`);
+		}
+
+		return room;
 	}
 
 	private static getByJoinCode (joinCode: string): RoomSchema | undefined {
@@ -114,11 +120,25 @@ class Rooms {
 	public static async removePlayer (playerId: number, roomId: RoomId): Promise<RoomSchema> {
 		const room = this.getById(roomId);
 
-		if (!room) {
-			throw new Error('Room not found');
-		}
-
 		room.players.splice(room.players.indexOf(playerId), 1);
+		await DB.write();
+
+		return room;
+	}
+
+	public static async changeJoinCode (roomId: RoomId): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+
+		room.settings.joinCode = this.generateJoinCode();
+		await DB.write();
+
+		return room;
+	}
+
+	public static async changeSettings (roomId: RoomId, newSettings: Partial<RoomSettings>): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+
+		room.settings = { ...room.settings, ...newSettings };
 		await DB.write();
 
 		return room;

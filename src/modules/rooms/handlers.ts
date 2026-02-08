@@ -1,29 +1,9 @@
-import type TelegramBot from 'node-telegram-bot-api';
-
 import { BOT, STATES } from '~/core';
-import type { RoomSchema } from '~/db';
 import { ORM } from '~/db';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as ui from './ui';
-import { playersList } from '~/modules/game/ui';
-
-const getRoomsListOptions = (me: TelegramBot.User) => {
-	return { text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(ORM.Rooms.getWithMe(me.id)) };
-};
-
-const getRoomOptions = (me: TelegramBot.User, room: RoomSchema) => {
-	return {
-		text:
-			`Комната ${room.name}\n` +
-			`Код подключения: <code>${room.settings.joinCode}</code>\n\n` +
-			'Список игроков:\n' +
-			`${playersList(room.players)}\n\n` +
-			'Настройки игры:\n' +
-			`Количество колод: ${room.settings.decksCount}`,
-		keyboard: ui.gkb.room(me.id, room),
-	};
-};
+import * as utils from './utils';
 
 export const roomsMessageHandler = async (ctx: MessageContext) => {
 	await BOT.deleteMessage(ctx);
@@ -35,7 +15,7 @@ export const roomsMessageHandler = async (ctx: MessageContext) => {
 	if (roomsWithMe.length === 0) {
 		await BOT.sendMessage({ ctx, text: ui.txt.noRooms, keyboard: ui.kb.default });
 	} else {
-		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+		await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 	}
 };
 
@@ -55,7 +35,7 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageContext) => {
 		const meUser = ORM.Users.get(me.id);
 
 		await BOT.sendMessage({ ctx, text: `Ты зашел в комнату ${room.name}` });
-		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+		await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 
 		for (const playerId of room.players) {
 			if (playerId !== me.id) {
@@ -69,7 +49,7 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageContext) => {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
 		await BOT.sendMessage({ ctx, text: e.message });
-		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+		await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 	}
 
 	STATES.clearState(me.id);
@@ -87,7 +67,7 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
 	const meUser = ORM.Users.get(me.id);
 
 	await BOT.editMessage({ ctx, text: `Ты вышел из комнаты ${room.name}` });
-	await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+	await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 
 	for (const playerId of room.players) {
 		if (playerId !== me.id) {
@@ -115,7 +95,7 @@ export const createRoomNameMessageHandler = async (ctx: MessageContext) => {
 		await BOT.sendMessage({ ctx, text: ui.txt.createdRoom + ' ' + roomName });
 		STATES.clearState(me.id);
 
-		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+		await BOT.sendMessage({ ctx, ...utils.getRoomsListOptions(me) });
 	} catch (e) {
 		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-expect-error
@@ -133,11 +113,7 @@ export const openRoomCallbackHandler = async (ctx: CallbackContext) => {
 
 	const room = ORM.Rooms.getById(roomId);
 
-	if (!room) {
-		throw new Error('Room not found');
-	}
-
-	await BOT.editMessage({ ctx, ...getRoomOptions(me, room) });
+	await BOT.editMessage({ ctx, ...utils.getRoomOptions(me, room) });
 };
 
 export const kickCallbackHandler = async (ctx: CallbackContext) => {
@@ -151,10 +127,6 @@ export const kickCallbackHandler = async (ctx: CallbackContext) => {
 	const [roomId, playerId] = meta.split(':');
 	const room = ORM.Rooms.getById(roomId);
 
-	if (!room) {
-		throw new Error('Room not found');
-	}
-
 	if (playerId) {
 		await ORM.Rooms.removePlayer(Number(playerId), roomId);
 	}
@@ -167,7 +139,7 @@ export const backToRoomsListCallbackHandler = async (ctx: CallbackContext) => {
 	const { from: me, data: { meta } } = ctx.callback;
 
 	if (meta === 'list') {
-		await BOT.editMessage({ ctx, ...getRoomsListOptions(me) });
+		await BOT.editMessage({ ctx, ...utils.getRoomsListOptions(me) });
 		return;
 	}
 
@@ -175,11 +147,6 @@ export const backToRoomsListCallbackHandler = async (ctx: CallbackContext) => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const [_, roomId] = meta?.split(':');
 		const room = ORM.Rooms.getById(roomId);
-
-		if (!room) {
-			throw new Error('Room not found');
-		}
-
-		await BOT.editMessage({ ctx, ...getRoomOptions(me, room) });
+		await BOT.editMessage({ ctx, ...utils.getRoomOptions(me, room) });
 	}
 };

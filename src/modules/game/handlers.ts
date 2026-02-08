@@ -2,13 +2,14 @@ import { BOT } from '~/core';
 import { DB, ORM } from '~/db';
 import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
+import { playersList } from '~/shared/ui';
 
 import type { CallbackContext, MessageContext, SendMessageOptions } from '~/core';
 
 import { GameLogicService, GameNotificationsService } from './services';
 import { DECKS_COUNT, PLAYERS_TO_START } from './config';
 import { parseTurnMeta } from './lib';
-import { InfoMessage, playersList, txt, kb, athanasiusesList } from './ui';
+import { InfoMessage, txt, kb, athanasiusesList } from './ui';
 
 export const gameCommandHandler = async (ctx: MessageContext) => {
 	await BOT.deleteMessage(ctx);
