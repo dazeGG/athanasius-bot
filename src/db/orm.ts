@@ -115,15 +115,8 @@ class Rooms {
 			throw new Error(`Ты уже в комнате ${room.name}`);
 		}
 
-		await DB.update(({ rooms }) => {
-			for (const r of rooms) {
-				if (r.id === room.id) {
-					r.players.push(myId);
-					break;
-				}
-			}
-			return { rooms };
-		});
+		room.players.push(myId);
+		await DB.write();
 
 		return room;
 	}
