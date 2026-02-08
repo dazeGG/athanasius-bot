@@ -52,6 +52,10 @@ export class Deck {
 		});
 	}
 
+	private static getSpacedValue (value: string, space: number): string {
+		return ' '.repeat(space - value.length) + value;
+	}
+
 	public static getMyHandView (cards: Card[]): string {
 		if (cards.length === 0) {
 			return 'У тебя закончились карты, подожди пока игра закончится :)';
@@ -68,27 +72,30 @@ export class Deck {
 			groupedCounts[card.name]!.total++;
 		}
 
+		const maxCountsLengths: Record<SuitName | 'total', number> = { Hearts: 0, Diamonds: 0, Spades: 0, Clubs: 0, total: 0 };
+
+		for (const card of cards) {
+			const counts = groupedCounts[card.name]!;
+			maxCountsLengths.Hearts = Math.max(maxCountsLengths.Hearts, counts.Hearts.toString().length);
+			maxCountsLengths.Diamonds = Math.max(maxCountsLengths.Diamonds, counts.Diamonds.toString().length);
+			maxCountsLengths.Spades = Math.max(maxCountsLengths.Spades, counts.Spades.toString().length);
+			maxCountsLengths.Clubs = Math.max(maxCountsLengths.Clubs, counts.Clubs.toString().length);
+			maxCountsLengths.total = Math.max(maxCountsLengths.total, counts.total.toString().length);
+		}
+
 		let result = '<code>';
 
 		for (const cardName of Object.keys(groupedCounts) as CardName[]) {
 			const counts = groupedCounts[cardName]!;
-			result += DeckConfig.CARDS_VIEW_MAP[cardName];
-			result += cardName === '10' ? ' |' : '  |';
+
+			result += this.getSpacedValue(DeckConfig.CARDS_VIEW_MAP[cardName], 2) + ' |';
 
 			for (const suit of Object.keys(DeckConfig.SUIT_VIEW_MAP) as SuitName[]) {
-				const count = counts[suit];
-
-				if (count < 10) {
-					result += '   ';
-				} else if (count < 100) {
-					result += '  ';
-				}
-
-				result += count === 0 ? '-' : count;
+				result += this.getSpacedValue(counts[suit].toString(), maxCountsLengths[suit] + 1);
 				result += DeckConfig.SUIT_VIEW_MAP[suit];
 			}
 
-			result += ` | ${counts.total}\n`;
+			result += ` | ${this.getSpacedValue(counts.total.toString(), maxCountsLengths.total)}\n`;
 		}
 
 		return result + '</code>';
