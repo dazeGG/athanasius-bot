@@ -1,30 +1,12 @@
 import _ from 'lodash';
 
-import { DB } from '~/db';
 import { TurnStage } from '~/entities/game';
-import type { ColorsStageMeta, CountStageMeta, Game, Suits, SuitsStageMeta } from '~/entities/game';
+import type { ColorsStageMeta, CountStageMeta, Suits, SuitsStageMeta } from '~/entities/game';
 
 import { GameNotificationsService } from '.';
 import type { GameServiceOptions, GameServiceOptionsStage } from './types';
 
 export class GameLogicService {
-	private static getWinners (game: Game): [string[], number] {
-		const playerStats = game.allPlayers.map(playerId => {
-			const user = DB.data.users.find(u => u.id === playerId);
-			return {
-				playerId,
-				name: user?.name,
-				count: game.getCountAthanasiuses(playerId),
-			};
-		});
-		const maxCount = Math.max(...playerStats.map(stat => stat.count));
-		const winners = playerStats
-			.filter(stat => stat.count === maxCount && stat.count > 0)
-			.map(stat => stat.name ?? 'noname');
-
-		return [winners, maxCount];
-	}
-
 	private static getNewCount (turnMeta: CountStageMeta): number {
 		return turnMeta.countAction === '-' ? turnMeta.count - 1 : turnMeta.count + 1;
 	}
@@ -159,8 +141,7 @@ export class GameLogicService {
 		}
 
 		if (gameEnded) {
-			const [winners, maxCount] = this.getWinners(game);
-			await GameNotificationsService.notifyEndGameMessage(game, winners, maxCount);
+			await GameNotificationsService.notifyEndGameMessage(game);
 			return;
 		}
 
