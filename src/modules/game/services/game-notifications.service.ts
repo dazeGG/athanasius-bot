@@ -1,6 +1,8 @@
 import { BOT } from '~/core';
+import { ORM } from '~/db';
 import { TurnStage } from '~/entities/game';
 import { GLOBAL_KEYBOARD } from '~/shared/lib';
+import type { GameSchema } from '~/db';
 import type { Game } from '~/entities/game';
 
 import { txt, gkb, InfoMessage, GameMessage } from '../ui';
@@ -9,7 +11,7 @@ import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsS
 
 export class GameNotificationsService {
 	public static async sendFirstMessage (game: Game, initial: boolean = false) {
-		let text = '';
+		let text: string;
 
 		if (initial) {
 			text = txt.firstTurnMessage;
@@ -136,9 +138,20 @@ export class GameNotificationsService {
 		await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 	}
 
-	public static async notifyEndGameMessage (game: Game, winners: string[], maxCount: number) {
+	private static getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {
+		const athanasiusesMap: [string, number][] = [];
+
+		Object.entries(athanasiuses).forEach(([playerId, cardNames]) => {
+			const player = ORM.Users.get(Number(playerId));
+			athanasiusesMap.push([player.name, cardNames.length]);
+		});
+
+		return athanasiusesMap.sort((a, b) => b[1] - a[1]);
+	}
+
+	public static async notifyEndGameMessage (game: Game) {
 		await game.mailing({
-			text: InfoMessage.gameEndedMailing(winners, maxCount),
+			text: InfoMessage.gameEndedMailing(this.getSortedAthanasiusesMap(game.getAthanasiuses())),
 			options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
 		});
 	}

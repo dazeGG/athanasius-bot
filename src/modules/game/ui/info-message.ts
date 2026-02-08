@@ -1,5 +1,5 @@
-import type { UserSchema } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import type { UserSchema } from '~/db';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
 import { txt } from './texts';
@@ -24,16 +24,52 @@ export class InfoMessage {
 			'• ' + txt.decksCount + ': ' + deckCount;
 	}
 
-	public static gameEndedMailing (winners: string[], athanasiusesCount: number): string {
-		let txtGameEnded = '🦎 <b>' + txt.gameEnded + '</b>\n\n';
+	private static athanasiusRightText (count: number): string {
+		const lastDigit = Math.abs(count) % 10;
+		const lastTwoDigits = Math.abs(count) % 100;
 
-		if (winners.length === 1) {
-			txtGameEnded += `Победитель: <b>${winners[0]}</b>\n`;
-		} else {
-			txtGameEnded += `Победители: <b>${winners.join(', ')}</b>\n`;
+		if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+			return 'Афанасиев';
 		}
 
-		return txtGameEnded + `Количество Афанасиев: ${athanasiusesCount}`;
+		if (lastDigit === 1) {
+			return 'Афанасий';
+		}
+
+		if (lastDigit >= 2 && lastDigit <= 4) {
+			return 'Афанасия';
+		}
+
+		return 'Афанасиев';
+	}
+
+	public static gameEndedMailing (athMap: [string, number][]): string {
+		let text = `🦎 <b>${txt.gameEnded}</b>\n\n`;
+		text += 'Вот они, победители, слева на право:\n\n';
+
+		const [first, second, third, ...others] = athMap;
+
+		text += `🥇 ${first[0]} - ${first[1]} ${this.athanasiusRightText(first[1])}\n`;
+		text += `🥈 ${second[0]} - ${second[1]} ${this.athanasiusRightText(second[1])}\n`;
+
+		if (others.length == 0) {
+			text += '\nОстальные результаты:\n\n';
+			text += `🦧 ${third[0]} - ${third[1]} ${this.athanasiusRightText(third[1])}`;
+		} else {
+			text += `🥉 ${third[0]} - ${third[1]} ${this.athanasiusRightText(third[1])}\n`;
+
+			text += '\nОстальные результаты:\n\n';
+
+			others.forEach((other, i) => {
+				text += `🦧 ${other[0]} - ${other[1]} ${this.athanasiusRightText(other[1])}`;
+
+				if (i !== others.length - 1) {
+					text += '\n';
+				}
+			});
+		}
+
+		return text;
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
