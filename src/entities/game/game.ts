@@ -3,11 +3,11 @@ import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
-import type { GameId, GameLog, GameSchema, GameUtils, UserSchema } from '~/db';
+import type { GameId, GameLog, GameSchema, UserSchema , GameUtilsParsed } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
-import { GameLogs, GameMailing } from './utils';
+import { GameLogs, GameMailing, GameUtilsService } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
@@ -31,7 +31,7 @@ export class Game {
 	private readonly queue: Queue;
 	private readonly hands: Hands;
 	private readonly athanasiuses: GameSchema['athanasiuses'];
-	private readonly utils: GameUtils;
+	private readonly utils: GameUtilsParsed;
 
 	constructor (options: ConstructorOptionsById | ConstructorOptionsInit) {
 		if ('id' in options) {
@@ -47,7 +47,7 @@ export class Game {
 			this.queue = new Queue(game.players, false);
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
-			this.utils = game.utils;
+			this.utils = GameUtilsService.parseGameUtils(game.utils);
 		} else {
 			const { players, decksCount } = options;
 
@@ -108,7 +108,7 @@ export class Game {
 			players: this.queue.actualQueue,
 			hands: this.hands.allHands,
 			athanasiuses: this.athanasiuses,
-			utils: this.utils,
+			utils: GameUtilsService.generateGameUtils(this.utils),
 		};
 	}
 

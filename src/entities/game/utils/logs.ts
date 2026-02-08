@@ -1,6 +1,6 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
-import type { GameLog, GameUtils } from '~/db';
+import type { GameLog, GameUtilsParsed } from '~/db';
 
 import type { PlayerId } from '../types';
 
@@ -35,11 +35,11 @@ export class GameLogs {
 		return msg;
 	}
 
-	public static hasLogs (utils: GameUtils, playerId: PlayerId): boolean {
+	public static hasLogs (utils: GameUtilsParsed, playerId: PlayerId): boolean {
 		return utils.logs[utils.logs.length - 1].from !== playerId;
 	}
 
-	public static getLastRoundLogs (utils: GameUtils, playerId: PlayerId): string {
+	public static getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): string {
 		const result: string[] = [];
 
 		for (let i = utils.logs.length - 1; i >= 0; i--) {

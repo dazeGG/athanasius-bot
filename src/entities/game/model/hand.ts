@@ -2,7 +2,7 @@ import _ from 'lodash';
 
 import { Deck, DeckConfig } from '~/entities/deck';
 import type { CardId, Card, CardName, SuitName } from '~/entities/deck';
-import type { GameUtils } from '~/db';
+import type { GameUtilsParsed } from '~/db';
 
 import type { HandHasOptions } from '../types';
 
@@ -100,7 +100,7 @@ export class Hand {
 		return athanasiusCards;
 	}
 
-	public handleAthanasiuses ({ cardsToAthanasius }: GameUtils): ReturnType<typeof this.getAthanasiuses> {
+	public handleAthanasiuses ({ cardsToAthanasius }: GameUtilsParsed): ReturnType<typeof this.getAthanasiuses> {
 		const athanasiuses = this.getAthanasiuses(cardsToAthanasius);
 
 		athanasiuses.forEach(athanasius => {
