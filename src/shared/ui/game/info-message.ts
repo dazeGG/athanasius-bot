@@ -3,7 +3,7 @@ import { playersList } from '~/shared/ui';
 import type { RoomSchema, UserSchema } from '~/db';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
-import { txt } from './texts';
+import { txt } from '.';
 
 export class InfoMessage {
 	/* MAILING */

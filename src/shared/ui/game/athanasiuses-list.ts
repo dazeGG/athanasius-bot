@@ -1,6 +1,6 @@
-import type { Game } from '~/entities/game';
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import type { Game } from '~/entities/game';
 
 export const athanasiusesList = (game: Game): string => {
 	return game.allPlayers.map(playerId => {

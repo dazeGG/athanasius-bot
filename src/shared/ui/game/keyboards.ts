@@ -1,19 +1,10 @@
-import type { RawButtons } from '~/core';
 import { DB } from '~/db';
+import { DeckConfig } from '~/entities/deck';
+import { TurnStage } from '~/entities/game';
+import type { RawButtons } from '~/core';
 import type { GameId } from '~/db';
 import type { CardName } from '~/entities/deck';
-import { DeckConfig } from '~/entities/deck';
 import type { Game, PlayerId, Suits } from '~/entities/game';
-import { TurnStage } from '~/entities/game';
-
-import { DECKS_COUNT } from '../config';
-
-/* KEYBOARDS */
-export const kb: ModuleKeyboards = {
-	start: [
-		[{ text: 'Начать игру', callback_data: { module: 'game', action: 'start' } }],
-	],
-} as const;
 
 /* GENERABLE KEYBOARDS */
 export const gkb = {
@@ -54,7 +45,7 @@ export const gkb = {
 		})));
 	},
 
-	countSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number): RawButtons => {
+	countSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, decksCount: number): RawButtons => {
 		const actionButtons = [];
 		const baseMeta = `${TurnStage.count}#${gameId}#${playerId}#${cardName}#${count}`;
 
@@ -62,7 +53,7 @@ export const gkb = {
 			actionButtons.push({ text: '-', callback_data: { module: 'g',action: 't',meta: baseMeta + '-' } });
 		}
 
-		if (count < DECKS_COUNT * 4 - 1) {
+		if (count < decksCount * 4 - 1) {
 			actionButtons.push({ text: '+', callback_data: { module: 'g',action: 't',meta: baseMeta + '+' } });
 		}
 

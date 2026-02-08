@@ -1,11 +1,9 @@
 import { BOT } from '~/core';
 import { DB } from '~/db';
-import { Game } from '~/entities/game';
-
+import { Game, GameLogicService } from '~/entities/game';
 import type { CallbackContext } from '~/core';
 
-import { GameLogicService } from './services';
-import { parseTurnMeta } from './lib';
+import * as lib from './lib';
 
 export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
@@ -17,7 +15,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		return;
 	}
 
-	const turnMeta = parseTurnMeta(callbackMeta);
+	const turnMeta = lib.parseTurnMeta(callbackMeta);
 	const game = new Game({ id: turnMeta.gameId });
 	const me = DB.data.users.find(u => u.id === ctx.callback.from.id);
 

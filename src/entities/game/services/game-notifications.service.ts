@@ -1,10 +1,10 @@
 import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { TurnStage } from '~/entities/game';
+import { txt, gkb, InfoMessage, GameMessage } from '~/shared/ui/game';
 import type { GameSchema } from '~/db';
 import type { Game } from '~/entities/game';
 
-import { txt, gkb, InfoMessage, GameMessage } from '../ui';
 import { SERVICES_CONFIG } from './config';
 import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsStage } from './types';
 

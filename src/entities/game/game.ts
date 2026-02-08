@@ -3,13 +3,14 @@ import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
-import { InfoMessage } from '~/modules/game/ui';
-import { GameNotificationsService } from '~/modules/game/services';
+import { InfoMessage } from '~/shared/ui/game';
+import { GameNotificationsService } from '~/entities/game/services';
 import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
-import { GameLogs, GameMailing, GameUtilsService } from './utils';
+import { GameUtilsService } from './services';
+import { GameLogs, GameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';

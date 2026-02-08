@@ -8,7 +8,7 @@ import type {
 	SuitsStageMeta,
 } from '~/entities/game';
 
-import { txt } from './texts';
+import { txt } from '.';
 
 export class GameMessage {
 	private static generateChoiceMessage (turnMeta: TurnMeta): string {
