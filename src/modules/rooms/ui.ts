@@ -32,7 +32,7 @@ export const gkb = {
 	room: (myId: UserId, room: RoomSchema): RawButtons => {
 		const kb = [];
 
-		if (room.leader === myId) {
+		if (room.owner === myId) {
 			// kb.push([{ text: 'Настроить', callback_data: { module: 'room', action: 'settings' } }]);
 
 			if (room.players.length > 1) {

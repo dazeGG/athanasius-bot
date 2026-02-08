@@ -22,7 +22,7 @@ export interface GameSchema {
 export interface RoomSchema {
 	id: RoomId;
 	name: string;
-	leader: UserId;
+	owner: UserId;
 	players: UserId[];
 	settings: RoomSettings;
 }

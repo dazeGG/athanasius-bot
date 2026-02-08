@@ -46,7 +46,7 @@ class Rooms {
 	}
 
 	public static getMine (myId: UserId): RoomSchema[] {
-		return DB.data.rooms.filter(r => r.leader === myId);
+		return DB.data.rooms.filter(r => r.owner === myId);
 	}
 
 	public static getWithMe (myId: UserId): RoomSchema[] {
@@ -78,7 +78,7 @@ class Rooms {
 			rooms.push({
 				id: nanoid(6),
 				name,
-				leader: myId,
+				owner: myId,
 				players: [myId],
 				settings: {
 					joinCode: this.generateJoinCode(),
