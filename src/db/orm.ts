@@ -128,15 +128,17 @@ class Rooms {
 		return room;
 	}
 
-	public static async leaveRoom (myId: UserId, roomId: RoomId): Promise<void> {
-		await DB.update(({ rooms }) => {
-			for (const r of rooms) {
-				if (r.id === roomId) {
-					r.players.splice(r.players.indexOf(myId), 1);
-				}
-			}
-			return { rooms };
-		});
+	public static async leaveRoom (myId: UserId, roomId: RoomId): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+
+		if (!room) {
+			throw new Error('Room not found');
+		}
+
+		room.players.splice(room.players.indexOf(myId), 1);
+		await DB.write();
+
+		return room;
 	}
 }
 

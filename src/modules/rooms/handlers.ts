@@ -40,7 +40,7 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageContext) => {
 		const room = await ORM.Rooms.joinRoom(me.id, joinCode);
 		const meUser = ORM.Users.get(me.id);
 
-		await BOT.sendMessage({ ctx, text: `Ты успешно зашел в комнату ${room.name}` });
+		await BOT.sendMessage({ ctx, text: `Ты зашел в комнату ${room.name}` });
 		await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
 
 		for (const playerId of room.players) {
@@ -69,8 +69,20 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
 		throw new Error('Room id required');
 	}
 
-	await ORM.Rooms.leaveRoom(me.id, roomId);
-	await BOT.editMessage({ ctx, ...getRoomsListOptions(me) });
+	const room = await ORM.Rooms.leaveRoom(me.id, roomId);
+	const meUser = ORM.Users.get(me.id);
+
+	await BOT.editMessage({ ctx, text: `Ты вышел из комнаты ${room.name}` });
+	await BOT.sendMessage({ ctx, ...getRoomsListOptions(me) });
+
+	for (const playerId of room.players) {
+		if (playerId !== me.id) {
+			await BOT.sendMessageByChatId({
+				chatId: playerId,
+				text: `Комната ${room.name} | ${meUser.name} вышел`,
+			});
+		}
+	}
 };
 
 export const createRoomCallbackHandler = async (ctx: CallbackContext) => {
