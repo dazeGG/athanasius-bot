@@ -1,6 +1,7 @@
 import type TelegramBot from 'node-telegram-bot-api';
 
 import { BOT, STATES } from '~/core';
+import type { RoomSchema } from '~/db';
 import { ORM } from '~/db';
 import type { MessageContext, CallbackContext } from '~/core';
 
@@ -9,6 +10,19 @@ import { playersList } from '~/modules/game/ui';
 
 const getRoomsListOptions = (me: TelegramBot.User) => {
 	return { text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(ORM.Rooms.getWithMe(me.id)) };
+};
+
+const getRoomOptions = (me: TelegramBot.User, room: RoomSchema) => {
+	return {
+		text:
+			`Комната ${room.name}\n` +
+			`Код подключения: <code>${room.settings.joinCode}</code>\n\n` +
+			'Список игроков:\n' +
+			`${playersList(room.players)}\n\n` +
+			'Настройки игры:\n' +
+			`Количество колод: ${room.settings.decksCount}`,
+		keyboard: ui.gkb.room(me.id, room),
+	};
 };
 
 export const roomsMessageHandler = async (ctx: MessageContext) => {
@@ -69,7 +83,7 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
 		throw new Error('Room id required');
 	}
 
-	const room = await ORM.Rooms.leaveRoom(me.id, roomId);
+	const room = await ORM.Rooms.removePlayer(me.id, roomId);
 	const meUser = ORM.Users.get(me.id);
 
 	await BOT.editMessage({ ctx, text: `Ты вышел из комнаты ${room.name}` });
@@ -123,26 +137,49 @@ export const openRoomCallbackHandler = async (ctx: CallbackContext) => {
 		throw new Error('Room not found');
 	}
 
-	await BOT.editMessage({
-		ctx,
-		text:
-			`Комната ${room.name}\n` +
-			`Код подключения: <code>${room.settings.joinCode}</code>\n\n` +
-			'Список игроков:\n' +
-			`${playersList(room.players)}\n\n` +
-			'Настройки игры:\n' +
-			`Количество колод: ${room.settings.decksCount}`,
-		keyboard: ui.gkb.room(me.id, room),
-	});
+	await BOT.editMessage({ ctx, ...getRoomOptions(me, room) });
+};
+
+export const kickCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+	const { from: me, data: { meta } } = ctx.callback;
+
+	if (!meta) {
+		throw new Error('Meta is required');
+	}
+
+	const [roomId, playerId] = meta.split(':');
+	const room = ORM.Rooms.getById(roomId);
+
+	if (!room) {
+		throw new Error('Room not found');
+	}
+
+	if (playerId) {
+		await ORM.Rooms.removePlayer(Number(playerId), roomId);
+	}
+
+	await BOT.editMessage({ ctx, text: ui.txt.kickPlayer, keyboard: ui.gkb.kickList(me.id, room) });
 };
 
 export const backToRoomsListCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
-	const { from: me, data: { meta: to } } = ctx.callback;
+	const { from: me, data: { meta } } = ctx.callback;
 
-	switch (to) {
-	case 'list':
+	if (meta === 'list') {
 		await BOT.editMessage({ ctx, ...getRoomsListOptions(me) });
-		break;
+		return;
+	}
+
+	if (meta?.startsWith('room')) {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const [_, roomId] = meta?.split(':');
+		const room = ORM.Rooms.getById(roomId);
+
+		if (!room) {
+			throw new Error('Room not found');
+		}
+
+		await BOT.editMessage({ ctx, ...getRoomOptions(me, room) });
 	}
 };

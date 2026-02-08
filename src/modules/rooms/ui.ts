@@ -1,3 +1,4 @@
+import { ORM } from '~/db';
 import type { RawButtons } from '~/core';
 import type { RoomSchema, UserId } from '~/db';
 
@@ -6,6 +7,7 @@ export const txt = {
 	noRooms: 'У тебя пока нет комнат',
 	roomsList: 'Вот список твоих комнат',
 	createdRoom: 'Создал комнату',
+	kickPlayer: 'Выбери кого хочешь выгнать',
 } as const;
 
 /* KEYBOARDS */
@@ -31,10 +33,13 @@ export const gkb = {
 		const kb = [];
 
 		if (room.leader === myId) {
-			// TODO: Сделать настройку игры
 			// kb.push([{ text: 'Настроить', callback_data: { module: 'room', action: 'settings' } }]);
-			//
-			if (room.players.length >= 3) {
+
+			if (room.players.length > 1) {
+				kb.push([{ text: 'Выгнать игроков', callback_data: { module: 'room', action: 'kick', meta: `${room.id}:` } }]);
+			}
+
+			if (room.players.length >= 2) {
 				kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start' } }]);
 			}
 		} else {
@@ -44,5 +49,17 @@ export const gkb = {
 		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
 
 		return kb;
+	},
+
+	kickList: (myId: UserId, room: RoomSchema): RawButtons => {
+		return [
+			...room.players.filter(p => p !== myId).map(playerId => {
+				return [{
+					text: ORM.Users.get(playerId).name,
+					callback_data: { module: 'room', action: 'kick', meta: `${room.id}:${playerId}` },
+				}];
+			}),
+			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${room.id}` } }],
+		];
 	},
 } as const;
