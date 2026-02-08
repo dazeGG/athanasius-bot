@@ -6,9 +6,42 @@ import type { GameId } from '~/db';
 import type { CardName } from '~/entities/deck';
 import type { Game, PlayerId, Suits } from '~/entities/game';
 
-/* GENERABLE KEYBOARDS */
+/**
+ *  GENERABLE KEYBOARDS
+ *  */
+interface PlayersSelectGKBOptions {
+	me: PlayerId;
+	gameId: GameId;
+	playerIds: PlayerId[];
+}
+
+interface CardSelectGKBOptions {
+	me: PlayerId;
+	game: Game;
+	playerId: PlayerId;
+}
+
+interface BaseStageOptions {
+	gameId: GameId;
+	playerId: PlayerId;
+	cardName: CardName;
+	count: number;
+}
+
+interface CountSelectGKBOptions extends BaseStageOptions {
+	cardsToAthanasius: number;
+}
+
+interface ColorsSelectGKBOptions extends BaseStageOptions {
+	redCount: number;
+}
+
+interface SuitsSelectGKBOptions extends ColorsSelectGKBOptions {
+	suits: Suits;
+}
+
 export const gkb = {
-	playersSelect: (me: PlayerId, gameId: GameId, playerIds: PlayerId[]): RawButtons => {
+	playersSelect: ({ me, gameId, playerIds }: PlayersSelectGKBOptions): RawButtons => {
 		const playersExceptMe = playerIds.filter(playerId => playerId !== me);
 		const players = DB.data.users.filter(user => playersExceptMe.includes(user.id));
 
@@ -18,7 +51,7 @@ export const gkb = {
 		}]);
 	},
 
-	cardSelect: (me: PlayerId, game: Game, playerId: PlayerId): RawButtons => {
+	cardSelect: ({ me,game, playerId }: CardSelectGKBOptions): RawButtons => {
 		const myHand = game.getHand(me);
 
 		if (!myHand) {
@@ -45,7 +78,7 @@ export const gkb = {
 		})));
 	},
 
-	countSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, decksCount: number): RawButtons => {
+	countSelect: ({ gameId, playerId, cardName, count, cardsToAthanasius }: CountSelectGKBOptions): RawButtons => {
 		const actionButtons = [];
 		const baseMeta = `${TurnStage.count}#${gameId}#${playerId}#${cardName}#${count}`;
 
@@ -53,7 +86,7 @@ export const gkb = {
 			actionButtons.push({ text: '-', callback_data: { module: 'g',action: 't',meta: baseMeta + '-' } });
 		}
 
-		if (count < decksCount * 4 - 1) {
+		if (count < cardsToAthanasius - 1) {
 			actionButtons.push({ text: '+', callback_data: { module: 'g',action: 't',meta: baseMeta + '+' } });
 		}
 
@@ -63,7 +96,7 @@ export const gkb = {
 		];
 	},
 
-	colorsSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, redCount: number): RawButtons => {
+	colorsSelect: ({ gameId, playerId, cardName, count, redCount }: ColorsSelectGKBOptions): RawButtons => {
 		const actionButtons = [];
 		const baseMeta = `${TurnStage.colors}#${gameId}#${playerId}#${cardName}#${count}#${redCount}`;
 
@@ -81,7 +114,7 @@ export const gkb = {
 		];
 	},
 
-	suitsSelect: (gameId: GameId, playerId: PlayerId, cardName: CardName, count: number, redCount: number, suits: Suits): RawButtons => {
+	suitsSelect: ({ gameId, playerId, cardName, count, redCount, suits }: SuitsSelectGKBOptions): RawButtons => {
 		const actionButtons = [];
 		const baseMeta = `${TurnStage.suits}#${gameId}#${playerId}#${cardName}#${count}#${redCount}#${suits.hearts}!${suits.diamonds}!${suits.spades}!${suits.clubs}!${suits.mode}`;
 

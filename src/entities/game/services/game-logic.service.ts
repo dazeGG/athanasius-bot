@@ -69,7 +69,7 @@ export class GameLogicService {
 	private static async processCountStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Count']) {
 		if (turnMeta.countAction !== 'select') {
 			const newCount = this.getNewCount(turnMeta);
-			await GameNotificationsService.updateCountMessage({ ctx, turnMeta, newCount });
+			await GameNotificationsService.updateCountMessage({ ctx, game, turnMeta, newCount });
 			return;
 		}
 

@@ -90,6 +90,10 @@ export class Game {
 		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
 	}
 
+	public get cardsToAthanasius (): number {
+		return this.utils.cardsToAthanasius;
+	}
+
 	public getAthanasiuses (): GameSchema['athanasiuses'] {
 		return this.athanasiuses;
 	}
