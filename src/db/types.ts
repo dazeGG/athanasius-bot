@@ -4,10 +4,20 @@ import type { nanoid } from 'nanoid';
 import type { CardName } from '~/entities/deck';
 
 export type UserId = TelegramBot.User['id'];
+export type RoomId = ReturnType<typeof nanoid>;
 export type GameId = ReturnType<typeof nanoid>;
 
 export interface UserSettings {
 	updatesView: 'instant' | 'composed';
+}
+
+export interface RoomSettings {
+	joinCode: string;
+	deckType: 52 | 54 | 36;
+	decksCount: number;
+	towHands: boolean;
+	allowMailing: boolean;
+	allowMailingAtTurn: boolean;
 }
 
 export interface GameLog {

@@ -1,6 +1,8 @@
+import { nanoid, customAlphabet } from 'nanoid';
+
 import { DB } from './db';
-import type { GameSchema, UserSchema } from './schemas';
-import type { GameId, UserId, UserSettings } from './types';
+import type { GameSchema, RoomSchema, UserSchema } from './schemas';
+import type { GameId, RoomId, RoomSettings, UserId, UserSettings } from './types';
 
 class Users {
 	public static async add (user: UserSchema): Promise<UserSchema> {
@@ -38,18 +40,134 @@ class Users {
 	}
 }
 
-class Games {
-	public static getActive (): GameSchema | undefined {
-		return DB.data.games.find(g => !g.ended);
+class Rooms {
+	public static getAll (): RoomSchema[] {
+		return DB.data.rooms;
 	}
 
-	public static get (id: GameId): GameSchema | undefined {
-		return DB.data.games.find(g => g.id === id);
+	public static getMine (myId: UserId): RoomSchema[] {
+		return DB.data.rooms.filter(r => r.owner === myId);
+	}
+
+	public static getWithMe (myId: UserId): RoomSchema[] {
+		return DB.data.rooms.filter(r => r.players.includes(myId));
+	}
+
+	public static getById (roomId: RoomId): RoomSchema {
+		const room = DB.data.rooms.find(r => r.id === roomId);
+
+		if (!room) {
+			throw new Error(`Room with id ${roomId} not found`);
+		}
+
+		return room;
+	}
+
+	private static getByJoinCode (joinCode: string): RoomSchema | undefined {
+		return DB.data.rooms.find(r => r.settings.joinCode === joinCode);
+	}
+
+	private static generateJoinCodeBlock (): string {
+		return customAlphabet('23456789ABCDEFGHJKLMNPQRSTUVWXYZ', 4)();
+	}
+
+	private static generateJoinCode (): string {
+		return Array.from({ length: 4 }, () => this.generateJoinCodeBlock()).join('-');
+	}
+
+	public static async createRoom (name: string, myId: UserId): Promise<void> {
+		await DB.update(({ rooms }) => {
+			if (this.getAll().some(r => r.name === name)) {
+				throw new Error(`Комната ${name} уже есть, попробуй другое название`);
+			}
+
+			rooms.push({
+				id: nanoid(6),
+				name,
+				owner: myId,
+				players: [myId],
+				settings: {
+					joinCode: this.generateJoinCode(),
+					deckType: 52,
+					decksCount: 4,
+					towHands: false,
+					allowMailing: false,
+					allowMailingAtTurn: false,
+				},
+			});
+
+			return { rooms };
+		});
+	}
+
+	public static async joinRoom (myId: UserId, joinCode: string): Promise<RoomSchema> {
+		const room = this.getByJoinCode(joinCode);
+
+		if (!room) {
+			throw new Error('Неправильный код подключения');
+		}
+
+		if (room.players.includes(myId)) {
+			throw new Error(`Ты уже в комнате ${room.name}`);
+		}
+
+		room.players.push(myId);
+		await DB.write();
+
+		return room;
+	}
+
+	public static async removePlayer (playerId: number, roomId: RoomId): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+
+		room.players.splice(room.players.indexOf(playerId), 1);
+		await DB.write();
+
+		return room;
+	}
+
+	public static async changeJoinCode (roomId: RoomId): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+
+		room.settings.joinCode = this.generateJoinCode();
+		await DB.write();
+
+		return room;
+	}
+
+	public static async changeSettings (roomId: RoomId, newSettings: Partial<RoomSettings>): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+
+		room.settings = { ...room.settings, ...newSettings };
+		await DB.write();
+
+		return room;
+	}
+}
+
+class Games {
+	public static getActive (roomId: RoomId): GameSchema | undefined {
+		return DB.data.games.find(g => g.roomId === roomId && !g.ended);
+	}
+
+	public static getActiveWithMe (myId: UserId): GameSchema[] {
+		return DB.data.games.filter(g => g.players.includes(myId) && !g.ended);
+	}
+
+	public static getById (id: GameId): GameSchema {
+		const game = DB.data.games.find(g => g.id === id);
+
+		if (!game) {
+			throw new Error('Game not found');
+		}
+
+		return game;
 	}
 }
 
 const ORM = {
 	Users,
+	Rooms,
 	Games,
 };
 

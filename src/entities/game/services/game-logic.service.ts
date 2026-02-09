@@ -69,7 +69,7 @@ export class GameLogicService {
 	private static async processCountStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Count']) {
 		if (turnMeta.countAction !== 'select') {
 			const newCount = this.getNewCount(turnMeta);
-			await GameNotificationsService.updateCountMessage({ ctx, turnMeta, newCount });
+			await GameNotificationsService.updateCountMessage({ ctx, game, turnMeta, newCount });
 			return;
 		}
 
@@ -94,7 +94,7 @@ export class GameLogicService {
 	private static async processColorsStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Colors']) {
 		if (turnMeta.redCountAction !== 'select') {
 			const newRedCount = this.getNewRedCount(turnMeta);
-			await GameNotificationsService.updateColorsMessage({ ctx, turnMeta, newRedCount });
+			await GameNotificationsService.updateColorsMessage({ ctx, game, turnMeta, newRedCount });
 			return;
 		}
 
@@ -119,7 +119,7 @@ export class GameLogicService {
 	private static async processSuitsStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
 		if (turnMeta.suits?.action !== 'select') {
 			const newSuits = this.getNewSuits(turnMeta);
-			await GameNotificationsService.updateSuitsMessage({ ctx, turnMeta, newSuits });
+			await GameNotificationsService.updateSuitsMessage({ ctx, game, turnMeta, newSuits });
 			return;
 		}
 
