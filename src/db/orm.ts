@@ -150,6 +150,10 @@ class Games {
 		return DB.data.games.find(g => g.roomId === roomId && !g.ended);
 	}
 
+	public static getActiveWithMe (myId: UserId): GameSchema[] {
+		return DB.data.games.filter(g => g.players.includes(myId) && !g.ended);
+	}
+
 	public static getById (id: GameId): GameSchema {
 		const game = DB.data.games.find(g => g.id === id);
 
