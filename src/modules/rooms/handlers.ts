@@ -1,6 +1,7 @@
 import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
+import { getAthanasiusesListText } from '~/shared/ui/game';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as ui from './ui';
@@ -131,6 +132,24 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	const game = new Game({ room });
 	await game.save();
+};
+
+export const gameGetAthanasiusesCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+
+	const roomId = utils.getRoomIdFromMeta(ctx);
+	const game = utils.getGameFromMeta(ctx);
+
+	await BOT.editMessage({ ctx, text: getAthanasiusesListText(game), keyboard: ui.gkb.backToRoom(roomId) });
+};
+
+export const gameWhoseTurnCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+
+	const roomId = utils.getRoomIdFromMeta(ctx);
+	const game = utils.getGameFromMeta(ctx);
+
+	await BOT.editMessage({ ctx, text: game.activePlayer.name, keyboard: ui.gkb.backToRoom(roomId) });
 };
 
 export const backCallbackHandler = async (ctx: CallbackContext) => {

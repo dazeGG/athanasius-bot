@@ -1,6 +1,6 @@
 import { ORM } from '~/db';
 import type { RawButtons } from '~/core';
-import type { RoomSchema, UserId } from '~/db';
+import type { RoomSchema, UserId, RoomId } from '~/db';
 
 /* TEXTS */
 export const txt = {
@@ -54,18 +54,25 @@ export const gkb = {
 	roomOngoing: (myId: UserId, room: RoomSchema): RawButtons => {
 		const kb = [];
 
+		// TODO: Сделать завершение игры
 		// if (room.owner === myId) {
 		// 	kb.push([{ text: 'Завершить игру', callback_data: { module: 'room', action: 'end', meta: room.id } }]);
 		// }
 
 		kb.push([
-			{ text: 'Афанасии', callback_data: { module: 'room', action: 'getathanasiuses', meta: room.id } },
+			{ text: 'Афанасии', callback_data: { module: 'room', action: 'getath', meta: room.id } },
 			{ text: 'Чей ход', callback_data: { module: 'room', action: 'whoseturn', meta: room.id } },
 		]);
 
 		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
 
 		return kb;
+	},
+
+	backToRoom: (roomId: RoomId): RawButtons => {
+		return [
+			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${roomId}` } }],
+		];
 	},
 
 	kickList: (myId: UserId, room: RoomSchema): RawButtons => {

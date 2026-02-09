@@ -2,10 +2,11 @@ import type TelegramBot from 'node-telegram-bot-api';
 
 import { BOT } from '~/core';
 import { ORM } from '~/db';
+import { Game } from '~/entities/game';
 import { playersList } from '~/shared/ui';
 import { txt } from '~/shared/ui/game';
 import type { CallbackContext, MessageContext } from '~/core';
-import type { RoomSchema } from '~/db';
+import type { RoomSchema, RoomId } from '~/db';
 import type { PlayerId } from '~/entities/game';
 
 import * as ui from './ui';
@@ -74,14 +75,36 @@ export const getRoomOptions = (me: TelegramBot.User, room: RoomSchema) => {
 	};
 };
 
-export const getRoomFromMeta = (ctx: CallbackContext): RoomSchema => {
+export const getRoomIdFromMeta = (ctx: CallbackContext): RoomId => {
 	const { data: { meta: roomId } } = ctx.callback;
 
 	if (!roomId) {
 		throw new Error('Room id required');
 	}
 
-	return ORM.Rooms.getById(roomId ?? '');
+	return roomId;
+};
+
+export const getRoomFromMeta = (ctx: CallbackContext): RoomSchema => {
+	return ORM.Rooms.getById(getRoomIdFromMeta(ctx));
+};
+
+export const getGameFromMeta = (ctx: CallbackContext): Game => {
+	const roomId = getRoomIdFromMeta(ctx);
+
+	const gameId = ORM.Games.getActive(roomId)?.id;
+
+	if (!gameId) {
+		throw new Error('Game not found');
+	}
+
+	const game = gameId ? new Game({ id: gameId }) : null;
+
+	if (!game) {
+		throw new Error('Game not found');
+	}
+
+	return game;
 };
 
 export const getSettingsStartOptions = (ctx: MessageContext | CallbackContext, room: RoomSchema) => {

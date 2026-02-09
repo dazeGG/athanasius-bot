@@ -3,7 +3,6 @@ import { isRegistered } from '~/shared/lib';
 
 import * as handlers from './handlers';
 import { SettingsHandlers } from './settings.handlers';
-import { gameStartCallbackHandler } from './handlers';
 
 const registerRooms = () => {
 	BOT.registerMessageHandler(handlers.roomsMessageHandler, { exact: 'Комнаты' }, isRegistered);
@@ -35,6 +34,16 @@ const registerRooms = () => {
 	 *  GAME START
 	 */
 	BOT.registerCallbackHandler(handlers.gameStartCallbackHandler, { module: 'room', action: 'start' }, isRegistered);
+
+	/**
+	 *  GET ATHANASIUSES
+	 */
+	BOT.registerCallbackHandler(handlers.gameGetAthanasiusesCallbackHandler, { module: 'room', action: 'getath' }, isRegistered);
+
+	/**
+	 *  WHOSE TURN
+	 */
+	BOT.registerCallbackHandler(handlers.gameWhoseTurnCallbackHandler, { module: 'room', action: 'whoseturn' }, isRegistered);
 
 	/**
 	 *  BACK
