@@ -1,6 +1,7 @@
 import { ORM } from '~/db';
 import type { RawButtons } from '~/core';
 import type { GameSchema } from '~/db';
+import type { Game } from '~/entities/game';
 
 /* TEXTS */
 export const txt = {
@@ -8,16 +9,16 @@ export const txt = {
 	chooseGame: 'Выбери игру, руку в которой хочешь посмотреть',
 } as const;
 
-/* KEYBOARDS */
-export const kb: ModuleKeyboards = {
-	handBack: [
-		[{ text: 'Назад', callback_data: { module: 'hand', back: true } }],
-	],
-} as const;
-
 /* GENERABLE KEYBOARDS */
 export const gkb = {
-	roomsList: (games: GameSchema[]): RawButtons => {
+	hand: (game: Game): RawButtons => {
+		return [
+			[{ text: 'Обновить', callback_data: { module: 'hand', action: 'show', meta: game.gameId } }],
+			[{ text: 'Назад', callback_data: { module: 'hand', back: true } }],
+		];
+	},
+
+	gamesList: (games: GameSchema[]): RawButtons => {
 		return [
 			...games.map(g => {
 				return [{
