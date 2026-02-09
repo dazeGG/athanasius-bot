@@ -3,29 +3,31 @@ import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
-import type { GameId, GameLog, GameSchema, UserSchema , GameUtilsParsed } from '~/db';
+import { InfoMessage } from '~/shared/ui/game';
+import { GameNotificationsService } from '~/entities/game/services';
+import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
-import { GameLogs, GameMailing, GameUtilsService } from './utils';
+import { GameUtilsService } from './services';
+import { GameLogs, GameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
 
 interface ConstructorOptionsById {
 	id: string;
-	players?: never;
-	decksCount?: never;
+	room?: never;
 }
 
 interface ConstructorOptionsInit {
 	id?: never;
-	players: PlayerId[];
-	decksCount: number;
+	room: RoomSchema;
 }
 
 export class Game {
 	private readonly id: GameId;
+	private readonly roomId: RoomId;
 	private readonly started: Dayjs;
 	private ended?: Dayjs;
 	private readonly queue: Queue;
@@ -35,13 +37,10 @@ export class Game {
 
 	constructor (options: ConstructorOptionsById | ConstructorOptionsInit) {
 		if ('id' in options) {
-			const game = DB.data.games.find(g => g.id === options.id);
-
-			if (!game) {
-				throw new Error('Game not found');
-			}
+			const game = ORM.Games.getById(options.id ?? '');
 
 			this.id = game.id;
+			this.roomId = game.roomId;
 			this.started = dayjs(game.started);
 			this.ended = game.ended ? dayjs(game.ended) : undefined;
 			this.queue = new Queue(game.players, false);
@@ -49,20 +48,33 @@ export class Game {
 			this.athanasiuses = game.athanasiuses;
 			this.utils = GameUtilsService.parseGameUtils(game.utils);
 		} else {
-			const { players, decksCount } = options;
+			const { room } = options;
+			const { id: roomId, players, settings } = room;
 
 			this.id = nanoid(6);
+			this.roomId = roomId;
 			this.started = dayjs();
-			this.queue = new Queue(options.players, true);
-			this.hands = new Hands({ players: options.players, decksCount, queue: this.queue });
+			this.queue = new Queue(players, true);
+			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
-			this.utils = { cardsToAthanasius: decksCount * 4, logs: [] };
+			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
+
+			this.initialMailing(room);
 		}
+	}
+
+	private async initialMailing (room: RoomSchema) {
+		await this.mailing({ text: InfoMessage.gameStartedMailing(room) });
+		await GameNotificationsService.sendFirstMessage(this, true);
 	}
 
 	/* GETTERS */
 	public get gameId (): GameId {
 		return this.id;
+	}
+
+	public getRoomId (): RoomId {
+		return this.roomId;
 	}
 
 	public get activePlayer (): UserSchema {
@@ -78,16 +90,16 @@ export class Game {
 		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
 	}
 
+	public get cardsToAthanasius (): number {
+		return this.utils.cardsToAthanasius;
+	}
+
 	public getAthanasiuses (): GameSchema['athanasiuses'] {
 		return this.athanasiuses;
 	}
 
 	public getHand (playerId: PlayerId): Hand | undefined {
 		return this.hands.getHand(playerId);
-	}
-
-	public getCountAthanasiuses (playerId: PlayerId): number {
-		return this.athanasiuses[playerId]?.length || 0;
 	}
 
 	/* LOGS */
@@ -103,6 +115,7 @@ export class Game {
 	private toSchema (): GameSchema {
 		return {
 			id: this.id,
+			roomId: this.roomId,
 			started: this.started.valueOf(),
 			ended: this.ended?.valueOf(),
 			players: this.queue.actualQueue,
