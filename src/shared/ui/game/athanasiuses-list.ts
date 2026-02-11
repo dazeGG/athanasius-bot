@@ -13,13 +13,17 @@ export const athanasiusesList = (game: Game): string => {
 		.join('\n');
 };
 
-export const getAthanasiusesListText = (game: Game): string => {
+export const getAthanasiusesListText = (game: Game, roomName: string): string => {
 	const athanasiuses = game.getAthanasiuses();
 	const overallAthanasiusesCount = Object.values(athanasiuses).reduce((acc, current) => acc + current.length, 0);
 
+	let text = `Комната ${roomName}\n\n`;
+
 	if (overallAthanasiusesCount === 0) {
-		return 'Афанасиев пока ни у кого нет';
+		text += 'Афанасиев пока ни у кого нет';
+	} else {
+		text += '<b>Собранные Афанасии:</b>\n\n' + athanasiusesList(game);
 	}
 
-	return '<b>Собранные Афанасии:</b>\n\n' + athanasiusesList(game);
+	return text;
 };
