@@ -31,13 +31,18 @@ const getHandShowOptions = (ctx: CallbackContext): EditMessageOptions => {
 		throw new Error('Game not found');
 	}
 
+	const room = ORM.Rooms.getById(game?.getRoomId());
 	const hand = game.getHand(me.id);
 
 	if (!hand) {
 		throw new Error('Hand not found');
 	}
 
-	return { ctx, text: Deck.getMyHandView(hand.cardsInHand), keyboard: ui.gkb.hand(game) };
+	return {
+		ctx,
+		text: `Комната ${room.name}\n\n${Deck.getMyHandView(hand.cardsInHand)}`,
+		keyboard: ui.gkb.hand(game),
+	};
 };
 
 export const handMessageHandler = async (ctx: MessageContext) => {

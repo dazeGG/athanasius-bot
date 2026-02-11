@@ -137,19 +137,27 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 export const gameGetAthanasiusesCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
-	const roomId = utils.getRoomIdFromMeta(ctx);
+	const room = utils.getRoomFromMeta(ctx);
 	const game = utils.getGameFromMeta(ctx);
 
-	await BOT.editMessage({ ctx, text: getAthanasiusesListText(game), keyboard: ui.gkb.backToRoom(roomId) });
+	await BOT.editMessage({
+		ctx,
+		text: getAthanasiusesListText(game, room.name),
+		keyboard: ui.gkb.athanasiuses(room.id),
+	});
 };
 
 export const gameWhoseTurnCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
-	const roomId = utils.getRoomIdFromMeta(ctx);
+	const room = utils.getRoomFromMeta(ctx);
 	const game = utils.getGameFromMeta(ctx);
 
-	await BOT.editMessage({ ctx, text: game.activePlayer.name, keyboard: ui.gkb.backToRoom(roomId) });
+	await BOT.editMessage({
+		ctx,
+		text: `Комната ${room.name}\n\nСейчас ход ${game.activePlayer.name}`,
+		keyboard: ui.gkb.whoseTurn(room.id),
+	});
 };
 
 export const backCallbackHandler = async (ctx: CallbackContext) => {

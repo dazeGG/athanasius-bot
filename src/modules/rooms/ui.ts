@@ -69,8 +69,16 @@ export const gkb = {
 		return kb;
 	},
 
-	backToRoom: (roomId: RoomId): RawButtons => {
+	athanasiuses: (roomId: RoomId): RawButtons => {
 		return [
+			[{ text: 'Обновить', callback_data: { module: 'room', action: 'getath', meta: roomId } }],
+			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${roomId}` } }],
+		];
+	},
+
+	whoseTurn: (roomId: RoomId): RawButtons => {
+		return [
+			[{ text: 'Обновить', callback_data: { module: 'room', action: 'whoseturn', meta: roomId } }],
 			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${roomId}` } }],
 		];
 	},
