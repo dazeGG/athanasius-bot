@@ -1,4 +1,5 @@
 import { ORM } from '~/db';
+import { MIN_PLAYERS_TO_START } from '~/shared/ui/game';
 import type { RawButtons } from '~/core';
 import type { RoomSchema, UserId, RoomId } from '~/db';
 
@@ -40,7 +41,7 @@ export const gkb = {
 				kb.push([{ text: 'Выгнать игроков', callback_data: { module: 'room', action: 'kick', meta: `${room.id}:` } }]);
 			}
 
-			if (room.players.length >= 2) {
+			if (room.players.length >= MIN_PLAYERS_TO_START) {
 				kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start', meta: room.id } }]);
 			}
 		} else {
