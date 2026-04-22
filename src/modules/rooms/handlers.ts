@@ -1,7 +1,8 @@
 import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
-import { getAthanasiusesListText } from '~/shared/ui/game';
+import { GameNotificationsService } from '~/entities/game/services';
+import { getAthanasiusesListText, txt as gameTxt } from '~/shared/ui/game';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as ui from './ui';
@@ -157,6 +158,25 @@ export const gameWhoseTurnCallbackHandler = async (ctx: CallbackContext) => {
 		ctx,
 		text: `Комната ${room.name}\n\nСейчас ход ${game.activePlayer.name}`,
 		keyboard: ui.gkb.whoseTurn(room.id),
+	});
+};
+
+export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackContext) => {
+	await BOT.answerCallbackQuery(ctx);
+
+	const room = utils.getRoomFromMeta(ctx);
+
+	if (room.owner !== ctx.callback.from.id) {
+		return;
+	}
+
+	const game = utils.getGameFromMeta(ctx);
+
+	await GameNotificationsService.sendFirstMessage(game);
+	await BOT.editMessage({
+		ctx,
+		text: utils.getRoomBaseText(room, true) + `\n\n🟩 ${gameTxt.gameMessageResendSuccess}`,
+		keyboard: ui.gkb.roomOngoing(ctx.callback.from.id, room),
 	});
 };
 

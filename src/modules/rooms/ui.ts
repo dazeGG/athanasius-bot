@@ -8,6 +8,7 @@ export const txt = {
 	roomsList: 'Вот список твоих комнат',
 	createdRoom: 'Создал комнату',
 	kickPlayer: 'Выбери кого хочешь выгнать',
+	sendTurnMessage: 'Отправить сообщение хода',
 } as const;
 
 /* KEYBOARDS */
@@ -63,6 +64,10 @@ export const gkb = {
 			{ text: 'Афанасии', callback_data: { module: 'room', action: 'getath', meta: room.id } },
 			{ text: 'Чей ход', callback_data: { module: 'room', action: 'whoseturn', meta: room.id } },
 		]);
+
+		if (room.owner === myId) {
+			kb.push([{ text: txt.sendTurnMessage, callback_data: { module: 'room', action: 'sendturnmsg', meta: room.id } }]);
+		}
 
 		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
 

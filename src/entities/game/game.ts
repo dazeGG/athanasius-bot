@@ -102,6 +102,21 @@ export class Game {
 		return this.hands.getHand(playerId);
 	}
 
+	public async ensureActivePlayerHasCards (): Promise<boolean> {
+		if (this.hands.hand(this.queue.activePlayer).cardsInHand.length > 0) {
+			return true;
+		}
+
+		if (this.hands.handleGameEnd(this.queue.actualQueue)) {
+			return false;
+		}
+
+		this.shiftTurnToNextPlayerWithCards();
+		await this.save();
+
+		return true;
+	}
+
 	/* LOGS */
 	public get hasLogs (): boolean {
 		return GameLogs.hasLogs(this.utils, this.activePlayer.id);
@@ -154,6 +169,12 @@ export class Game {
 		}
 	}
 
+	private shiftTurnToNextPlayerWithCards (): void {
+		do {
+			this.queue.next();
+		} while (this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0);
+	}
+
 	private async handleSuccessfulTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
 		if (turnMeta.stage !== TurnStage.suits) {
 			return { success: true };
@@ -175,6 +196,10 @@ export class Game {
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.actualQueue);
 
+		if (!gameEnded && this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0) {
+			this.shiftTurnToNextPlayerWithCards();
+		}
+
 		if (gameEnded) {
 			this.ended = dayjs();
 		}
@@ -189,9 +214,7 @@ export class Game {
 	}
 
 	private async handleFailedTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
-		do {
-			this.queue.next();
-		} while (this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0);
+		this.shiftTurnToNextPlayerWithCards();
 
 		this.utils.logs.push({
 			from: me,
