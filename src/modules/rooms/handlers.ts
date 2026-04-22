@@ -1,7 +1,7 @@
 import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
-import { GameNotificationsService } from '~/entities/game/services';
+import { sendFirstMessage } from '~/entities/game/services';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import type { MessageContext, CallbackContext } from '~/core';
 
@@ -141,8 +141,7 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 
 	await BOT.deleteMessage(ctx);
 
-	const game = new Game({ room });
-	await game.save();
+	await Game.create(room);
 };
 
 export const gameGetAthanasiusesCallbackHandler = async (ctx: CallbackContext) => {
@@ -182,7 +181,7 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackContext) =
 
 	const game = utils.getGameFromMeta(ctx);
 
-	await GameNotificationsService.sendFirstMessage(game);
+	await sendFirstMessage(game);
 	await BOT.editMessage({
 		ctx,
 		text: utils.getRoomBaseText(room, true) + `\n\n🟩 ${gameTxt.gameMessageResendSuccess}`,

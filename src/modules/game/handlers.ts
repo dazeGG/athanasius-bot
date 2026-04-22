@@ -1,6 +1,6 @@
 import { BOT } from '~/core';
 import { DB } from '~/db';
-import { Game, GameLogicService } from '~/entities/game';
+import { Game, processTurn } from '~/entities/game';
 import type { CallbackContext } from '~/core';
 
 import * as lib from './lib';
@@ -23,5 +23,5 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		return;
 	}
 
-	await GameLogicService.processTurn({ ctx, game, me, turnMeta });
+	await processTurn({ ctx, game, me, turnMeta });
 };

@@ -4,13 +4,13 @@ import type { Dayjs } from 'dayjs';
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
 import { InfoMessage } from '~/shared/ui/game';
-import { GameNotificationsService } from '~/entities/game/services';
+import { sendFirstMessage } from '~/entities/game/services';
 import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
-import { GameUtilsService } from './services';
-import { GameLogs, GameMailing } from './utils';
+import { parseGameUtils, generateGameUtils } from './services';
+import { hasLogs, getLastRoundLogs, mailing as gameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
@@ -46,7 +46,7 @@ export class Game {
 			this.queue = new Queue(game.players, false);
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
-			this.utils = GameUtilsService.parseGameUtils(game.utils);
+			this.utils = parseGameUtils(game.utils);
 		} else {
 			const { room } = options;
 			const { id: roomId, players, settings } = room;
@@ -58,14 +58,15 @@ export class Game {
 			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
 			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
-
-			this.initialMailing(room);
 		}
 	}
 
-	private async initialMailing (room: RoomSchema) {
-		await this.mailing({ text: InfoMessage.gameStartedMailing(room) });
-		await GameNotificationsService.sendFirstMessage(this, true);
+	public static async create (room: RoomSchema): Promise<Game> {
+		const game = new Game({ room });
+		await game.save();
+		await game.mailing({ text: InfoMessage.gameStartedMailing(room) });
+		await sendFirstMessage(game, true);
+		return game;
 	}
 
 	/* GETTERS */
@@ -119,11 +120,11 @@ export class Game {
 
 	/* LOGS */
 	public get hasLogs (): boolean {
-		return GameLogs.hasLogs(this.utils, this.activePlayer.id);
+		return hasLogs(this.utils, this.activePlayer.id);
 	}
 
 	public getLastRoundLogs (): string {
-		return GameLogs.getLastRoundLogs(this.utils, this.activePlayer.id);
+		return getLastRoundLogs(this.utils, this.activePlayer.id);
 	}
 
 	/* PERSISTENCE */
@@ -136,7 +137,7 @@ export class Game {
 			players: this.queue.actualQueue,
 			hands: this.hands.allHands,
 			athanasiuses: this.athanasiuses,
-			utils: GameUtilsService.generateGameUtils(this.utils),
+			utils: generateGameUtils(this.utils),
 		};
 	}
 
@@ -156,7 +157,7 @@ export class Game {
 
 	/* MAILING */
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		await GameMailing.mailing(options, this.allPlayers, exclude);
+		await gameMailing(options, this.allPlayers, exclude);
 	}
 
 	/* TURNS */
