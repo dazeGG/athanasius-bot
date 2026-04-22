@@ -53,12 +53,7 @@ export class Hands {
 			throw new Error(`No hand for player ${playerId}`);
 		}
 
-		return new Proxy(hand, {
-			get (target, prop, receiver) {
-				const value = Reflect.get(target, prop, receiver);
-				return typeof value === 'function' ? value.bind(target) : value;
-			},
-		});
+		return hand;
 	}
 
 	private dealCards (mainDeck: CardId[], players: PlayerId[]): void {
@@ -78,13 +73,10 @@ export class Hands {
 	}
 
 	public get allHands (): Record<PlayerId, CardId[]> {
-		const preResult = Object.fromEntries(this.hands);
 		const result: Record<PlayerId, CardId[]> = {};
-
-		Object.keys(preResult).map(Number).forEach(playerId => {
-			result[playerId] = preResult[playerId.toString()].cardIds;
+		this.hands.forEach((hand, playerId) => {
+			result[playerId] = hand.cardIds;
 		});
-
 		return result;
 	}
 
