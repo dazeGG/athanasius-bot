@@ -46,6 +46,11 @@ const registerRooms = () => {
 	BOT.registerCallbackHandler(handlers.gameWhoseTurnCallbackHandler, { module: 'room', action: 'whoseturn' }, isRegistered);
 
 	/**
+	 *  RESEND TURN MESSAGE
+	 */
+	BOT.registerCallbackHandler(handlers.gameSendTurnMessageCallbackHandler, { module: 'room', action: 'sendturnmsg' }, isRegistered);
+
+	/**
 	 *  BACK
 	 */
 	BOT.registerCallbackHandler(handlers.backCallbackHandler, { module: 'rooms', back: true }, isRegistered);
