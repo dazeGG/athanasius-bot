@@ -102,6 +102,21 @@ export class Game {
 		return this.hands.getHand(playerId);
 	}
 
+	public async ensureActivePlayerHasCards (): Promise<boolean> {
+		if (this.hands.hand(this.queue.activePlayer).cardsInHand.length > 0) {
+			return true;
+		}
+
+		if (this.hands.handleGameEnd(this.queue.actualQueue)) {
+			return false;
+		}
+
+		this.shiftTurnToNextPlayerWithCards();
+		await this.save();
+
+		return true;
+	}
+
 	/* LOGS */
 	public get hasLogs (): boolean {
 		return GameLogs.hasLogs(this.utils, this.activePlayer.id);

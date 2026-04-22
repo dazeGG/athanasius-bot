@@ -10,6 +10,12 @@ import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsS
 
 export class GameNotificationsService {
 	public static async sendFirstMessage (game: Game, initial: boolean = false) {
+		const canSendTurnMessage = await game.ensureActivePlayerHasCards();
+
+		if (!canSendTurnMessage) {
+			return;
+		}
+
 		let text: string;
 
 		if (initial) {
