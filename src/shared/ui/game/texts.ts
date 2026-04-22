@@ -1,3 +1,5 @@
+export const MIN_PLAYERS_TO_START = 3;
+
 /* TEXTS */
 export const txt = {
 	notStarted: '🔴 <b>Игра ещё не начата</b>',
@@ -5,7 +7,7 @@ export const txt = {
 	players: 'Список игроков',
 	gameSettings: 'Настройки игры',
 	decksCount: 'Количество колод',
-	playersCountError: '<b>Чтобы начать игру, необходимо как минимум 3 игрока!</b>',
+	playersCountError: `<b>Чтобы начать игру, необходимо как минимум ${MIN_PLAYERS_TO_START} игрока!</b>`,
 	gameStarted: 'Игра началась!',
 	gameEnded: 'Игра закончилась!',
 	yourChoice: 'Твой выбор',

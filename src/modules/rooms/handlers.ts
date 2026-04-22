@@ -2,7 +2,7 @@ import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
 import { GameNotificationsService } from '~/entities/game/services';
-import { getAthanasiusesListText, txt as gameTxt } from '~/shared/ui/game';
+import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import type { MessageContext, CallbackContext } from '~/core';
 
 import * as ui from './ui';
@@ -127,9 +127,19 @@ export const kickCallbackHandler = async (ctx: CallbackContext) => {
 
 export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
-	await BOT.deleteMessage(ctx);
 
 	const room = utils.getRoomFromMeta(ctx);
+
+	if (room.players.length < MIN_PLAYERS_TO_START) {
+		await BOT.editMessage({
+			ctx,
+			text: utils.getRoomBaseText(room) + `\n\n${gameTxt.playersCountError}`,
+			keyboard: ui.gkb.room(ctx.callback.from.id, room),
+		});
+		return;
+	}
+
+	await BOT.deleteMessage(ctx);
 
 	const game = new Game({ room });
 	await game.save();
