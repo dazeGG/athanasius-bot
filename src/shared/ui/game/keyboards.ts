@@ -40,6 +40,19 @@ interface SuitsSelectGKBOptions extends BaseStageOptions {
 	suits: Suits;
 }
 
+const gameTurnCallback = (meta: string) => ({ module: 'g', action: 't', meta });
+
+const buildSelectKeyboard = (baseMeta: string, canDecrement: boolean, canIncrement: boolean): RawButtons => {
+	const actionButtons = [];
+	if (canDecrement) {
+		actionButtons.push({ text: '-', callback_data: gameTurnCallback(baseMeta + '-') });
+	}
+	if (canIncrement) {
+		actionButtons.push({ text: '+', callback_data: gameTurnCallback(baseMeta + '+') });
+	}
+	return [actionButtons, [{ text: 'Выбрать', callback_data: gameTurnCallback(baseMeta + 'select') }]];
+};
+
 export const gkb = {
 	playersSelect: ({ me, gameId, playerIds }: PlayersSelectGKBOptions): RawButtons => {
 		const playersExceptMe = playerIds.filter(playerId => playerId !== me);
@@ -47,7 +60,7 @@ export const gkb = {
 
 		return players.map(player => [{
 			text: player.name,
-			callback_data: { module: 'g', action: 't', meta: `${TurnStage.player}#${gameId}#${player.id}` },
+			callback_data: gameTurnCallback(`${TurnStage.player}#${gameId}#${player.id}`),
 		}]);
 	},
 
@@ -74,44 +87,18 @@ export const gkb = {
 
 		return distributedCardNames.map(row => row.map(cardName => ({
 			text: DeckConfig.CARDS_VIEW_MAP[cardName],
-			callback_data: { module: 'g', action: 't', meta: `${TurnStage.card}#${game.gameId}#${playerId}#${cardName}` },
+			callback_data: gameTurnCallback(`${TurnStage.card}#${game.gameId}#${playerId}#${cardName}`),
 		})));
 	},
 
 	countSelect: ({ game, turnMeta, count }: CountSelectGKBOptions): RawButtons => {
-		const actionButtons = [];
 		const baseMeta = `${TurnStage.count}#${game.gameId}#${turnMeta.player.id}#${turnMeta.cardName}#${count}`;
-
-		if (count > 1) {
-			actionButtons.push({ text: '-', callback_data: { module: 'g',action: 't',meta: baseMeta + '-' } });
-		}
-
-		if (count < game.cardsToAthanasius - 1) {
-			actionButtons.push({ text: '+', callback_data: { module: 'g',action: 't',meta: baseMeta + '+' } });
-		}
-
-		return [
-			actionButtons,
-			[{ text: 'Выбрать', callback_data: { module: 'g',action: 't',meta: baseMeta + 'select' } }],
-		];
+		return buildSelectKeyboard(baseMeta, count > 1, count < game.cardsToAthanasius - 1);
 	},
 
 	colorsSelect: ({ game, turnMeta, redCount }: ColorsSelectGKBOptions): RawButtons => {
-		const actionButtons = [];
 		const baseMeta = `${TurnStage.colors}#${game.gameId}#${turnMeta.player.id}#${turnMeta.cardName}#${turnMeta.count}#${redCount}`;
-
-		if (redCount > 0) {
-			actionButtons.push({ text: '-', callback_data: { module: 'g', action: 't', meta: baseMeta + '-' } });
-		}
-
-		if (redCount < turnMeta.count) {
-			actionButtons.push({ text: '+', callback_data: { module: 'g', action: 't', meta: baseMeta + '+' } });
-		}
-
-		return [
-			actionButtons,
-			[{ text: 'Выбрать', callback_data: { module: 'g', action: 't', meta: baseMeta + 'select' } }],
-		];
+		return buildSelectKeyboard(baseMeta, redCount > 0, redCount < turnMeta.count);
 	},
 
 	suitsSelect: ({ game, turnMeta, suits }: SuitsSelectGKBOptions): RawButtons => {
@@ -120,58 +107,27 @@ export const gkb = {
 
 		if (turnMeta.redCount > 0) {
 			if (suits.mode === '+' || (suits.mode === '-' && suits.hearts !== 0)) {
-				actionButtons.push({
-					text: '♥️',
-					callback_data: {
-						module: 'g',
-						action: 't',
-						meta: baseMeta + '!h',
-					},
-				});
+				actionButtons.push({ text: '♥️', callback_data: gameTurnCallback(baseMeta + '!h') });
 			}
 
 			if (suits.mode === '+' || (suits.mode === '-' && suits.diamonds !== 0)) {
-				actionButtons.push({
-					text: '♦️',
-					callback_data: {
-						module: 'g',
-						action: 't',
-						meta: baseMeta + '!d',
-					},
-				});
+				actionButtons.push({ text: '♦️', callback_data: gameTurnCallback(baseMeta + '!d') });
 			}
 		}
 
 		if (turnMeta.redCount !== turnMeta.count) {
 			if (suits.mode === '+' || (suits.mode === '-' && suits.spades !== 0)) {
-				actionButtons.push({
-					text: '♠️',
-					callback_data: {
-						module: 'g',
-						action: 't',
-						meta: baseMeta + '!s',
-					},
-				});
+				actionButtons.push({ text: '♠️', callback_data: gameTurnCallback(baseMeta + '!s') });
 			}
 
 			if (suits.mode === '+' || (suits.mode === '-' && suits.clubs !== 0)) {
-				actionButtons.push({
-					text: '♣️',
-					callback_data: {
-						module: 'g',
-						action: 't',
-						meta: baseMeta + '!c',
-					},
-				});
+				actionButtons.push({ text: '♣️', callback_data: gameTurnCallback(baseMeta + '!c') });
 			}
 		}
 
 		const keyboard = [
 			actionButtons,
-			[{
-				text: 'mode: ' + suits.mode,
-				callback_data: { module: 'g', action: 't', meta: baseMeta + '!m' },
-			}],
+			[{ text: 'mode: ' + suits.mode, callback_data: gameTurnCallback(baseMeta + '!m') }],
 		];
 
 		if (
@@ -179,7 +135,7 @@ export const gkb = {
 			&& suits.hearts + suits.diamonds === turnMeta.redCount
 			&& suits.spades + suits.clubs === turnMeta.count - turnMeta.redCount
 		) {
-			keyboard.push([{ text: 'Выбрать', callback_data: { module: 'g', action: 't', meta: baseMeta + '!select' } }]);
+			keyboard.push([{ text: 'Выбрать', callback_data: gameTurnCallback(baseMeta + '!select') }]);
 		}
 
 		return keyboard;

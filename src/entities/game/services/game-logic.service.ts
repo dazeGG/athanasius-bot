@@ -1,18 +1,14 @@
 import _ from 'lodash';
 
 import { TurnStage } from '~/entities/game';
-import type { ColorsStageMeta, CountStageMeta, Suits, SuitsStageMeta } from '~/entities/game';
+import type { Suits, SuitsStageMeta } from '~/entities/game';
 
 import { GameNotificationsService } from '.';
 import type { GameServiceOptions, GameServiceOptionsStage } from './types';
 
 export class GameLogicService {
-	private static getNewCount (turnMeta: CountStageMeta): number {
-		return turnMeta.countAction === '-' ? turnMeta.count - 1 : turnMeta.count + 1;
-	}
-
-	private static getNewRedCount (turnMeta: ColorsStageMeta): number {
-		return turnMeta.redCountAction === '-' ? turnMeta.redCount - 1 : turnMeta.redCount + 1;
+	private static adjustCount (value: number, action: string): number {
+		return action === '-' ? value - 1 : value + 1;
 	}
 
 	private static getNewSuits (turnMeta: SuitsStageMeta): Suits {
@@ -68,7 +64,7 @@ export class GameLogicService {
 
 	private static async processCountStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Count']) {
 		if (turnMeta.countAction !== 'select') {
-			const newCount = this.getNewCount(turnMeta);
+			const newCount = this.adjustCount(turnMeta.count, turnMeta.countAction);
 			await GameNotificationsService.updateCountMessage({ ctx, game, turnMeta, newCount });
 			return;
 		}
@@ -93,7 +89,7 @@ export class GameLogicService {
 
 	private static async processColorsStage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Colors']) {
 		if (turnMeta.redCountAction !== 'select') {
-			const newRedCount = this.getNewRedCount(turnMeta);
+			const newRedCount = this.adjustCount(turnMeta.redCount, turnMeta.redCountAction);
 			await GameNotificationsService.updateColorsMessage({ ctx, game, turnMeta, newRedCount });
 			return;
 		}

@@ -95,28 +95,26 @@ export class GameNotificationsService {
 		});
 	}
 
+	private static async notifyWrongTurn ({ ctx, game, me }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me'>, meText: string, mailingText: string): Promise<void> {
+		await BOT.editMessage({ ctx, text: meText });
+		await game.mailing({ text: mailingText }, [me.id, ...game.playersWithComposedUpdated]);
+		await this.sendFirstMessage(game);
+	}
+
 	public static async notifyWrongCardMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Card']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongCardMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await GameNotificationsService.sendFirstMessage(game);
+		await this.notifyWrongTurn({ ctx, game, me }, InfoMessage.wrongCardMe(turnMeta), InfoMessage.wrongCardMailing(turnMeta, me));
 	}
 
 	public static async notifyWrongCountMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Count']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongCountMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await GameNotificationsService.sendFirstMessage(game);
+		await this.notifyWrongTurn({ ctx, game, me }, InfoMessage.wrongCountMe(turnMeta), InfoMessage.wrongCountMailing(turnMeta, me));
 	}
 
 	public static async notifyWrongColorsMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Colors']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongColorsMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await GameNotificationsService.sendFirstMessage(game);
+		await this.notifyWrongTurn({ ctx, game, me }, InfoMessage.wrongColorsMe(turnMeta), InfoMessage.wrongColorsMailing(turnMeta, me));
 	}
 
 	public static async notifyWrongSuitsMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongSuitsMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await this.sendFirstMessage(game);
+		await this.notifyWrongTurn({ ctx, game, me }, InfoMessage.wrongSuitsMe(turnMeta), InfoMessage.wrongSuitsMailing(turnMeta, me));
 	}
 
 	public static async notifyStealMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {

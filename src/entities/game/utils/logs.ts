@@ -1,5 +1,6 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import { formatSuits } from '~/shared/ui/game';
 import type { GameLog, GameUtilsParsed } from '~/db';
 
 import type { PlayerId } from '../types';
@@ -12,7 +13,7 @@ export class GameLogs {
 		case 2:
 			return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
 		case 4:
-			return `♥️: ${stealData[0]} ♦️: ${stealData[1]} ♠️: ${stealData[2]} ♣️: ${stealData[3]}`;
+			return formatSuits({ hearts: stealData[0], diamonds: stealData[1], spades: stealData[2], clubs: stealData[3] });
 		default:
 			throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
 		}
