@@ -5,3 +5,4 @@ generated
 
 .env
 db.json
+.DS_Store
