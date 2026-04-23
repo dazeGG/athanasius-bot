@@ -47,7 +47,7 @@ export const logGameEvent = (event: GameEvent): void => {
 		});
 		break;
 	case 'TURN_FAILED':
-		LOGGER.warn('Turn failed', {
+		LOGGER.info('Turn failed', {
 			gameId: event.gameId,
 			playerId: event.playerId,
 			failedAt: event.failedAt,
@@ -75,7 +75,7 @@ export const logGameEvent = (event: GameEvent): void => {
 		});
 		break;
 	case 'PLAYER_KICKED':
-		LOGGER.warn('Player kicked from room', {
+		LOGGER.info('Player kicked from room', {
 			roomId: event.roomId,
 			playerId: event.playerId,
 			playerName: event.playerName,
