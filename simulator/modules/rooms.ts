@@ -7,7 +7,7 @@ import type { CallbackData } from '~/core';
 
 import { STATES, resetLog, getLog, clearDB, seedDB } from '../bootstrap';
 import { assert, assertSent, assertNotSent } from '../runner';
-import type { ScenarioTools } from '../runner';
+import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
@@ -181,7 +181,7 @@ const setupRoomWithPlayers = async (
 	return ORM.Rooms.getById(room.id);
 };
 
-export async function scenarioRooms ({ runCase }: ScenarioTools): Promise<void> {
+export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('~/modules/rooms/handlers');
 	const { SettingsHandlers } = await import('~/modules/rooms/settings.handlers');
 

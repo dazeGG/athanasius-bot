@@ -1,7 +1,7 @@
 /**
  * simulator/index.ts — test entry point.
  *
- * Run all scenarios: pnpm test
+ * Run all modules: pnpm test
  * Show help: pnpm test --help
  */
 
@@ -22,7 +22,7 @@ Usage:
   pnpm test --save-db
 
 Flags:
-  --full-logs  Show detailed case-level logs for every scenario.
+  --full-logs  Show detailed case-level logs for every module.
   --save-db    Keep db.test.json after the run for inspection.
 `);
 	process.exit(0);
@@ -35,19 +35,19 @@ config({ path: '.env.test', override: true });
 await import('./bootstrap');
 
 const { run, printSummary, setRunnerOptions } = await import('./runner');
-const { scenarioRegistration }  = await import('./scenarios/registration');
-const { scenarioRooms }         = await import('./scenarios/rooms');
+const { registrationModule }  = await import('./modules/registration');
+const { roomsModule }         = await import('./modules/rooms');
 
-// ─── Run all scenarios ────────────────────────────────────────────────────────
+// ─── Run all modules ──────────────────────────────────────────────────────────
 const fullLogs = args.includes('--full-logs');
 
 setRunnerOptions({ fullLogs });
 
 console.log('\n🎮  Athanasius simulator\n');
-console.log('Scenarios:\n');
+console.log('Modules:\n');
 
-await run('Registration', scenarioRegistration);
-await run('Rooms', scenarioRooms);
+await run('Registration', registrationModule);
+await run('Rooms', roomsModule);
 
 const dbg = args.includes('--debug');
 if (dbg) {

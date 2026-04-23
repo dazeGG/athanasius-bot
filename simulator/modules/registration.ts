@@ -4,7 +4,7 @@
 
 import { DB, STATES, resetLog, getLog, clearDB } from '../bootstrap';
 import { assert, assertSent } from '../runner';
-import type { ScenarioTools } from '../runner';
+import type { ModuleTools } from '../runner';
 
 const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Рука';
 
@@ -128,7 +128,7 @@ const assertInvalidPendingName = async (
 	resetLog();
 };
 
-export async function scenarioRegistration ({ runCase }: ScenarioTools): Promise<void> {
+export async function registrationModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('~/modules/reg/handlers');
 
 	await runCase('Prompts new users for a name and stores REGISTRATION state', async () => {

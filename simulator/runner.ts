@@ -18,7 +18,7 @@ interface RunResult {
 	error?: string;
 }
 
-export interface ScenarioTools {
+export interface ModuleTools {
 	runCase: (name: string, fn: () => Promise<void>) => Promise<void>;
 }
 
@@ -75,7 +75,7 @@ const printFailedCaseDetails = (result: RunResult): void => {
 	}
 
 	if (result.error) {
-		console.log('   Unhandled scenario error:');
+		console.log('   Unhandled module error:');
 		console.log(formatError(result.error));
 	}
 };
@@ -86,7 +86,7 @@ export function setRunnerOptions (options: Partial<RunnerOptions>): void {
 
 export async function run (
 	name: string,
-	fn: ((tools: ScenarioTools) => Promise<void>) | (() => Promise<void>),
+	fn: ((tools: ModuleTools) => Promise<void>) | (() => Promise<void>),
 ): Promise<void> {
 	const result: RunResult = {
 		name,
@@ -96,12 +96,12 @@ export async function run (
 
 	results.push(result);
 
-	const scenarioNumber = results.length;
+	const moduleNumber = results.length;
 	let caseIndex = 0;
 	let usedCaseRunner = false;
 
 	if (runnerOptions.fullLogs) {
-		console.log(`${scenarioNumber}) ${name}`);
+		console.log(`${moduleNumber}) ${name}`);
 		console.log('   Cases:');
 	}
 
@@ -134,21 +134,21 @@ export async function run (
 		result.error = error;
 
 		if (!usedCaseRunner) {
-			result.cases.push({ name: 'Scenario body', passed: false, error });
+			result.cases.push({ name: 'Module body', passed: false, error });
 			if (runnerOptions.fullLogs) {
-				console.log(`   1) Scenario body - ${ERROR_LABEL}`);
+				console.log(`   1) Module body - ${ERROR_LABEL}`);
 				console.log(formatError(error));
 			}
 		} else if (runnerOptions.fullLogs) {
-			console.log(`   Unhandled scenario error - ${ERROR_LABEL}`);
+			console.log(`   Unhandled module error - ${ERROR_LABEL}`);
 			console.log(formatError(error));
 		}
 	}
 
 	if (!usedCaseRunner && !result.error) {
-		result.cases.push({ name: 'Scenario body', passed: true });
+		result.cases.push({ name: 'Module body', passed: true });
 		if (runnerOptions.fullLogs) {
-			console.log(`   1) Scenario body - ${PASSED_LABEL}`);
+			console.log(`   1) Module body - ${PASSED_LABEL}`);
 		}
 	}
 
@@ -158,7 +158,7 @@ export async function run (
 	if (runnerOptions.fullLogs) {
 		console.log(`   Result: ${result.passed ? PASSED_LABEL : ERROR_LABEL} ${casesSummary}\n`);
 	} else {
-		console.log(`${scenarioNumber}) ${name} - ${result.passed ? PASSED_LABEL : ERROR_LABEL} ${casesSummary}`);
+		console.log(`${moduleNumber}) ${name} - ${result.passed ? PASSED_LABEL : ERROR_LABEL} ${casesSummary}`);
 		if (!result.passed) {
 			printFailedCaseDetails(result);
 		}
@@ -166,23 +166,23 @@ export async function run (
 }
 
 export function printSummary (): void {
-	const passedScenarios = results.filter(r => r.passed).length;
+	const passedModules = results.filter(r => r.passed).length;
 	const allCases = results.flatMap(r => r.cases);
 	const passedCases = allCases.filter(c => c.passed).length;
 
 	console.log(`${'─'.repeat(50)}`);
-	console.log(`  Scenarios: ${passedScenarios} / ${results.length} passed`);
+	console.log(`  Modules: ${passedModules} / ${results.length} passed`);
 	console.log(`  Cases: ${passedCases} / ${allCases.length} passed`);
 
 	if (results.some(r => !r.passed)) {
-		console.log('\n  Failed scenarios:');
-		results.forEach((scenario, scenarioIndex) => {
-			if (scenario.passed) {
+		console.log('\n  Failed modules:');
+		results.forEach((moduleResult, moduleIndex) => {
+			if (moduleResult.passed) {
 				return;
 			}
 
-			const scenarioPassedCases = scenario.cases.filter(item => item.passed).length;
-			console.log(`    ${scenarioIndex + 1}) ${scenario.name} ${getCasesSummary(scenarioPassedCases, scenario.cases.length)}`);
+			const modulePassedCases = moduleResult.cases.filter(item => item.passed).length;
+			console.log(`    ${moduleIndex + 1}) ${moduleResult.name} ${getCasesSummary(modulePassedCases, moduleResult.cases.length)}`);
 		});
 		process.exitCode = 1;
 	}

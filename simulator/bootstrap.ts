@@ -1,6 +1,6 @@
 /**
  * bootstrap.ts — loaded via dynamic import by index.ts AFTER env is configured.
- * Imports all project code, mocks BOT, and re-exports everything scenarios need.
+ * Imports all project code, mocks BOT, and re-exports everything modules need.
  */
 
 import type { UserSchema, GameSchema, RoomSchema } from '~/db/schemas';
@@ -120,7 +120,7 @@ export async function seedDB (data: {
 	await DB.write();
 }
 
-// ─── Re-exports for scenarios ─────────────────────────────────────────────────
+// ─── Re-exports for simulator modules ─────────────────────────────────────────
 export { DB, STATES };
 export const {
 	Game,
