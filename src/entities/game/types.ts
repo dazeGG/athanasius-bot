@@ -1,4 +1,3 @@
-import type { SendMessageByChatIdOptions } from '~/core';
 import type { GameId, UserId, UserSchema } from '~/db';
 import type { CardName } from '~/entities/deck';
 
@@ -92,7 +91,9 @@ export interface SuitsStageMeta extends Omit<BaseTurnMeta, SuitsStageOmitOptions
 
 export type TurnMeta = PlayerStageMeta | CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;
 
-export type MailingOptions = Omit<SendMessageByChatIdOptions, 'chatId'>;
+export interface MailingOptions {
+	text: string;
+}
 
 export interface TurnOptions {
 	me: PlayerId;

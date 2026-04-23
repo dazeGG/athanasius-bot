@@ -1,13 +1,14 @@
-import { BOT } from '~/core';
+import { Composer } from 'grammy';
+
 import { DB } from '~/db';
 import { Game } from '~/entities/game';
 import { isRegistered } from '~/shared/lib';
-import type { CallbackContextCallback } from '~/core';
+import type { AppContext, CallbackCtx } from '~/core';
 
 import * as handlers from './handlers';
 
-const turnGuard = (ctx: CallbackContextCallback): boolean => {
-	const gameId = ctx.data.meta?.split('#')[1];
+const turnGuard = (ctx: CallbackCtx): boolean => {
+	const gameId = ctx.callbackData?.meta?.split('#')[1];
 
 	if (!gameId) {
 		return false;
@@ -27,8 +28,11 @@ const turnGuard = (ctx: CallbackContextCallback): boolean => {
 	}
 };
 
-const registerGame = () => {
-	BOT.registerCallbackHandler(handlers.gameTurnCallbackHandler, { module: 'g', action: 't' }, turnGuard);
-};
+const composer = new Composer<AppContext>();
 
-export default registerGame;
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'g' && ctx.callbackData?.action === 't' && turnGuard(ctx),
+	handlers.gameTurnCallbackHandler,
+);
+
+export default composer;

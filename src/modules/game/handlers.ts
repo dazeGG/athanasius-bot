@@ -1,24 +1,23 @@
-import { BOT } from '~/core';
 import { DB } from '~/db';
 import { Game, processTurn } from '~/entities/game';
-import type { CallbackContext } from '~/core';
+import type { CallbackCtx } from '~/core';
 
 import * as lib from './lib';
 
-export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
-	await BOT.answerCallbackQuery(ctx);
+export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
+	await ctx.answerCallbackQuery();
 
-	const { meta: callbackMeta } = ctx.callback.data;
+	const { meta: callbackMeta } = ctx.callbackData!;
 
 	if (!callbackMeta) {
-		await BOT.sendMessage({ ctx, text: lib.STALE_GAME_MESSAGE_TEXT });
+		await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
 		return;
 	}
 
 	try {
 		const turnMeta = lib.parseTurnMeta(callbackMeta);
 		const game = new Game({ id: turnMeta.gameId });
-		const me = DB.data.users.find(u => u.id === ctx.callback.from.id);
+		const me = DB.data.users.find(u => u.id === ctx.from.id);
 
 		if (!me) {
 			return;
@@ -29,7 +28,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackContext) => {
 		await processTurn({ ctx, game, me, turnMeta });
 	} catch (error) {
 		if (lib.isInvalidGameFlowError(error) || (error instanceof Error && error.message === 'Game not found')) {
-			await BOT.sendMessage({ ctx, text: lib.STALE_GAME_MESSAGE_TEXT });
+			await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
 			return;
 		}
 

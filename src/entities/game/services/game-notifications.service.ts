@@ -11,11 +11,13 @@ import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsS
 
 export async function notifyInitialAthanasiuses (game: Game): Promise<void> {
 	for (const [playerIdStr, cardNames] of Object.entries(game.getAthanasiuses())) {
-		if (cardNames.length === 0) { continue; }
+		if (cardNames.length === 0) {
+			continue;
+		}
 
 		const playerId = Number(playerIdStr);
 		await ORM.Users.awardAchievement(playerId, Achievements.DEAL_ATHANASIUS);
-		await BOT.sendMessageByChatId({ chatId: playerId, text: InfoMessage.dealAthanasiusMe(cardNames) });
+		await BOT.api.sendMessage(playerId, InfoMessage.dealAthanasiusMe(cardNames));
 		await game.mailing(
 			{ text: InfoMessage.dealAthanasiusMailing(ORM.Users.get(playerId), cardNames) },
 			[playerId],
@@ -38,79 +40,71 @@ export async function sendFirstMessage (game: Game, initial: boolean = false) {
 		text = '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
 
 		if (game.activePlayer.settings.updatesView === 'composed') {
-			await BOT.sendMessageByChatId({
-				chatId: game.activePlayer.id,
-				text: `🟨 Вот что было за последний круг:\n\n${game.getLastRoundLogs()}`,
-			});
+			await BOT.api.sendMessage(game.activePlayer.id, `🟨 Вот что было за последний круг:\n\n${game.getLastRoundLogs()}`);
 		}
 	}
 
-	await BOT.sendMessageByChatId({
-		chatId: game.activePlayer.id,
-		text,
-		keyboard: gkb.playersSelect({ me: game.activePlayer.id, gameId: game.gameId, playerIds: game.playersWithCards }),
+	await BOT.api.sendMessage(game.activePlayer.id, text, {
+		reply_markup: gkb.playersSelect({
+			me: game.activePlayer.id,
+			gameId: game.gameId,
+			playerIds: game.playersWithCards,
+		}),
 	});
 }
 
 export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptions) {
 	switch (turnMeta.stage) {
 	case TurnStage.player:
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getCardSelectMessage(turnMeta),
-			keyboard: gkb.cardSelect({ me: ctx.callback.from.id, game, playerId: turnMeta.player.id }),
-		});
+		await ctx.editMessageText(
+			GameMessage.getCardSelectMessage(turnMeta),
+			{ reply_markup: gkb.cardSelect({ me: ctx.from.id, game, playerId: turnMeta.player.id }) },
+		);
 		break;
 	case TurnStage.card:
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT),
-			keyboard: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }),
-		});
+		await ctx.editMessageText(
+			GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT),
+			{ reply_markup: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }) },
+		);
 		break;
 	case TurnStage.count:
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT),
-			keyboard: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }),
-		});
+		await ctx.editMessageText(
+			GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT),
+			{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }) },
+		);
 		break;
 	case TurnStage.colors:
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
-			keyboard: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }),
-		});
+		await ctx.editMessageText(
+			GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
+			{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }) },
+		);
 		break;
 	}
 }
 
 export async function updateCountMessage ({ ctx, game, turnMeta, newCount }: UpdateMessageOptionsStage['Count']) {
-	await BOT.editMessage({
-		ctx,
-		text: GameMessage.getCountSelectMessage(turnMeta, newCount),
-		keyboard: gkb.countSelect({ game, turnMeta, count: newCount }),
-	});
+	await ctx.editMessageText(
+		GameMessage.getCountSelectMessage(turnMeta, newCount),
+		{ reply_markup: gkb.countSelect({ game, turnMeta, count: newCount }) },
+	);
 }
 
 export async function updateColorsMessage ({ ctx, game, turnMeta, newRedCount }: UpdateMessageOptionsStage['Colors']) {
-	await BOT.editMessage({
-		ctx,
-		text: GameMessage.getColorsSelectMessage(turnMeta, newRedCount),
-		keyboard: gkb.colorsSelect({ game, turnMeta, redCount: newRedCount }),
-	});
+	await ctx.editMessageText(
+		GameMessage.getColorsSelectMessage(turnMeta, newRedCount),
+		{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: newRedCount }) },
+	);
 }
 
 export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: UpdateMessageOptionsStage['Suits']) {
-	await BOT.editMessage({
-		ctx,
-		text: GameMessage.getSuitsSelectMessage(turnMeta, newSuits),
-		keyboard: gkb.suitsSelect({ game, turnMeta, suits: newSuits }),
-	});
+	await ctx.editMessageText(
+		GameMessage.getSuitsSelectMessage(turnMeta, newSuits),
+		{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: newSuits }) },
+	);
 }
 
 async function notifyWrongTurn ({ ctx, game, me }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me'>, meText: string, mailingText: string): Promise<void> {
-	await BOT.editMessage({ ctx, text: meText });
+	await ctx.editMessageText(meText);
 	await game.mailing({ text: mailingText }, [me.id, ...game.playersWithComposedUpdated]);
 	await sendFirstMessage(game);
 }
@@ -132,12 +126,12 @@ export async function notifyWrongSuitsMessage ({ ctx, game, me, turnMeta }: Game
 }
 
 export async function notifyStealMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-	await BOT.editMessage({ ctx, text: GameMessage.getCardsStealMessage(turnMeta) });
+	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta));
 	await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 }
 
 export async function notifyComposeAthanasiusMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-	await BOT.sendMessage({ ctx, text: InfoMessage.newAthanasiusMe(turnMeta) });
+	await ctx.reply(InfoMessage.newAthanasiusMe(turnMeta));
 	await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
 }
 

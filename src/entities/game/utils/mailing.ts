@@ -5,6 +5,6 @@ export async function mailing (options: MailingOptions, allPlayers: PlayerId[], 
 	const playersToMailing = allPlayers.filter(p => !exclude.includes(p));
 
 	await Promise.allSettled(
-		playersToMailing.map(playerId => BOT.sendMessageByChatId({ ...options, chatId: playerId })),
+		playersToMailing.map(playerId => BOT.api.sendMessage(playerId, options.text)),
 	);
 }
