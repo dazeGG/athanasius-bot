@@ -320,7 +320,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Алиса');
 		assertSent(log, ALICE.id, 'Борис');
 		assertSent(log, ALICE.id, 'Каролина');
-		assertSent(log, ALICE.id, 'Выгнать игроков · Начать игру · Назад');
+		assertSent(log, ALICE.id, 'Выгнать игроков · Начать игру · Удалить комнату · Назад');
 		assertNotSent(log, ALICE.id, 'Выйти');
 		resetLog();
 
@@ -345,7 +345,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		log = getLog();
 		assertSent(log, ALICE.id, 'Комната Алисы');
 		assertSent(log, ALICE.id, 'Код подключения');
-		assertSent(log, ALICE.id, 'Выгнать игроков · Начать игру · Назад');
+		assertSent(log, ALICE.id, 'Выгнать игроков · Начать игру · Удалить комнату · Назад');
 	});
 
 	await runCase('Blocks stale room access for non-members', async () => {
@@ -585,5 +585,69 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		log = getLog();
 		assertSent(log, CAROL.id, `Комната ${room.name}`);
 		assertSent(log, CAROL.id, 'Обновить · Назад');
+	});
+
+	await runCase('Shows delete button for owner when no active game', async () => {
+		const room = await setupRoomWithPlayers([BOB], handlers);
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
+		const log = getLog();
+
+		assertSent(log, ALICE.id, 'Удалить комнату');
+	});
+
+	await runCase('Does not show delete button for non-owner', async () => {
+		const room = await setupRoomWithPlayers([BOB], handlers);
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'rooms', action: 'open', meta: room.id }));
+		const log = getLog();
+
+		assertNotSent(log, BOB.id, 'Удалить комнату');
+	});
+
+	await runCase('Does not show delete button for owner with active game', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		resetLog();
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
+		const log = getLog();
+
+		assertNotSent(log, ALICE.id, 'Удалить комнату');
+	});
+
+	await runCase('Owner deletes room, all members notified, room removed from DB', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.deleteRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'delete', meta: room.id }));
+		const log = getLog();
+
+		assert(ORM.Rooms.getAll().find(r => r.id === room.id) === undefined, 'Room should be removed from DB');
+		assertSent(log, ALICE.id, 'Комната удалена');
+		assertSent(log, BOB.id, `Комната ${room.name} была удалена`);
+		assertSent(log, CAROL.id, `Комната ${room.name} была удалена`);
+		assertNotSent(log, ALICE.id, `Комната ${room.name} была удалена`);
+	});
+
+	await runCase('Prevents non-owner from deleting room', async () => {
+		const room = await setupRoomWithPlayers([BOB], handlers);
+
+		await handlers.deleteRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'delete', meta: room.id }));
+		const log = getLog();
+
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+		assert(ORM.Rooms.getAll().find(r => r.id === room.id) !== undefined, 'Room should not be deleted by non-owner');
+	});
+
+	await runCase('Prevents deleting room with active game', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		resetLog();
+
+		await handlers.deleteRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'delete', meta: room.id }));
+		const log = getLog();
+
+		assertSent(log, ALICE.id, 'Нельзя удалить комнату с активной игрой');
+		assert(ORM.Rooms.getAll().find(r => r.id === room.id) !== undefined, 'Room with active game should not be deleted');
 	});
 }
