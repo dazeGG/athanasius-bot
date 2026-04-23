@@ -40,7 +40,10 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 		text = '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
 
 		if (game.activePlayer.settings.updatesView === 'composed') {
-			await sender(game.activePlayer.id, `🟨 Вот что было за последний круг:\n\n${game.getLastRoundLogs()}`);
+			const lastRoundLogs = game.getLastRoundLogs();
+			if (lastRoundLogs) {
+				await sender(game.activePlayer.id, `🟨 Вот что было за последний круг:\n\n${lastRoundLogs}`);
+			}
 		}
 	}
 
