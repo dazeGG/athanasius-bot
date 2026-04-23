@@ -136,7 +136,8 @@ export async function notifyStealMessage (
 	const mailingText = composeAthanasius
 		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.stealCardsMailing(turnMeta, me);
-	await game.realtimeMailing({ text: mailingText }, [me.id], sender);
+	await game.realtimeMailing({ text: mailingText }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, InfoMessage.stealVictimMessage(turnMeta, me));
 }
 
 function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {

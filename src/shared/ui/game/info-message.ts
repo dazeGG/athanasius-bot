@@ -120,6 +120,12 @@ export class InfoMessage {
 		return this.mailingLine('⭐', me, turnMeta.player.name, turnMeta.cardName, formatSuits(turnMeta.suits)) + ' — Афанасий!';
 	}
 
+	public static stealVictimMessage (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		const base = `🟧 <b>${escapeHtml(me.name)} → Ты</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const suits = formatSuits(turnMeta.suits);
+		return suits ? `${base} | ${suits}` : base;
+	}
+
 	/* ME — paragraph format with ❌ on wrong field */
 	public static wrongCardMe (turnMeta: CardStageMeta): string {
 		return this.meWrongHeader(turnMeta) +

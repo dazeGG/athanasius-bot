@@ -51,12 +51,14 @@ function getLogPrefix (log: GameLog): string {
 	return '🟥';
 }
 
-function getLogMessage (log: GameLog): string {
+function getLogMessage (log: GameLog, viewerId?: PlayerId): string {
 	const from = ORM.Users.get(log.from);
 	const to = ORM.Users.get(log.to);
-	const prefix = getLogPrefix(log);
+	const isVictim = viewerId !== undefined && log.to === viewerId && !log.athanasius;
+	const prefix = isVictim ? '🟧' : getLogPrefix(log);
+	const toName = isVictim ? 'Ты' : escapeHtml(to.name);
 
-	let msg = `${prefix} <b>${escapeHtml(from.name)} → ${escapeHtml(to.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+	let msg = `${prefix} <b>${escapeHtml(from.name)} → ${toName}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
 
 	if (log.stealData?.length) {
 		const formatted = formatStealData(log.stealData);
@@ -80,7 +82,7 @@ export function getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): s
 		if (log.from === playerId) {
 			break;
 		}
-		result.push(getLogMessage(log));
+		result.push(getLogMessage(log, playerId));
 	}
 
 	return result.reverse().join('\n');
