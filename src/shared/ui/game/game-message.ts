@@ -12,7 +12,31 @@ import type {
 import { txt } from '.';
 
 export function formatSuits ({ hearts, diamonds, spades, clubs }: Pick<Suits, 'hearts' | 'diamonds' | 'spades' | 'clubs'>): string {
-	return `♥️: ${hearts} ♦️: ${diamonds} ♠️: ${spades} ♣️: ${clubs}`;
+	const parts: string[] = [];
+	if (hearts > 0) {
+		parts.push(`♥️ ${hearts}`);
+	}
+	if (diamonds > 0) {
+		parts.push(`♦️ ${diamonds}`);
+	}
+	if (spades > 0) {
+		parts.push(`♠️ ${spades}`);
+	}
+	if (clubs > 0) {
+		parts.push(`♣️ ${clubs}`);
+	}
+	return parts.join(' ');
+}
+
+export function formatColors (red: number, black: number): string {
+	const parts: string[] = [];
+	if (red > 0) {
+		parts.push(`🔴 ${red}`);
+	}
+	if (black > 0) {
+		parts.push(`⚫ ${black}`);
+	}
+	return parts.join(' ');
 }
 
 export class GameMessage {
@@ -104,11 +128,17 @@ export class GameMessage {
 			this.getSuitsNowSelected(turnMeta, suits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count);
 	}
 
-	public static getCardsStealMessage (turnMeta: SuitsStageMeta): string {
-		return '🟩 <b>Ты успешно украл карты :)</b>\n' +
+	public static getCardsStealMessage (turnMeta: SuitsStageMeta, composeAthanasius: boolean = false): string {
+		let msg = '🟩 <b>Ты успешно украл карты</b>\n' +
 			'\n' +
 			`Игрок: ${escapeHtml(turnMeta.player.name)}\n` +
 			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
 			`Масти: ${formatSuits(turnMeta.suits)}`;
+
+		if (composeAthanasius) {
+			msg += '\n\n⭐ <b>И это новый Афанасий!</b>';
+		}
+
+		return msg;
 	}
 }

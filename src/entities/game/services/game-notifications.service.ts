@@ -42,7 +42,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 		if (game.activePlayer.settings.updatesView === 'composed') {
 			const lastRoundLogs = game.getLastRoundLogs();
 			if (lastRoundLogs) {
-				text = `🟨 Вот что было за последний круг:\n\n${lastRoundLogs}\n\n———\n\n${text}`;
+				text = `Вот что было за последний круг:\n\n${lastRoundLogs}\n\n———\n\n${text}`;
 			}
 		}
 	}
@@ -128,14 +128,15 @@ export async function notifyWrongSuitsMessage ({ ctx, game, me, turnMeta, sender
 	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongSuitsMe(turnMeta), InfoMessage.wrongSuitsMailing(turnMeta, me));
 }
 
-export async function notifyStealMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits']) {
-	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta));
-	await game.realtimeMailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id], sender);
-}
-
-export async function notifyComposeAthanasiusMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits']) {
-	await ctx.reply(InfoMessage.newAthanasiusMe(turnMeta));
-	await game.realtimeMailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id], sender);
+export async function notifyStealMessage (
+	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits'],
+	composeAthanasius: boolean,
+) {
+	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta, composeAthanasius));
+	const mailingText = composeAthanasius
+		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
+		: InfoMessage.stealCardsMailing(turnMeta, me);
+	await game.realtimeMailing({ text: mailingText }, [me.id], sender);
 }
 
 function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {

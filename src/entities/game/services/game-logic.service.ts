@@ -14,7 +14,6 @@ import {
 	notifyWrongColorsMessage,
 	notifyWrongSuitsMessage,
 	notifyStealMessage,
-	notifyComposeAthanasiusMessage,
 	notifyEndGameMessage,
 } from './game-notifications.service';
 import type { GameServiceOptions } from './types';
@@ -116,10 +115,7 @@ export async function processTurn ({ ctx, game, me, turnMeta, sender }: GameServ
 			await notifyWrongSuitsMessage({ ctx, game, me, turnMeta, sender });
 			return;
 		}
-		await notifyStealMessage({ ctx, game, me, turnMeta, sender });
-		if (composeAthanasius) {
-			await notifyComposeAthanasiusMessage({ ctx, game, me, turnMeta, sender });
-		}
+		await notifyStealMessage({ ctx, game, me, turnMeta, sender }, composeAthanasius ?? false);
 		if (gameEnded) {
 			await notifyEndGameMessage(game, sender);
 			return;
