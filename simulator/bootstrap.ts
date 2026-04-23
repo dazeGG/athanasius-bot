@@ -114,16 +114,29 @@ const getDeletedMessageId = (ctx: {
 (BOT as any).answerCallbackQuery = async () => {};
 
 // ─── Log API ──────────────────────────────────────────────────────────────────
+/**
+ * Returns the captured simulator transport log for the current test case.
+ */
 export const getLog = (): readonly CapturedMsg[] => _log;
+
+/**
+ * Clears the captured transport log without touching database state.
+ */
 export const resetLog = (): void => { _log = []; };
 
 // ─── DB helpers ───────────────────────────────────────────────────────────────
+/**
+ * Resets the test database to an empty persisted snapshot.
+ */
 export async function clearDB (): Promise<void> {
 	setDBData({ users: [], rooms: [], games: [] });
 	await DB.write();
 }
 
 // ─── DB data mutation helpers (safe for reassignment) ─────────────────────────
+/**
+ * Replaces lowdb collections in place so ORM references remain valid.
+ */
 export function setDBData (data: { users: unknown[]; rooms: unknown[]; games: unknown[] }): void {
 	// Replace the content of the existing object, don't reassign DB.data
 	// This ensures all ORM instances still reference the same object
@@ -132,6 +145,9 @@ export function setDBData (data: { users: unknown[]; rooms: unknown[]; games: un
 	DB.data.games = data.games as never;
 }
 
+/**
+ * Seeds the simulator database with a full explicit snapshot for one case.
+ */
 export async function seedDB (data: {
 	users: UserSchema[];
 	rooms: RoomSchema[];

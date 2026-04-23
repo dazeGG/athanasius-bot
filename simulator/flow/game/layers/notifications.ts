@@ -1,3 +1,6 @@
+/**
+ * notifications.ts — notification delivery coverage for instant and composed players.
+ */
 import { getLog } from '../../../bootstrap';
 import { assert, assertNotSent, assertSent } from '../../../runner';
 import type { ModuleTools } from '../../../runner';
@@ -33,6 +36,9 @@ const seedNotificationGame = async (views: Partial<Record<number, 'instant' | 'c
 	});
 };
 
+/**
+ * Runs notification coverage for instant mailings and composed round summaries.
+ */
 export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('Instant players receive wrong-turn mailings in real time', async () => {
 		await resetGameFlowCase();

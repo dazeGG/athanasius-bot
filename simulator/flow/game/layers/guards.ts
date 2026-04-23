@@ -1,3 +1,6 @@
+/**
+ * guards.ts — anti-corruption and stale callback checks for the game flow.
+ */
 import { getLog } from '../../../bootstrap';
 import { assertSent } from '../../../runner';
 import type { ModuleTools } from '../../../runner';
@@ -32,6 +35,9 @@ const seedGuardGame = async (gameOverrides: Partial<ReturnType<typeof makeGame>>
 	});
 };
 
+/**
+ * Runs guard coverage for invalid payloads, stale callbacks, and illegal actors.
+ */
 export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('Soft-rejects callbacks without meta', async () => {
 		await resetGameFlowCase();

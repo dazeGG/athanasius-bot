@@ -97,17 +97,17 @@ const printFailedCaseDetails = (cases: CaseResult[], indent: string): void => {
 
 const printFlowCompactDetails = (result: RunResult): void => {
 	console.log('   Layers:');
-		result.layers.forEach((layerResult, layerIndex) => {
-			const layerPassedCases = layerResult.cases.filter(item => item.passed).length;
-			console.log(`   ${layerIndex + 1}) ${layerResult.name} - ${layerResult.passed ? PASSED_LABEL : ERROR_LABEL} ${getCasesSummary(layerPassedCases, layerResult.cases.length)}`);
-			if (!layerResult.passed) {
-				printFailedCaseDetails(layerResult.cases, '      ');
+	result.layers.forEach((layerResult, layerIndex) => {
+		const layerPassedCases = layerResult.cases.filter(item => item.passed).length;
+		console.log(`   ${layerIndex + 1}) ${layerResult.name} - ${layerResult.passed ? PASSED_LABEL : ERROR_LABEL} ${getCasesSummary(layerPassedCases, layerResult.cases.length)}`);
+		if (!layerResult.passed) {
+			printFailedCaseDetails(layerResult.cases, '      ');
 			if (layerResult.error) {
 				console.log('      Unhandled layer error:');
-					console.log(formatError(layerResult.error));
-				}
+				console.log(formatError(layerResult.error));
 			}
-		});
+		}
+	});
 	if (result.error) {
 		console.log('   Unhandled flow error:');
 		console.log(formatError(result.error));
@@ -116,10 +116,16 @@ const printFlowCompactDetails = (result: RunResult): void => {
 
 const getKindTitle = (kind: RunKind): string => kind === 'module' ? 'module' : 'flow';
 
+/**
+ * Updates runner behavior for the current simulator invocation.
+ */
 export function setRunnerOptions (options: Partial<RunnerOptions>): void {
 	Object.assign(runnerOptions, options);
 }
 
+/**
+ * Executes one module or flow and records structured case and layer results.
+ */
 export async function run (
 	name: string,
 	fn: ((tools: ModuleTools) => Promise<void>) | (() => Promise<void>),
@@ -279,6 +285,9 @@ export async function run (
 	}
 }
 
+/**
+ * Prints the aggregated simulator summary and sets the exit code on failures.
+ */
 export function printSummary (): void {
 	const modules = results.filter(r => r.kind === 'module');
 	const flows = results.filter(r => r.kind === 'flow');
@@ -335,10 +344,16 @@ export function printSummary (): void {
 	console.log('─'.repeat(50));
 }
 
+/**
+ * Throws with the provided message when a test condition is not met.
+ */
 export function assert (condition: boolean, message: string): void {
 	if (!condition) { throw new Error(message); }
 }
 
+/**
+ * Asserts that a user received a message containing the expected fragment.
+ */
 export function assertSent (log: readonly CapturedMsg[], toId: number, contains: string): void {
 	const msgs = log.filter(m => m.to === toId && m.type !== 'delete');
 	if (!msgs.some(m => m.text.includes(contains))) {
@@ -349,6 +364,9 @@ export function assertSent (log: readonly CapturedMsg[], toId: number, contains:
 	}
 }
 
+/**
+ * Asserts that a user did not receive a message containing the given fragment.
+ */
 export function assertNotSent (log: readonly CapturedMsg[], toId: number, contains: string): void {
 	const msgs = log.filter(m => m.to === toId && m.type !== 'delete');
 	if (msgs.some(m => m.text.includes(contains))) {
@@ -356,6 +374,9 @@ export function assertNotSent (log: readonly CapturedMsg[], toId: number, contai
 	}
 }
 
+/**
+ * Asserts that a message deletion was captured for the given user.
+ */
 export function assertDeleted (log: readonly CapturedMsg[], toId: number, messageId?: number): void {
 	const deletions = log.filter(m => m.to === toId && m.type === 'delete');
 
@@ -374,6 +395,9 @@ export function assertDeleted (log: readonly CapturedMsg[], toId: number, messag
 	}
 }
 
+/**
+ * Builds a minimal callback context for low-level helper assertions.
+ */
 export function makeCtx (playerId: number): CallbackContext {
 	return {
 		chatId: playerId,

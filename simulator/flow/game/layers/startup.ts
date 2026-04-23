@@ -1,3 +1,6 @@
+/**
+ * startup.ts — startup and deal invariants for the staged game flow.
+ */
 import { Deck } from '~/entities/deck';
 
 import { DB, Game, getLog } from '../../../bootstrap';
@@ -22,6 +25,9 @@ import {
 	totalCardsInHands,
 } from '../helpers';
 
+/**
+ * Runs startup-related game flow coverage such as deal invariants and first turn delivery.
+ */
 export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('Creates a game with consistent deal invariants and one first-turn recipient', async () => {
 		await resetGameFlowCase();

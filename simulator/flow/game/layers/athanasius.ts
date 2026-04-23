@@ -1,3 +1,6 @@
+/**
+ * athanasius.ts — Athanasius composition and endgame coverage for the game flow.
+ */
 import { DB, getLog } from '../../../bootstrap';
 import { assert, assertSent } from '../../../runner';
 import type { ModuleTools } from '../../../runner';
@@ -19,6 +22,9 @@ import {
 	turnMeta,
 } from '../helpers';
 
+/**
+ * Runs Athanasius creation, initial notification, and endgame ranking coverage.
+ */
 export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('Successful steals compose an Athanasius, empty the hand, and pass the turn forward', async () => {
 		await resetGameFlowCase();

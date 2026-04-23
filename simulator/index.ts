@@ -1,8 +1,11 @@
 /**
- * simulator/index.ts — test entry point.
+ * simulator/index.ts — top-level simulator entrypoint.
  *
- * Run all modules: pnpm test
- * Show help: pnpm test --help
+ * Loads the test environment, runs feature modules first, then executes
+ * broader cross-module flows such as the staged game flow.
+ *
+ * Run all checks: `pnpm test`
+ * Show help: `pnpm test --help`
  */
 
 import { config } from 'dotenv';

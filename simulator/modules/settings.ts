@@ -108,6 +108,9 @@ const getUser = (playerId: number) => {
 	return user!;
 };
 
+/**
+ * Runs simulator coverage for user settings navigation and mutations.
+ */
 export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('~/modules/settings/handlers');
 

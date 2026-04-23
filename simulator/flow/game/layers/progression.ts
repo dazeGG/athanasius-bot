@@ -1,3 +1,6 @@
+/**
+ * progression.ts — happy-path staged progression for the game flow.
+ */
 import { Deck } from '~/entities/deck';
 
 import { getLog } from '../../../bootstrap';
@@ -35,6 +38,9 @@ const seedProgressionGame = async (cardsToAthanasius = 4): Promise<void> => {
 	});
 };
 
+/**
+ * Runs happy-path coverage for player, card, count, colors, and suits stages.
+ */
 export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('Shows only other players with cards in the opening turn keyboard', async () => {
 		await resetGameFlowCase();

@@ -1,3 +1,6 @@
+/**
+ * failures.ts — negative turn outcomes for the staged game flow.
+ */
 import { getLog } from '../../../bootstrap';
 import { assert, assertSent } from '../../../runner';
 import type { ModuleTools } from '../../../runner';
@@ -29,6 +32,9 @@ const seedFailureGame = async (): Promise<void> => {
 	});
 };
 
+/**
+ * Runs failure-path coverage for every declaration stage and stale callbacks after turn shifts.
+ */
 export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('Wrong rank ends the turn and passes it to the next player with cards', async () => {
 		await resetGameFlowCase();

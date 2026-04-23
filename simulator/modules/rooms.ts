@@ -199,6 +199,9 @@ const setupRoomWithPlayers = async (
 	return ORM.Rooms.getById(room.id);
 };
 
+/**
+ * Runs simulator coverage for room management, membership, settings, and start-game entrypoints.
+ */
 export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('~/modules/rooms/handlers');
 	const { SettingsHandlers } = await import('~/modules/rooms/settings.handlers');
