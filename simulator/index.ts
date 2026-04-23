@@ -2,6 +2,7 @@
  * simulator/index.ts — test entry point.
  *
  * Run all scenarios: pnpm test
+ * Show detailed case logs: pnpm test -- --full-logs
  * Keep db.test.json after run: pnpm test -- --save-db
  */
 
@@ -14,10 +15,14 @@ config({ path: '.env.test', override: true });
 // ─── Project code via dynamic imports (env is now set) ───────────────────────
 await import('./bootstrap');
 
-const { run, printSummary } = await import('./runner');
+const { run, printSummary, setRunnerOptions } = await import('./runner');
 const { scenarioRegistration }  = await import('./scenarios/registration');
 
 // ─── Run all scenarios ────────────────────────────────────────────────────────
+const fullLogs = process.argv.includes('--full-logs');
+
+setRunnerOptions({ fullLogs });
+
 console.log('\n🎮  Athanasius simulator\n');
 console.log('Scenarios:\n');
 
