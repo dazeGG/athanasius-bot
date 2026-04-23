@@ -2,9 +2,9 @@
  * settings.ts — user settings coverage split into explicit cases.
  */
 
-import { DB } from '~/db';
+import { DB } from '../../src/db';
 
-import { STATES, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
+import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -52,7 +52,7 @@ const resetSettingsCase = async (): Promise<void> => {
 	resetLog();
 	await clearDB();
 	PLAYERS.forEach(player => {
-		STATES.clearState(player.id);
+		SESSIONS.clear(player.id);
 	});
 };
 
@@ -113,7 +113,7 @@ const getUser = (playerId: number) => {
  * Runs simulator coverage for user settings navigation and mutations.
  */
 export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('~/modules/settings/handlers');
+	const handlers = await import('../../src/modules/settings/handlers');
 
 	await runCase('Shows current settings and actions for idle user', async () => {
 		await resetSettingsCase();
@@ -175,39 +175,39 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Отлично, напиши мне новое имя');
 		assertSent(log, ALICE.id, 'Имя должно быть уникальным независимо от регистра');
-		assert(STATES.getState(ALICE.id) === 'SETTINGS_CHANGE_NAME', 'Alice state should be SETTINGS_CHANGE_NAME');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'SETTINGS_CHANGE_NAME', 'Alice state should be SETTINGS_CHANGE_NAME');
 	});
 
 	await runCase('Rejects invalid renamed value and keeps rename state', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
-		STATES.setState(ALICE.id, 'SETTINGS_CHANGE_NAME');
+		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
 
 		await handlers.settingsChangeNameStateMessageHandler(makeMessageCtx(ALICE, 'ab'));
 
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Имя может содержать только русские буквы');
-		assert(STATES.getState(ALICE.id) === 'SETTINGS_CHANGE_NAME', 'Alice state should remain SETTINGS_CHANGE_NAME after invalid rename');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'SETTINGS_CHANGE_NAME', 'Alice state should remain SETTINGS_CHANGE_NAME after invalid rename');
 		assert(getUser(ALICE.id).name === ALICE.name, 'Alice name should stay unchanged after invalid rename');
 	});
 
 	await runCase('Rejects duplicate renamed value ignoring case', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
-		STATES.setState(ALICE.id, 'SETTINGS_CHANGE_NAME');
+		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
 
 		await handlers.settingsChangeNameStateMessageHandler(makeMessageCtx(ALICE, 'бОрИс'));
 
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Это имя уже используется');
-		assert(STATES.getState(ALICE.id) === 'SETTINGS_CHANGE_NAME', 'Alice state should remain SETTINGS_CHANGE_NAME after duplicate rename');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'SETTINGS_CHANGE_NAME', 'Alice state should remain SETTINGS_CHANGE_NAME after duplicate rename');
 		assert(getUser(ALICE.id).name === ALICE.name, 'Alice name should stay unchanged after duplicate rename');
 	});
 
 	await runCase('Renames user successfully after previous invalid attempt', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
-		STATES.setState(ALICE.id, 'SETTINGS_CHANGE_NAME');
+		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
 
 		await handlers.settingsChangeNameStateMessageHandler(makeMessageCtx(ALICE, 'ab'));
 		resetLog();
@@ -219,7 +219,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Твои настройки');
 		assertSent(log, ALICE.id, 'Имя: Алевтина');
 		assertSent(log, ALICE.id, 'Вид обновлений: instant');
-		assert(STATES.getState(ALICE.id) === undefined, 'Alice state should be cleared after successful rename');
+		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Alice state should be cleared after successful rename');
 		assert(getUser(ALICE.id).name === 'Алевтина', 'Alice name should be updated after successful rename');
 	});
 

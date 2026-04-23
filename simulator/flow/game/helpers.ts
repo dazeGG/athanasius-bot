@@ -1,11 +1,11 @@
 /**
  * game/helpers.ts — shared fixtures, builders, and assertions for `Game Flow`.
  */
-import { ORM } from '~/db';
-import { Deck, DeckConfig } from '~/entities/deck';
-import type { GameSchema, RoomSchema, UserSchema } from '~/db';
-import type { CardName, SuitName } from '~/entities/deck';
-import type { CallbackCtx } from '~/core';
+import { ORM } from '../../../src/db';
+import { Deck, DeckConfig } from '../../../src/entities/deck';
+import type { GameSchema, RoomSchema, UserSchema } from '../../../src/db';
+import type { CardName, SuitName } from '../../../src/entities/deck';
+import type { CallbackCtx } from '../../../src/core';
 
 import {
 	clearDB,
@@ -265,7 +265,7 @@ export const turnMeta = {
  * Executes the real game callback handler with a staged simulator payload.
  */
 export const runTurn = async (player: PlayerFixture, meta?: string, messageId = 1): Promise<void> => {
-	const handlers = await import('~/modules/game/handlers');
+	const handlers = await import('../../../src/modules/game/handlers');
 	await handlers.gameTurnCallbackHandler(makeTurnCallbackCtx(player, meta, messageId));
 };
 

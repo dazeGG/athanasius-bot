@@ -4,7 +4,7 @@
 
 import type { ApiCallFn } from 'grammy';
 
-import { STATES, BOT, clearDB, getLog, resetLog } from '../bootstrap';
+import { SESSIONS, BOT, clearDB, getLog, resetLog } from '../bootstrap';
 import { assert, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -30,21 +30,23 @@ export async function coreModule ({ runCase }: ModuleTools): Promise<void> {
 		resetLog();
 		await clearDB();
 
-		STATES.setState(ALICE.id, 'ROOM_CDC', { roomId: 'room-1' });
-		assert(STATES.getState(ALICE.id) === 'ROOM_CDC', 'Alice state should be stored');
-		assert((STATES.getContext(ALICE.id) as { roomId?: string } | undefined)?.roomId === 'room-1', 'Alice context should be stored');
+		SESSIONS.setFlow(ALICE.id, { name: 'ROOM_CDC', roomId: 'room-1' });
+		assert(SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC', 'Alice state should be stored');
+		assert(
+			SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC' && SESSIONS.get(ALICE.id).flow.roomId === 'room-1',
+			'Alice context should be stored',
+		);
 
-		STATES.setState(ALICE.id, 'REGISTRATION');
-		assert(STATES.getContext(ALICE.id) === undefined, 'Setting a new state without context should clear the previous context');
+		SESSIONS.setFlow(ALICE.id, { name: 'REGISTRATION' });
+		assert(!('roomId' in SESSIONS.get(ALICE.id).flow), 'Setting a new state without context should clear the previous context');
 
-		STATES.setContext(ALICE.id, { roomId: 'room-2' });
-		STATES.clearState(ALICE.id);
-		assert(STATES.getState(ALICE.id) === undefined, 'Alice state should be cleared');
-		assert(STATES.getContext(ALICE.id) === undefined, 'Alice context should be cleared');
+		SESSIONS.clear(ALICE.id);
+		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Alice state should be cleared');
+		assert(!('roomId' in SESSIONS.get(ALICE.id).flow), 'Alice context should be cleared');
 	});
 
 	await runCase('Publishes user-facing Telegram commands alongside keyboard helpers', async () => {
-		const { commands } = await import('~/commands');
+		const { commands } = await import('../../src/commands');
 
 		assert(commands.some(command => command.command === 'start'), 'Commands list should include /start');
 		assert(commands.some(command => command.command === 'reg'), 'Commands list should include /reg');
@@ -82,7 +84,7 @@ export async function coreModule ({ runCase }: ModuleTools): Promise<void> {
 	});
 
 	await runCase('Escapes HTML-sensitive user content before rendering it into messages', async () => {
-		const { escapeHtml } = await import('~/shared/lib');
+		const { escapeHtml } = await import('../../src/shared/lib');
 
 		assert(
 			escapeHtml('<b>Зал & Co</b>') === '&lt;b&gt;Зал &amp; Co&lt;/b&gt;',
@@ -105,7 +107,7 @@ export async function coreModule ({ runCase }: ModuleTools): Promise<void> {
 			}),
 		});
 
-		const { default: gameComposer } = await import('~/modules/game');
+		const { default: gameComposer } = await import('../../src/modules/game');
 		const middleware = gameComposer.middleware();
 
 		await middleware(

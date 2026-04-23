@@ -2,14 +2,14 @@
  * rooms.ts — room creation, joining, settings, and membership flows split into explicit cases.
  */
 
-import type { CallbackData } from '~/core';
-import { ORM, DB } from '~/db';
-import { txt as roomTxt } from '~/modules/rooms/ui';
-import { escapeHtml } from '~/shared/lib';
-import { txt as gameTxt } from '~/shared/ui/game';
-import type * as RoomsHandlersModule from '~/modules/rooms/handlers';
+import type { CallbackData } from '../../src/core';
+import { ORM, DB } from '../../src/db';
+import { txt as roomTxt } from '../../src/modules/rooms/ui';
+import { escapeHtml } from '../../src/shared/lib';
+import { txt as gameTxt } from '../../src/shared/ui/game';
+import type * as RoomsHandlersModule from '../../src/modules/rooms/handlers';
 
-import { STATES, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
+import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -62,7 +62,7 @@ const resetRoomsCase = async (): Promise<void> => {
 	resetLog();
 	await clearDB();
 	PLAYERS.forEach(player => {
-		STATES.clearState(player.id);
+		SESSIONS.clear(player.id);
 	});
 };
 
@@ -122,7 +122,7 @@ const startCreateRoomFlow = async (
 
 	const log = getLog();
 	assertSent(log, owner.id, 'Напиши название комнаты');
-	assert(STATES.getState(owner.id) === 'ROOMS_CREATE', `${owner.name}: state should be ROOMS_CREATE`);
+	assert(SESSIONS.get(owner.id).flow.name === 'ROOMS_CREATE', `${owner.name}: state should be ROOMS_CREATE`);
 	resetLog();
 };
 
@@ -139,7 +139,7 @@ const createRoom = async (
 	assertSent(log, owner.id, escapeHtml(roomName));
 	assertSent(log, owner.id, 'Вот список твоих комнат');
 	assertSent(log, owner.id, roomName);
-	assert(STATES.getState(owner.id) === undefined, `${owner.name}: state should be cleared after room creation`);
+	assert(SESSIONS.get(owner.id).flow.name === undefined, `${owner.name}: state should be cleared after room creation`);
 
 	const room = getRoomByName(roomName);
 	assert(room.owner === owner.id, `${owner.name}: should be room owner`);
@@ -158,7 +158,7 @@ const startJoinRoomFlow = async (
 
 	const log = getLog();
 	assertSent(log, player.id, 'Напиши код подключения');
-	assert(STATES.getState(player.id) === 'ROOMS_JOIN', `${player.name}: state should be ROOMS_JOIN`);
+	assert(SESSIONS.get(player.id).flow.name === 'ROOMS_JOIN', `${player.name}: state should be ROOMS_JOIN`);
 	resetLog();
 };
 
@@ -178,7 +178,7 @@ const joinRoomSuccessfully = async (
 	const log = getLog();
 	assertSent(log, player.id, `Ты зашел в комнату ${escapeHtml(roomName)}`);
 	assertSent(log, player.id, 'Вот список твоих комнат');
-	assert(STATES.getState(player.id) === undefined, `${player.name}: state should be cleared after successful join`);
+	assert(SESSIONS.get(player.id).flow.name === undefined, `${player.name}: state should be cleared after successful join`);
 	assertRoomPlayers(roomId, [...playersBefore, player.id]);
 	playersBefore.forEach(playerId => {
 		assertSent(log, playerId, 'зашел');
@@ -207,8 +207,8 @@ const setupRoomWithPlayers = async (
  * Runs simulator coverage for room management, membership, settings, and start-game entrypoints.
  */
 export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('~/modules/rooms/handlers');
-	const { SettingsHandlers } = await import('~/modules/rooms/settings.handlers');
+	const handlers = await import('../../src/modules/rooms/handlers');
+	const { SettingsHandlers } = await import('../../src/modules/rooms/settings.handlers');
 
 	await runCase('Shows empty rooms view with default actions', async () => {
 		await resetRoomsCase();
@@ -274,7 +274,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Комната Комната Алисы уже есть');
-		assert(STATES.getState(ALICE.id) === 'ROOMS_CREATE', 'Alice should stay in ROOMS_CREATE after duplicate room name');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'ROOMS_CREATE', 'Alice should stay in ROOMS_CREATE after duplicate room name');
 		assert(ORM.Rooms.getAll().filter(room => room.name === DEFAULT_ROOM_NAME).length === 1, 'Only one room with duplicate name should exist');
 	});
 
@@ -289,7 +289,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		const log = getLog();
 		assertSent(log, BOB.id, 'Неправильный код подключения');
 		assertSent(log, BOB.id, 'Вот список твоих комнат');
-		assert(STATES.getState(BOB.id) === undefined, 'Bob state should be cleared after wrong code');
+		assert(SESSIONS.get(BOB.id).flow.name === undefined, 'Bob state should be cleared after wrong code');
 		assert(ORM.Rooms.getAll()[0].players.length === 1, 'Wrong code should not change room players');
 	});
 
@@ -306,7 +306,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 
 		const log = getLog();
 		assertSent(log, BOB.id, `Ты уже в комнате ${room.name}`);
-		assert(STATES.getState(BOB.id) === undefined, 'Bob state should be cleared after duplicate join');
+		assert(SESSIONS.get(BOB.id).flow.name === undefined, 'Bob state should be cleared after duplicate join');
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
 	});
 
@@ -463,7 +463,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		await handlers.joinRoomCodeMessageHandler(makeMessageCtx(EVE, oldCode));
 		log = getLog();
 		assertSent(log, EVE.id, 'Неправильный код подключения');
-		assert(STATES.getState(EVE.id) === undefined, 'Eve state should be cleared after wrong join code');
+		assert(SESSIONS.get(EVE.id).flow.name === undefined, 'Eve state should be cleared after wrong join code');
 		resetLog();
 
 		await joinRoomSuccessfully(EVE, room.id, handlers);
@@ -489,7 +489,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		await SettingsHandlers.changeDecksCount(makeCallbackCtx(BOB, { module: 'room', action: 'cdc', meta: room.id }));
 		log = getLog();
 		assertSent(log, BOB.id, roomTxt.ownerOnly);
-		assert(STATES.getState(BOB.id) === undefined, 'Member should not enter ROOM_CDC state');
+		assert(SESSIONS.get(BOB.id).flow.name === undefined, 'Member should not enter ROOM_CDC state');
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Member should not be able to change decks count');
 	});
 
@@ -499,22 +499,25 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		await SettingsHandlers.changeDecksCount(makeCallbackCtx(ALICE, { module: 'room', action: 'cdc', meta: room.id }));
 		let log = getLog();
 		assertSent(log, ALICE.id, 'Напиши новое количество колод');
-		assert(STATES.getState(ALICE.id) === 'ROOM_CDC', 'Alice state should be ROOM_CDC after opening decks count change');
-		assert((STATES.getContext(ALICE.id) as { roomId?: string } | undefined)?.roomId === room.id, 'Deck count flow should persist the room id in state context');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC', 'Alice state should be ROOM_CDC after opening decks count change');
+		assert(
+			SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC' && SESSIONS.get(ALICE.id).flow.roomId === room.id,
+			'Deck count flow should persist the room id in state context',
+		);
 		resetLog();
 
 		await SettingsHandlers.changeDecksCountMessage(makeMessageCtx(ALICE, '101'));
 		log = getLog();
 		assertSent(log, ALICE.id, 'Количество колод должно быть целым числом в диапазоне от 1 до 100');
-		assert(STATES.getState(ALICE.id) === 'ROOM_CDC', 'Alice state should stay ROOM_CDC after invalid decks count');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC', 'Alice state should stay ROOM_CDC after invalid decks count');
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Invalid decks count should not change room settings');
 		resetLog();
 
 		await SettingsHandlers.changeDecksCountMessage(makeMessageCtx(ALICE, '7'));
 		log = getLog();
 		assertSent(log, ALICE.id, 'Количество колод: 7');
-		assert(STATES.getState(ALICE.id) === undefined, 'Alice state should be cleared after valid decks count');
-		assert(STATES.getContext(ALICE.id) === undefined, 'Alice context should be cleared after valid decks count');
+		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Alice state should be cleared after valid decks count');
+		assert(!('roomId' in SESSIONS.get(ALICE.id).flow), 'Alice context should be cleared after valid decks count');
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 7, 'Valid decks count should update room settings');
 	});
 
@@ -528,7 +531,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		const log = getLog();
 
 		assertSent(log, ALICE.id, 'Количество колод должно быть целым числом в диапазоне от 1 до 100');
-		assert(STATES.getState(ALICE.id) === 'ROOM_CDC', 'Alice state should stay ROOM_CDC after fractional decks count');
+		assert(SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC', 'Alice state should stay ROOM_CDC after fractional decks count');
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Fractional decks count should not change room settings');
 	});
 

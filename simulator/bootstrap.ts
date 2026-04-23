@@ -5,13 +5,13 @@
 
 import type { KeyboardButton } from 'grammy/types';
 
-import type { UserSchema, GameSchema, RoomSchema } from '~/db/schemas';
+import type { AppFlowState, AppSession } from '../src/core';
+import type { UserSchema, GameSchema, RoomSchema } from '../src/db/schemas';
 
 // ─── Project code (env must already be set by the time this module evaluates) ──
-const { BOT } = await import('~/core');
-const { DB } = await import('~/db');
-const { STATES } = await import('~/core/states');
-const gameModule = await import('~/entities/game');
+const { BOT } = await import('../src/core');
+const { DB } = await import('../src/db');
+const gameModule = await import('../src/entities/game');
 
 // ─── Transport capture ────────────────────────────────────────────────────────
 export interface CapturedMsg {
@@ -23,6 +23,38 @@ export interface CapturedMsg {
 }
 
 let _log: CapturedMsg[] = [];
+let _sessions = new Map<number, AppSession>();
+
+const createSession = (): AppSession => ({
+	flow: {},
+});
+
+const getOrCreateSession = (userId: number): AppSession => {
+	const session = _sessions.get(userId);
+
+	if (session) {
+		return session;
+	}
+
+	const nextSession = createSession();
+	_sessions.set(userId, nextSession);
+	return nextSession;
+};
+
+export const SESSIONS = {
+	get (userId: number): AppSession {
+		return getOrCreateSession(userId);
+	},
+	setFlow (userId: number, flow: AppFlowState): void {
+		getOrCreateSession(userId).flow = flow;
+	},
+	clear (userId: number): void {
+		_sessions.delete(userId);
+	},
+	reset (): void {
+		_sessions = new Map();
+	},
+};
 
 const SUPPORTED_HTML_TAGS = new Set(['b', '/b', 'code', '/code']);
 
@@ -109,6 +141,7 @@ const getDeletedMessageId = (ctx: {
 
 type ReplyLikeContext = {
 	chat: { id: number };
+	from: { id: number };
 	message?: { message_id: number };
 	callbackQuery?: { message?: { message_id: number } };
 };
@@ -139,6 +172,7 @@ export const withMessageMethods = <ContextT extends ReplyLikeContext> (ctx: Cont
 	return Object.assign(ctx, {
 		api: BOT.api,
 		me: BOT_ME,
+		session: getOrCreateSession(ctx.from.id),
 		update: {
 			message: ctx.message,
 		},
@@ -151,6 +185,7 @@ export const withCallbackMethods = <ContextT extends ReplyLikeContext> (ctx: Con
 	return Object.assign(ctx, {
 		api: BOT.api,
 		me: BOT_ME,
+		session: getOrCreateSession(ctx.from.id),
 		update: {
 			callback_query: ctx.callbackQuery,
 		},
@@ -269,6 +304,7 @@ export const resetLog = (): void => {
  */
 export async function clearDB (): Promise<void> {
 	setDBData({ users: [], rooms: [], games: [] });
+	SESSIONS.reset();
 	await DB.write();
 }
 
@@ -299,7 +335,6 @@ export async function seedDB (data: {
 // ─── Re-exports for simulator modules ─────────────────────────────────────────
 export {
 	DB,
-	STATES,
 };
 export {
 	BOT,
