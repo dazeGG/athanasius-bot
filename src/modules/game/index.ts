@@ -6,7 +6,8 @@ import type { AppContext } from '~/core';
 import * as handlers from './handlers';
 
 const composer = new Composer<AppContext>();
+const registered = composer.filter(isRegistered);
 
-composer.callbackQuery(/^g:t:/, ctx => isRegistered(ctx) && handlers.gameTurnCallbackHandler(ctx));
+registered.callbackQuery(/^g:t:/, handlers.gameTurnCallbackHandler);
 
 export default composer;

@@ -5,7 +5,7 @@ import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
-import type { CallbackCtx, MessageCtx } from '~/core';
+import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
 
 import * as ui from './ui';
 
@@ -41,7 +41,7 @@ const getHandShowText = (ctx: CallbackCtx) => {
 	return `Комната ${escapeHtml(room.name)}\n\n${Deck.getMyHandView(hand.cardsInHand)}`;
 };
 
-export const handMessageHandler = async (ctx: MessageCtx) => {
+export const handMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	const gamesWithMe = ORM.Games.getActiveWithMe(ctx.from!.id);

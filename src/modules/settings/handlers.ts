@@ -4,7 +4,7 @@ import type { UserSchema } from '~/db';
 import { DB, ORM } from '~/db';
 import { escapeHtml, validateName } from '~/shared/lib';
 import { stringifyCallbackData } from '~/core/lib';
-import type { CallbackCtx, MessageCtx } from '~/core';
+import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
 
 import * as lib from './lib';
 
@@ -26,7 +26,7 @@ const getBaseSettingsKeyboard = () => {
 		.text('Выход', stringifyCallbackData({ module: 'settings', action: 'exit' }));
 };
 
-export const settingsStartMessageHandler = async (ctx: MessageCtx) => {
+export const settingsStartMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	if (ORM.Games.getActiveWithMe(ctx.from!.id).length) {

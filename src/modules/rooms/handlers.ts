@@ -5,7 +5,7 @@ import { sendFirstMessage } from '~/entities/game/services';
 import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import { getCallbackMeta } from '~/core/lib';
-import type { CallbackCtx, MessageCtx } from '~/core';
+import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
 import * as ui from './ui';
 import * as utils from './utils';
 
@@ -13,7 +13,7 @@ const getErrorMessage = (error: unknown): string => {
 	return escapeHtml(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
 };
 
-export const roomsMessageHandler = async (ctx: MessageCtx) => {
+export const roomsMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	const roomsWithMe = ORM.Rooms.getWithMe(ctx.from!.id);
