@@ -29,6 +29,7 @@ interface ConstructorOptionsInit {
 export class Game {
 	private readonly id: GameId;
 	private readonly roomId: RoomId;
+	private readonly name: string;
 	private readonly started: Dayjs;
 	private ended?: Dayjs;
 	private readonly queue: Queue;
@@ -42,6 +43,7 @@ export class Game {
 
 			this.id = game.id;
 			this.roomId = game.roomId;
+			this.name = game.name;
 			this.started = dayjs(game.started);
 			this.ended = game.ended ? dayjs(game.ended) : undefined;
 			this.queue = new Queue(game.players, false);
@@ -54,6 +56,7 @@ export class Game {
 
 			this.id = nanoid(6);
 			this.roomId = roomId;
+			this.name = room.name;
 			this.started = dayjs();
 			this.queue = new Queue(players, true);
 			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
@@ -152,6 +155,7 @@ export class Game {
 		return {
 			id: this.id,
 			roomId: this.roomId,
+			name: this.name,
 			started: this.started.valueOf(),
 			ended: this.ended?.valueOf(),
 			players: this.queue.actualQueue,
