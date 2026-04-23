@@ -247,6 +247,7 @@ export class Game {
 			cardName: turnMeta.cardName,
 			steal: true,
 			stealData: this.getStealData(turnMeta),
+			athanasius: newAthanasiuses.length > 0,
 		});
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.actualQueue);

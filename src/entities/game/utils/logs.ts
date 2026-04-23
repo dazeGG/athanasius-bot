@@ -33,6 +33,10 @@ function getLogMessage (log: GameLog): string {
 		}
 	}
 
+	if (log.athanasius) {
+		msg += ' | 🟨 Афанасий!';
+	}
+
 	return msg;
 }
 
