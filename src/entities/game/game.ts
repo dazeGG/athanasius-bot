@@ -10,7 +10,7 @@ import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
 import { parseGameUtils, generateGameUtils } from './services';
-import { hasLogs, getLastRoundLogs, mailing as gameMailing } from './utils';
+import { getLastRoundLogs, mailing as gameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
@@ -86,6 +86,10 @@ export class Game {
 		return this.queue.actualQueue;
 	}
 
+	public get playersWithCards (): PlayerId[] {
+		return this.queue.actualQueue.filter(id => this.hands.hand(id).cardsInHand.length > 0);
+	}
+
 	public get playersWithComposedUpdated (): PlayerId[] {
 		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
 		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
@@ -119,10 +123,6 @@ export class Game {
 	}
 
 	/* LOGS */
-	public get hasLogs (): boolean {
-		return hasLogs(this.utils, this.activePlayer.id);
-	}
-
 	public getLastRoundLogs (): string {
 		return getLastRoundLogs(this.utils, this.activePlayer.id);
 	}
@@ -162,6 +162,10 @@ export class Game {
 
 	/* TURNS */
 	public async turn ({ me, turnMeta, options }: TurnOptions): Promise<TurnReturn> {
+		if (!this.hands.hand(me).has({ cardName: turnMeta.cardName })) {
+			return this.handleFailedTurn({ me, turnMeta });
+		}
+
 		const hand = this.hands.hand(turnMeta.player.id);
 		if (hand.has(options)) {
 			return this.handleSuccessfulTurn({ me, turnMeta });
@@ -185,15 +189,15 @@ export class Game {
 
 		if (newAthanasiuses.length > 0) {
 			this.athanasiuses[me].push(...newAthanasiuses);
-
-			this.utils.logs.push({
-				from: me,
-				to: turnMeta.player.id,
-				cardName: turnMeta.cardName,
-				steal: true,
-				stealData: this.getStealData(turnMeta),
-			});
 		}
+
+		this.utils.logs.push({
+			from: me,
+			to: turnMeta.player.id,
+			cardName: turnMeta.cardName,
+			steal: true,
+			stealData: this.getStealData(turnMeta),
+		});
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.actualQueue);
 

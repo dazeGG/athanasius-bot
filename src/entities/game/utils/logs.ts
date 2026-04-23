@@ -35,10 +35,6 @@ function getLogMessage (log: GameLog): string {
 	return msg;
 }
 
-export function hasLogs (utils: GameUtilsParsed, playerId: PlayerId): boolean {
-	return utils.logs[utils.logs.length - 1].from !== playerId;
-}
-
 export function getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): string {
 	const result: string[] = [];
 

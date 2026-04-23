@@ -33,7 +33,7 @@ export async function sendFirstMessage (game: Game, initial: boolean = false) {
 	await BOT.sendMessageByChatId({
 		chatId: game.activePlayer.id,
 		text,
-		keyboard: gkb.playersSelect({ me: game.activePlayer.id, gameId: game.gameId, playerIds: game.allPlayers }),
+		keyboard: gkb.playersSelect({ me: game.activePlayer.id, gameId: game.gameId, playerIds: game.playersWithCards }),
 	});
 }
 
