@@ -195,7 +195,7 @@ export function assert (condition: boolean, message: string): void {
 }
 
 export function assertSent (log: readonly CapturedMsg[], toId: number, contains: string): void {
-	const msgs = log.filter(m => m.to === toId);
+	const msgs = log.filter(m => m.to === toId && m.type !== 'delete');
 	if (!msgs.some(m => m.text.includes(contains))) {
 		const got = msgs.length
 			? msgs.map(m => `      "${m.text.slice(0, 80)}"`).join('\n')
@@ -205,9 +205,27 @@ export function assertSent (log: readonly CapturedMsg[], toId: number, contains:
 }
 
 export function assertNotSent (log: readonly CapturedMsg[], toId: number, contains: string): void {
-	const msgs = log.filter(m => m.to === toId);
+	const msgs = log.filter(m => m.to === toId && m.type !== 'delete');
 	if (msgs.some(m => m.text.includes(contains))) {
 		throw new Error(`Expected NO message to ${toId} containing "${contains}", but one was sent`);
+	}
+}
+
+export function assertDeleted (log: readonly CapturedMsg[], toId: number, messageId?: number): void {
+	const deletions = log.filter(m => m.to === toId && m.type === 'delete');
+
+	if (messageId === undefined) {
+		if (deletions.length === 0) {
+			throw new Error(`Expected a deleted message for ${toId}, but none was captured`);
+		}
+		return;
+	}
+
+	if (!deletions.some(m => m.messageId === messageId)) {
+		const got = deletions.length
+			? deletions.map(m => `      ${m.text}`).join('\n')
+			: '      (no deletions)';
+		throw new Error(`Expected message ${messageId} to be deleted for ${toId}, but got:\n${got}`);
 	}
 }
 

@@ -3,6 +3,7 @@
  * Imports all project code, mocks BOT, and re-exports everything modules need.
  */
 
+import type TelegramBot from 'node-telegram-bot-api';
 import type { UserSchema, GameSchema, RoomSchema } from '~/db/schemas';
 
 // ─── Project code (env must already be set by the time this module evaluates) ──
@@ -15,12 +16,13 @@ const gameModule = await import('~/entities/game');
 (BOT as any).bot.on('polling_error', () => {});
 (BOT as any).bot.stopPolling().catch(() => {});
 
-// ─── Message capture ──────────────────────────────────────────────────────────
+// ─── Transport capture ────────────────────────────────────────────────────────
 export interface CapturedMsg {
-	type: 'send' | 'edit';
+	type: 'send' | 'edit' | 'delete';
 	to: number;
 	toName: string;
 	text: string;
+	messageId?: number;
 }
 
 let _log: CapturedMsg[] = [];
@@ -28,8 +30,13 @@ let _log: CapturedMsg[] = [];
 const nameOf = (id: number): string =>
 	DB.data.users.find(u => u.id === id)?.name ?? `user#${id}`;
 
-const capture = (type: CapturedMsg['type'], to: number, text: string): void => {
-	_log.push({ type, to, toName: nameOf(to), text });
+const capture = (
+	type: CapturedMsg['type'],
+	to: number,
+	text: string,
+	messageId?: number,
+): void => {
+	_log.push({ type, to, toName: nameOf(to), text, messageId });
 };
 
 const appendKeyboardLabels = (text: string, keyboard?: RawReplyKeyboard | TelegramBot.ReplyKeyboardMarkup): string => {
@@ -50,6 +57,13 @@ type MessageOptions = {
 
 const getKeyboard = ({ keyboard, options }: MessageOptions): RawReplyKeyboard | undefined => {
 	return keyboard ?? options?.reply_markup?.keyboard;
+};
+
+const getDeletedMessageId = (ctx: {
+	message?: { message_id: number };
+	callback?: { message?: { message_id: number } };
+}): number | undefined => {
+	return ctx.message?.message_id ?? ctx.callback?.message?.message_id;
 };
 
 // ─── Mock BOT methods ─────────────────────────────────────────────────────────
@@ -89,7 +103,14 @@ const getKeyboard = ({ keyboard, options }: MessageOptions): RawReplyKeyboard | 
 	options?: MessageOptions['options'];
 }) => capture('edit', ctx.chatId, appendKeyboardLabels(text, getKeyboard({ keyboard, options })));
 
-(BOT as any).deleteMessage = async () => {};
+(BOT as any).deleteMessage = async (ctx: {
+	chatId: number;
+	message?: { message_id: number };
+	callback?: { message?: { message_id: number } };
+}) => {
+	const messageId = getDeletedMessageId(ctx);
+	capture('delete', ctx.chatId, messageId === undefined ? 'message' : `message#${messageId}`, messageId);
+};
 (BOT as any).answerCallbackQuery = async () => {};
 
 // ─── Log API ──────────────────────────────────────────────────────────────────
