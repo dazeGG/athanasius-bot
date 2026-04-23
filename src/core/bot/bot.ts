@@ -1,9 +1,10 @@
 import 'dotenv/config';
 
-import { Bot as GrammyBot } from 'grammy';
+import { Bot as GrammyBot, session } from 'grammy';
 import type { Middleware, Transformer } from 'grammy';
 
 import { logError } from '~/core/lib';
+import { createInitialSessionData } from './types';
 import type { AppContext } from './types';
 
 import { CallbackUtils } from './lib';
@@ -33,6 +34,10 @@ class Bot {
 	constructor (token: string) {
 		this.grammyBot = new GrammyBot<AppContext>(token);
 		this.grammyBot.api.config.use(htmlParseModeTransformer);
+		this.grammyBot.use(session({
+			initial: createInitialSessionData,
+			getSessionKey: ctx => ctx.from?.id.toString(),
+		}));
 
 		this.grammyBot.use(async (ctx, next) => {
 			if (ctx.callbackQuery?.data) {

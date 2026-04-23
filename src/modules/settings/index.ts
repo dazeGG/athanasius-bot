@@ -1,6 +1,5 @@
 import { Composer } from 'grammy';
 
-import { STATES } from '~/core/states';
 import { isRegistered } from '~/shared/lib';
 import type { AppContext } from '~/core';
 
@@ -14,7 +13,7 @@ composer.on('message:text').filter(
 );
 
 composer.on('message:text').filter(
-	ctx => STATES.getState(ctx.from.id) === 'SETTINGS_CHANGE_NAME' && isRegistered(ctx),
+	ctx => ctx.session.flow.name === 'SETTINGS_CHANGE_NAME' && isRegistered(ctx),
 	handlers.settingsChangeNameStateMessageHandler,
 );
 

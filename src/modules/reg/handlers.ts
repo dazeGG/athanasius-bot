@@ -1,4 +1,3 @@
-import { STATES } from '~/core';
 import { DB, ORM } from '~/db';
 import type { MessageCtx } from '~/core';
 
@@ -16,7 +15,7 @@ export const regStartMessageHandler = async (ctx: MessageCtx) => {
 		return;
 	}
 
-	STATES.setState(ctx.from!.id, 'REGISTRATION');
+	ctx.session.flow = { name: 'REGISTRATION' };
 
 	await ctx.reply(lib.txt.registerStart);
 };
@@ -52,5 +51,5 @@ export const regNameStateMessageHandler = async (ctx: MessageCtx) => {
 		reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true },
 	});
 
-	STATES.clearState(userId);
+	ctx.session.flow = {};
 };

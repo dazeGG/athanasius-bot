@@ -1,6 +1,5 @@
 import { Composer } from 'grammy';
 
-import { STATES } from '~/core/states';
 import { isRegistered } from '~/shared/lib';
 import type { AppContext } from '~/core';
 
@@ -17,17 +16,17 @@ composer.on('message:text').filter(
 );
 
 composer.on('message:text').filter(
-	ctx => STATES.getState(ctx.from.id) === 'ROOMS_JOIN' && isRegistered(ctx),
+	ctx => ctx.session.flow.name === 'ROOMS_JOIN' && isRegistered(ctx),
 	handlers.joinRoomCodeMessageHandler,
 );
 
 composer.on('message:text').filter(
-	ctx => STATES.getState(ctx.from.id) === 'ROOMS_CREATE' && isRegistered(ctx),
+	ctx => ctx.session.flow.name === 'ROOMS_CREATE' && isRegistered(ctx),
 	handlers.createRoomNameMessageHandler,
 );
 
 composer.on('message:text').filter(
-	ctx => STATES.getState(ctx.from.id) === 'ROOM_CDC' && isRegistered(ctx),
+	ctx => ctx.session.flow.name === 'ROOM_CDC' && isRegistered(ctx),
 	SettingsHandlers.changeDecksCountMessage,
 );
 

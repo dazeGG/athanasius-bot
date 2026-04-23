@@ -1,6 +1,5 @@
 import { InlineKeyboard } from 'grammy';
 
-import { STATES } from '~/core';
 import type { UserSchema } from '~/db';
 import { DB, ORM } from '~/db';
 import { escapeHtml, validateName } from '~/shared/lib';
@@ -47,7 +46,7 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 	switch (ctx.callbackData!.action) {
 	case 'name':
 		await ctx.editMessageText(lib.txt.changeName);
-		STATES.setState(ctx.from.id, 'SETTINGS_CHANGE_NAME');
+		ctx.session.flow = { name: 'SETTINGS_CHANGE_NAME' };
 		break;
 	case 'updatesView':
 		await ORM.Users.update(
@@ -86,5 +85,5 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageCtx) => 
 	await ctx.reply(lib.txt.success);
 	await ctx.reply(getBaseSettingsText(me), { reply_markup: getBaseSettingsKeyboard() });
 
-	STATES.clearState(ctx.from!.id);
+	ctx.session.flow = {};
 };

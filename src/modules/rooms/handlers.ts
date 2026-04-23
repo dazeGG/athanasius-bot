@@ -1,4 +1,4 @@
-import { BOT, STATES } from '~/core';
+import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
 import { sendFirstMessage } from '~/entities/game/services';
@@ -29,7 +29,7 @@ export const joinRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
 	await ctx.editMessageText('Напиши код подключения');
-	STATES.setState(ctx.from.id, 'ROOMS_JOIN');
+	ctx.session.flow = { name: 'ROOMS_JOIN' };
 };
 
 export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
@@ -49,7 +49,7 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 	}
 
-	STATES.clearState(me.id);
+	ctx.session.flow = {};
 };
 
 export const leaveRoomCallbackHandler = async (ctx: CallbackCtx) => {
@@ -86,7 +86,7 @@ export const createRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
 	await ctx.editMessageText('Напиши название комнаты');
-	STATES.setState(ctx.from.id, 'ROOMS_CREATE');
+	ctx.session.flow = { name: 'ROOMS_CREATE' };
 };
 
 export const createRoomNameMessageHandler = async (ctx: MessageCtx) => {
@@ -96,7 +96,7 @@ export const createRoomNameMessageHandler = async (ctx: MessageCtx) => {
 	try {
 		await ORM.Rooms.createRoom(roomName, me.id);
 		await ctx.reply(ui.txt.createdRoom + ' ' + escapeHtml(roomName));
-		STATES.clearState(me.id);
+		ctx.session.flow = {};
 
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 	} catch (error) {
