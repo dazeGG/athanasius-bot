@@ -26,7 +26,8 @@ export const regStartMessageHandler = async (ctx: MessageContext) => {
 
 export const regNameStateMessageHandler = async (ctx: MessageContext) => {
 	const name = ctx.message.text;
-	const validationData = validateName(name);
+	const userId = ctx.message.from.id;
+	const validationData = validateName(name, userId);
 
 	if (!validationData.success) {
 		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
@@ -34,16 +35,22 @@ export const regNameStateMessageHandler = async (ctx: MessageContext) => {
 	}
 
 	const { from: user } = ctx.message;
+	const existingUser = DB.data.users.find(u => u.id === user.id);
 
-	await ORM.Users.add({
-		id: user.id,
-		username: user.username,
-		name,
-		settings: {
-			updatesView: 'instant',
-		},
-		achievements: [],
-	});
+	if (existingUser) {
+		existingUser.name = name;
+		await DB.write();
+	} else {
+		await ORM.Users.add({
+			id: user.id,
+			username: user.username,
+			name,
+			settings: {
+				updatesView: 'instant',
+			},
+			achievements: [],
+		});
+	}
 
 	await BOT.sendMessage({
 		ctx,

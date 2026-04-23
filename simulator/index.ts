@@ -15,11 +15,13 @@ config({ path: '.env.test', override: true });
 await import('./bootstrap');
 
 const { run, printSummary } = await import('./runner');
-const { scenarioGameFlow }  = await import('./scenarios/game-flow');
+const { scenarioGameFlow }      = await import('./scenarios/game-flow');
+const { scenarioRegistration }  = await import('./scenarios/registration');
 
 // ─── Run all scenarios ────────────────────────────────────────────────────────
 console.log('\n🎮  Athanasius simulator\n');
 
+await run('Registration flow (5 players, /reg → name → /reg again)', scenarioRegistration);
 await run('Initial Athanasius at deal + failed turn + successful steal', scenarioGameFlow);
 
 // ─── Summary ─────────────────────────────────────────────────────────────────

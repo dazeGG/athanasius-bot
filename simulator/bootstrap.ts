@@ -8,6 +8,7 @@ import type { UserSchema, GameSchema, RoomSchema } from '~/db/schemas';
 // ─── Project code (env must already be set by the time this module evaluates) ──
 const { BOT } = await import('~/core');
 const { DB } = await import('~/db');
+const { STATES } = await import('~/core/states');
 const gameModule = await import('~/entities/game');
 
 // ─── Stop fake polling ────────────────────────────────────────────────────────
@@ -48,6 +49,11 @@ export const getLog = (): readonly CapturedMsg[] => _log;
 export const resetLog = (): void => { _log = []; };
 
 // ─── DB helpers ───────────────────────────────────────────────────────────────
+export async function clearDB (): Promise<void> {
+	DB.data = { users: [], rooms: [], games: [] };
+	await DB.write();
+}
+
 export async function seedDB (data: {
 	users: UserSchema[];
 	rooms: RoomSchema[];
@@ -58,7 +64,7 @@ export async function seedDB (data: {
 }
 
 // ─── Re-exports for scenarios ─────────────────────────────────────────────────
-export { DB };
+export { DB, STATES };
 export const {
 	Game,
 	TurnStage,

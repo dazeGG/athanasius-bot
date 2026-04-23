@@ -12,7 +12,7 @@ const VALIDATION_TEXTS = {
 
 const RESERVED_NAMES = ['имя', 'вовощ'];
 
-export const validateName = (name: string): { success: boolean; message: string } => {
+export const validateName = (name: string, currentUserId?: number): { success: boolean; message: string } => {
 	if (name.length < 2) {
 		return { success: false, message: VALIDATION_TEXTS.nameLessThan4 };
 	}
@@ -25,7 +25,7 @@ export const validateName = (name: string): { success: boolean; message: string 
 		return { success: false, message: VALIDATION_TEXTS.invalidCharacters };
 	}
 
-	if (DB.data.users.find(u => u.name === name)) {
+	if (DB.data.users.find(u => u.name === name && u.id !== currentUserId)) {
 		return { success: false, message: VALIDATION_TEXTS.nameAlreadyUsed };
 	}
 
