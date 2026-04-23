@@ -1,67 +1,101 @@
-import { BOT } from '~/core';
+import { Composer } from 'grammy';
+
+import { STATES } from '~/core/states';
 import { isRegistered } from '~/shared/lib';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 import { SettingsHandlers } from './settings.handlers';
 
-const registerRooms = () => {
-	BOT.registerMessageHandler(handlers.roomsMessageHandler, { exact: 'Комнаты' }, isRegistered);
+const composer = new Composer<AppContext>();
 
-	/**
-	 *  JOIN ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.joinRoomCallbackHandler, { module: 'rooms', action: 'join' }, isRegistered);
-	BOT.registerMessageHandler(handlers.joinRoomCodeMessageHandler, { state: 'ROOMS_JOIN' }, isRegistered);
+// ── Message handlers ──────────────────────────────────────────────────────────
 
-	/**
-	 *  KICK AND LEAVE FROM ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.kickCallbackHandler, { module: 'room', action: 'kick' }, isRegistered);
-	BOT.registerCallbackHandler(handlers.leaveRoomCallbackHandler, { module: 'room', action: 'leave' }, isRegistered);
+composer.on('message:text').filter(
+	ctx => ctx.message.text === 'Комнаты' && isRegistered(ctx),
+	handlers.roomsMessageHandler,
+);
 
-	/**
-	 *  CREATE ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.createRoomCallbackHandler, { module: 'rooms', action: 'create' }, isRegistered);
-	BOT.registerMessageHandler(handlers.createRoomNameMessageHandler, { state: 'ROOMS_CREATE' }, isRegistered);
+composer.on('message:text').filter(
+	ctx => STATES.getState(ctx.from.id) === 'ROOMS_JOIN' && isRegistered(ctx),
+	handlers.joinRoomCodeMessageHandler,
+);
 
-	/**
-	 *  ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.openRoomCallbackHandler, { module: 'rooms', action: 'open' }, isRegistered);
+composer.on('message:text').filter(
+	ctx => STATES.getState(ctx.from.id) === 'ROOMS_CREATE' && isRegistered(ctx),
+	handlers.createRoomNameMessageHandler,
+);
 
-	/**
-	 *  GAME START
-	 */
-	BOT.registerCallbackHandler(handlers.gameStartCallbackHandler, { module: 'room', action: 'start' }, isRegistered);
+composer.on('message:text').filter(
+	ctx => STATES.getState(ctx.from.id) === 'ROOM_CDC' && isRegistered(ctx),
+	SettingsHandlers.changeDecksCountMessage,
+);
 
-	/**
-	 *  GET ATHANASIUSES
-	 */
-	BOT.registerCallbackHandler(handlers.gameGetAthanasiusesCallbackHandler, { module: 'room', action: 'getath' }, isRegistered);
+// ── Callback handlers ─────────────────────────────────────────────────────────
 
-	/**
-	 *  WHOSE TURN
-	 */
-	BOT.registerCallbackHandler(handlers.gameWhoseTurnCallbackHandler, { module: 'room', action: 'whoseturn' }, isRegistered);
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.action === 'join' && isRegistered(ctx),
+	handlers.joinRoomCallbackHandler,
+);
 
-	/**
-	 *  RESEND TURN MESSAGE
-	 */
-	BOT.registerCallbackHandler(handlers.gameSendTurnMessageCallbackHandler, { module: 'room', action: 'sendturnmsg' }, isRegistered);
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'kick' && isRegistered(ctx),
+	handlers.kickCallbackHandler,
+);
 
-	/**
-	 *  BACK
-	 */
-	BOT.registerCallbackHandler(handlers.backCallbackHandler, { module: 'rooms', back: true }, isRegistered);
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'leave' && isRegistered(ctx),
+	handlers.leaveRoomCallbackHandler,
+);
 
-	/**
-	 *  SETTINGS
-	 */
-	BOT.registerCallbackHandler(SettingsHandlers.start, { module: 'room', action: 'settings' }, isRegistered);
-	BOT.registerCallbackHandler(SettingsHandlers.changeJoinCode, { module: 'room', action: 'cjc' }, isRegistered);
-	BOT.registerCallbackHandler(SettingsHandlers.changeDecksCount, { module: 'room', action: 'cdc' }, isRegistered);
-	BOT.registerMessageHandler(SettingsHandlers.changeDecksCountMessage, { state: 'ROOM_CDC' }, isRegistered);
-};
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.action === 'create' && isRegistered(ctx),
+	handlers.createRoomCallbackHandler,
+);
 
-export default registerRooms;
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.action === 'open' && isRegistered(ctx),
+	handlers.openRoomCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'start' && isRegistered(ctx),
+	handlers.gameStartCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'getath' && isRegistered(ctx),
+	handlers.gameGetAthanasiusesCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'whoseturn' && isRegistered(ctx),
+	handlers.gameWhoseTurnCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'sendturnmsg' && isRegistered(ctx),
+	handlers.gameSendTurnMessageCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.back === true && isRegistered(ctx),
+	handlers.backCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'settings' && isRegistered(ctx),
+	SettingsHandlers.start,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'cjc' && isRegistered(ctx),
+	SettingsHandlers.changeJoinCode,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'cdc' && isRegistered(ctx),
+	SettingsHandlers.changeDecksCount,
+);
+
+export default composer;

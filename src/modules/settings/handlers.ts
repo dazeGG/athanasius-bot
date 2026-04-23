@@ -1,70 +1,80 @@
-import { BOT, STATES } from '~/core';
+import { InlineKeyboard } from 'grammy';
+
+import { STATES } from '~/core';
 import type { UserSchema } from '~/db';
 import { DB, ORM } from '~/db';
 import { validateName } from '~/shared/lib';
-import type { MessageContext, CallbackContext } from '~/core';
+import { stringifyCallbackData } from '~/core/lib';
+import type { CallbackCtx, MessageCtx } from '~/core';
 
 import * as lib from './lib';
 
-const getBaseSettingsMessage = (me: UserSchema) => {
-	const settingsStartMessage = '<b>' + lib.txt.yourSettings + ':</b>\n' +
+const getBaseSettingsText = (me: UserSchema) => {
+	return '<b>' + lib.txt.yourSettings + ':</b>\n' +
 		'\n' +
 		'• ' + lib.txt.name + ': ' + me.name + '\n' +
 		'• ' + lib.txt.updatesView + ': ' + me.settings.updatesView + '\n' +
 		'\n' +
 		lib.txt.chooseWhatToChange;
-
-	return { text: settingsStartMessage, keyboard: lib.kb.baseSettings };
 };
 
-export const settingsStartMessageHandler = async (ctx: MessageContext) => {
-	await BOT.deleteMessage(ctx);
+const getBaseSettingsKeyboard = () => {
+	return new InlineKeyboard()
+		.text('Имя', stringifyCallbackData({ module: 'settings', action: 'name' }))
+		.row()
+		.text('Вид обновлений', stringifyCallbackData({ module: 'settings', action: 'updatesView' }))
+		.row()
+		.text('Выход', stringifyCallbackData({ module: 'settings', action: 'exit' }));
+};
 
-	if (ORM.Games.getActiveWithMe(ctx.message.from.id).length) {
-		await BOT.sendMessage({ ctx, text: 'Нельзя менять настройки во время игры :(' });
+export const settingsStartMessageHandler = async (ctx: MessageCtx) => {
+	await ctx.deleteMessage();
+
+	if (ORM.Games.getActiveWithMe(ctx.from!.id).length) {
+		await ctx.reply('Нельзя менять настройки во время игры :(');
 		return;
 	}
 
-	const me = ORM.Users.get(ctx.message.from.id);
-	await BOT.sendMessage({ ctx, ...getBaseSettingsMessage(me) });
+	const me = ORM.Users.get(ctx.from!.id);
+	await ctx.reply(getBaseSettingsText(me), { reply_markup: getBaseSettingsKeyboard() });
 };
 
-export const settingsCallbackHandler = async (ctx: CallbackContext) => {
-	await BOT.answerCallbackQuery(ctx);
+export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
+	await ctx.answerCallbackQuery();
 
-	const me = ORM.Users.get(ctx.callback.from.id);
+	const me = ORM.Users.get(ctx.from.id);
 
-	switch (ctx.callback.data.action) {
+	switch (ctx.callbackData!.action) {
 	case 'name':
-		await BOT.editMessage({ ctx, text: lib.txt.changeName });
-		STATES.setState(ctx.callback.from.id, 'SETTINGS_CHANGE_NAME');
+		await ctx.editMessageText(lib.txt.changeName);
+		STATES.setState(ctx.from.id, 'SETTINGS_CHANGE_NAME');
 		break;
 	case 'updatesView':
 		await ORM.Users.update(
-			ctx.callback.from.id,
+			ctx.from.id,
 			{ updatesView: me.settings.updatesView === 'instant' ? 'composed' : 'instant' },
 		);
-		await BOT.editMessage({ ctx, ...getBaseSettingsMessage(me) });
+		await ctx.editMessageText(getBaseSettingsText(me), { reply_markup: getBaseSettingsKeyboard() });
 		break;
 	case 'exit':
-		await BOT.deleteMessage(ctx);
+		await ctx.deleteMessage();
 		break;
 	}
 };
 
-export const settingsChangeNameStateMessageHandler = async (ctx: MessageContext) => {
-	const me = ORM.Users.get(ctx.message.from.id);
+export const settingsChangeNameStateMessageHandler = async (ctx: MessageCtx) => {
+	const me = ORM.Users.get(ctx.from!.id);
 	const newName = ctx.message.text;
 
-	const validationData = validateName(newName);
+	const validationData = validateName(newName, me.id);
 
 	if (!validationData.success) {
-		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
+		await ctx.reply('<b>Ошибка!</b>\n\n' + validationData.message);
 		return;
 	}
 
 	await DB.update(({ users }) => {
-		const user = DB.data.users.find(user => user.id === ctx.message.from.id);
+		const user = DB.data.users.find(user => user.id === ctx.from!.id);
 
 		if (user) {
 			user.name = newName;
@@ -73,8 +83,8 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageContext)
 		return { users };
 	});
 
-	await BOT.sendMessage({ ctx, text: lib.txt.success });
-	await BOT.sendMessage({ ctx, ...getBaseSettingsMessage(me) });
+	await ctx.reply(lib.txt.success);
+	await ctx.reply(getBaseSettingsText(me), { reply_markup: getBaseSettingsKeyboard() });
 
-	STATES.clearState(ctx.message.from.id);
+	STATES.clearState(ctx.from!.id);
 };

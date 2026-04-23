@@ -1,55 +1,50 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import { formatSuits } from '~/shared/ui/game';
 import type { GameLog, GameUtilsParsed } from '~/db';
 
 import type { PlayerId } from '../types';
 
-export class GameLogs {
-	private static formatStealData (stealData: number[]): string {
-		switch (stealData.length) {
-		case 1:
-			return `${stealData[0]}`;
-		case 2:
-			return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
-		case 4:
-			return `♥️: ${stealData[0]} ♦️: ${stealData[1]} ♠️: ${stealData[2]} ♣️: ${stealData[3]}`;
-		default:
-			throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
+function formatStealData (stealData: number[]): string {
+	switch (stealData.length) {
+	case 1:
+		return `${stealData[0]}`;
+	case 2:
+		return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
+	case 4:
+		return formatSuits({ hearts: stealData[0], diamonds: stealData[1], spades: stealData[2], clubs: stealData[3] });
+	default:
+		throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
+	}
+}
+
+function getLogMessage (log: GameLog): string {
+	const from = ORM.Users.get(log.from);
+	const to = ORM.Users.get(log.to);
+
+	let msg = `<b>${from.name} -> ${to.name}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+
+	if (log.stealData?.length) {
+		if (log.steal) {
+			msg += ' | ' + formatStealData(log.stealData);
+		} else {
+			msg += ` | Не ${formatStealData(log.stealData)}`;
 		}
 	}
 
-	private static getLogMessage (log: GameLog): string {
-		const from = ORM.Users.get(log.from);
-		const to = ORM.Users.get(log.to);
+	return msg;
+}
 
-		let msg = `<b>${from.name} -> ${to.name}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+export function getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): string {
+	const result: string[] = [];
 
-		if (log.stealData?.length) {
-			if (log.steal) {
-				msg += ' | ' + GameLogs.formatStealData(log.stealData);
-			} else {
-				msg += ` | Не ${GameLogs.formatStealData(log.stealData)}`;
-			}
+	for (let i = utils.logs.length - 1; i >= 0; i--) {
+		const log = utils.logs[i];
+		if (log.from === playerId) {
+			break;
 		}
-
-		return msg;
+		result.push(getLogMessage(log));
 	}
 
-	public static hasLogs (utils: GameUtilsParsed, playerId: PlayerId): boolean {
-		return utils.logs[utils.logs.length - 1].from !== playerId;
-	}
-
-	public static getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): string {
-		const result: string[] = [];
-
-		for (let i = utils.logs.length - 1; i >= 0; i--) {
-			const log = utils.logs[i];
-			if (log.from === playerId) {
-				break;
-			}
-			result.push(GameLogs.getLogMessage(log));
-		}
-
-		return result.reverse().join('\n');
-	}
+	return result.reverse().join('\n');
 }

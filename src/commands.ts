@@ -1,7 +1,7 @@
-import type TelegramBot from 'node-telegram-bot-api';
+import type { BotCommand } from 'grammy/types';
 
-export const commands: TelegramBot.BotCommand[] = [
-	{ command: '/addglobalkeyboard', description: 'Добавить клавиатуру' },
-	{ command: '/removeglobalkeyboard', description: 'Убрать клавиатуру' },
-	{ command: '/updateglobalkeyboard', description: 'Обновить клавиатуру' },
+export const commands: BotCommand[] = [
+	{ command: 'addglobalkeyboard', description: 'Добавить клавиатуру' },
+	{ command: 'removeglobalkeyboard', description: 'Убрать клавиатуру' },
+	{ command: 'updateglobalkeyboard', description: 'Обновить клавиатуру' },
 ];

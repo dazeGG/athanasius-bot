@@ -1,8 +1,14 @@
-.idea
-logs
+.DS_Store
+
 node_modules
-generated
+
+.idea
+.claude
+
+logs
 
 .env
+.env.test
+
 db.json
-.DS_Store
+db.*.json

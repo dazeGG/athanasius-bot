@@ -1,13 +1,30 @@
-import { BOT } from '~/core';
+import { Composer } from 'grammy';
+
 import { isRegistered } from '~/shared/lib';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 
-const registerHand = () => {
-	BOT.registerMessageHandler(handlers.handMessageHandler, { exact: 'Рука' }, isRegistered);
-	BOT.registerCallbackHandler(handlers.handShowCallbackHandler, { module: 'hand', action: 'show' }, isRegistered);
-	BOT.registerCallbackHandler(handlers.handCloseCallbackHandler, { module: 'hand', action: 'close' }, isRegistered);
-	BOT.registerCallbackHandler(handlers.handBackCallbackHandler, { module: 'hand', back: true }, isRegistered);
-};
+const composer = new Composer<AppContext>();
 
-export default registerHand;
+composer.on('message:text').filter(
+	ctx => ctx.message.text === 'Рука' && isRegistered(ctx),
+	handlers.handMessageHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.action === 'show' && isRegistered(ctx),
+	handlers.handShowCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.action === 'close' && isRegistered(ctx),
+	handlers.handCloseCallbackHandler,
+);
+
+composer.on('callback_query:data').filter(
+	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.back === true && isRegistered(ctx),
+	handlers.handBackCallbackHandler,
+);
+
+export default composer;

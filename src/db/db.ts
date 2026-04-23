@@ -8,7 +8,7 @@ type DatabaseSchema = {
 	games: GameSchema[];
 };
 
-const DB = await JSONFilePreset<DatabaseSchema>('db.json', {
+const DB = await JSONFilePreset<DatabaseSchema>(process.env.DB_FILE ?? 'db.json', {
 	users: [],
 	rooms: [],
 	games: [],

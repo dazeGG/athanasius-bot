@@ -21,6 +21,15 @@ class Users {
 		return user;
 	}
 
+	public static async awardAchievement (id: UserId, achievement: string): Promise<void> {
+		const user = this.get(id);
+		const achievements = user.achievements ?? [];
+		if (!achievements.includes(achievement)) {
+			user.achievements = [...achievements, achievement];
+			await DB.write();
+		}
+	}
+
 	public static async update (id: UserId, newSettings: UserSettings): Promise<UserSchema> {
 		const user = this.get(id);
 		user.settings = newSettings;
@@ -119,8 +128,13 @@ class Rooms {
 
 	public static async removePlayer (playerId: number, roomId: RoomId): Promise<RoomSchema> {
 		const room = this.getById(roomId);
+		const playerIndex = room.players.indexOf(playerId);
 
-		room.players.splice(room.players.indexOf(playerId), 1);
+		if (playerIndex < 0) {
+			throw new Error('Игрока нет в комнате');
+		}
+
+		room.players.splice(playerIndex, 1);
 		await DB.write();
 
 		return room;

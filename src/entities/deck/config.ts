@@ -15,7 +15,7 @@ export class DeckConfig {
 	] as const;
 
 	public static RED_SUITS = ['Hearts', 'Diamonds'] as const;
-	public static BLACK_SUITS = ['Hearts', 'Diamonds'] as const;
+	public static BLACK_SUITS = ['Spades', 'Clubs'] as const;
 
 	public static SUIT_VIEW_MAP = {
 		Hearts: '♥️',

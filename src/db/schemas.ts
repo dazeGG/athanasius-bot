@@ -7,6 +7,7 @@ export interface UserSchema {
 	username: TelegramBot.User['username'];
 	name: string;
 	settings: UserSettings;
+	achievements?: string[];
 }
 
 export interface GameSchema {

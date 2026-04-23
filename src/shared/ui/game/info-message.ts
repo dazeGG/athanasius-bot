@@ -4,6 +4,7 @@ import type { RoomSchema, UserSchema } from '~/db';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
 
 import { txt } from '.';
+import { formatSuits } from './game-message';
 
 export class InfoMessage {
 	/* MAILING */
@@ -23,6 +24,10 @@ export class InfoMessage {
 			'\n' +
 			txt.gameSettings + ':\n' +
 			'• ' + txt.decksCount + ': ' + room.settings.decksCount;
+	}
+
+	private static formatPlayerResult (name: string, count: number): string {
+		return `${name} - ${count} ${this.athanasiusRightText(count)}`;
 	}
 
 	private static athanasiusRightText (count: number): string {
@@ -48,29 +53,30 @@ export class InfoMessage {
 		let text = `🦎 <b>${txt.gameEnded}</b>\n\n`;
 		text += 'Вот они, победители, слева на право:\n\n';
 
-		const [first, second, third, ...others] = athMap;
+		const [first, second, ...rest] = athMap;
+		const middle = rest.slice(0, -1);
+		const last = rest[rest.length - 1];
 
-		text += `🥇 ${first[0]} - ${first[1]} ${this.athanasiusRightText(first[1])}\n`;
-		text += `🥈 ${second[0]} - ${second[1]} ${this.athanasiusRightText(second[1])}\n`;
+		text += `🥇 ${this.formatPlayerResult(first[0], first[1])}\n`;
+		text += `🥈 ${this.formatPlayerResult(second[0], second[1])}\n`;
 
-		if (others.length == 0) {
-			text += '\nОстальные результаты:\n\n';
-			text += `🦧 ${third[0]} - ${third[1]} ${this.athanasiusRightText(third[1])}`;
-		} else {
-			text += `🥉 ${third[0]} - ${third[1]} ${this.athanasiusRightText(third[1])}\n`;
+		middle.forEach(player => {
+			text += `🥉 ${this.formatPlayerResult(player[0], player[1])}\n`;
+		});
 
-			text += '\nОстальные результаты:\n\n';
-
-			others.forEach((other, i) => {
-				text += `🦧 ${other[0]} - ${other[1]} ${this.athanasiusRightText(other[1])}`;
-
-				if (i !== others.length - 1) {
-					text += '\n';
-				}
-			});
-		}
+		text += `\n🦧 ${this.formatPlayerResult(last[0], last[1])}`;
 
 		return text;
+	}
+
+	public static dealAthanasiusMe (cardNames: string[]): string {
+		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
+		return `🎴 Стоп.\n\nПри раздаче тебе выпал Афанасий ${cards}.\nТакое случается раз в тысячу игр.`;
+	}
+
+	public static dealAthanasiusMailing (player: UserSchema, cardNames: string[]): string {
+		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
+		return `🎴 Стоп.\n\nПри раздаче у ${player.name} выпал Афанасий ${cards}.\nЗапомните этот момент.`;
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
@@ -86,11 +92,11 @@ export class InfoMessage {
 	}
 
 	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} (${turnMeta.count})`;
+		return this.playersCard(turnMeta, me) + `Не ${formatSuits(turnMeta.suits)} (${turnMeta.count})`;
 	}
 
 	public static stealCardsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Украл ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+		return this.playersCard(turnMeta, me) + `Украл ${formatSuits(turnMeta.suits)}`;
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
@@ -123,7 +129,7 @@ export class InfoMessage {
 	}
 
 	public static wrongSuitsMe (turnMeta: SuitsStageMeta): string {
-		return this.meWrongWithCount(turnMeta) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+		return this.meWrongWithCount(turnMeta) + `Не ${formatSuits(turnMeta.suits)}`;
 	}
 
 	public static newAthanasiusMe (turnMeta: SuitsStageMeta): string {

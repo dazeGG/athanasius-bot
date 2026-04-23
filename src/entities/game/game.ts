@@ -4,13 +4,13 @@ import type { Dayjs } from 'dayjs';
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
 import { InfoMessage } from '~/shared/ui/game';
-import { GameNotificationsService } from '~/entities/game/services';
+import { sendFirstMessage, notifyInitialAthanasiuses } from '~/entities/game/services';
 import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
 import { Hands } from './model/hands';
-import { GameUtilsService } from './services';
-import { GameLogs, GameMailing } from './utils';
+import { parseGameUtils, generateGameUtils } from './services';
+import { getLastRoundLogs, mailing as gameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
@@ -46,7 +46,7 @@ export class Game {
 			this.queue = new Queue(game.players, false);
 			this.hands = new Hands({ hands: game.hands });
 			this.athanasiuses = game.athanasiuses;
-			this.utils = GameUtilsService.parseGameUtils(game.utils);
+			this.utils = parseGameUtils(game.utils);
 		} else {
 			const { room } = options;
 			const { id: roomId, players, settings } = room;
@@ -59,13 +59,20 @@ export class Game {
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
 			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
 
-			this.initialMailing(room);
+			const initialAthanasiuses = this.hands.collectInitialAthanasiuses(this.utils);
+			Object.entries(initialAthanasiuses).forEach(([playerIdStr, cardNames]) => {
+				this.athanasiuses[Number(playerIdStr) as PlayerId].push(...cardNames);
+			});
 		}
 	}
 
-	private async initialMailing (room: RoomSchema) {
-		await this.mailing({ text: InfoMessage.gameStartedMailing(room) });
-		await GameNotificationsService.sendFirstMessage(this, true);
+	public static async create (room: RoomSchema): Promise<Game> {
+		const game = new Game({ room });
+		await game.save();
+		await game.mailing({ text: InfoMessage.gameStartedMailing(room) });
+		await notifyInitialAthanasiuses(game);
+		await sendFirstMessage(game, true);
+		return game;
 	}
 
 	/* GETTERS */
@@ -81,8 +88,16 @@ export class Game {
 		return ORM.Users.get(this.queue.activePlayer);
 	}
 
+	public get isEnded (): boolean {
+		return this.ended !== undefined;
+	}
+
 	public get allPlayers (): PlayerId[] {
 		return this.queue.actualQueue;
+	}
+
+	public get playersWithCards (): PlayerId[] {
+		return this.queue.actualQueue.filter(id => this.hands.hand(id).cardsInHand.length > 0);
 	}
 
 	public get playersWithComposedUpdated (): PlayerId[] {
@@ -118,12 +133,8 @@ export class Game {
 	}
 
 	/* LOGS */
-	public get hasLogs (): boolean {
-		return GameLogs.hasLogs(this.utils, this.activePlayer.id);
-	}
-
 	public getLastRoundLogs (): string {
-		return GameLogs.getLastRoundLogs(this.utils, this.activePlayer.id);
+		return getLastRoundLogs(this.utils, this.activePlayer.id);
 	}
 
 	/* PERSISTENCE */
@@ -136,7 +147,7 @@ export class Game {
 			players: this.queue.actualQueue,
 			hands: this.hands.allHands,
 			athanasiuses: this.athanasiuses,
-			utils: GameUtilsService.generateGameUtils(this.utils),
+			utils: generateGameUtils(this.utils),
 		};
 	}
 
@@ -156,11 +167,15 @@ export class Game {
 
 	/* MAILING */
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		await GameMailing.mailing(options, this.allPlayers, exclude);
+		await gameMailing(options, this.allPlayers, exclude);
 	}
 
 	/* TURNS */
 	public async turn ({ me, turnMeta, options }: TurnOptions): Promise<TurnReturn> {
+		if (!this.hands.hand(me).has({ cardName: turnMeta.cardName })) {
+			return this.handleFailedTurn({ me, turnMeta });
+		}
+
 		const hand = this.hands.hand(turnMeta.player.id);
 		if (hand.has(options)) {
 			return this.handleSuccessfulTurn({ me, turnMeta });
@@ -184,15 +199,15 @@ export class Game {
 
 		if (newAthanasiuses.length > 0) {
 			this.athanasiuses[me].push(...newAthanasiuses);
-
-			this.utils.logs.push({
-				from: me,
-				to: turnMeta.player.id,
-				cardName: turnMeta.cardName,
-				steal: true,
-				stealData: this.getStealData(turnMeta),
-			});
 		}
+
+		this.utils.logs.push({
+			from: me,
+			to: turnMeta.player.id,
+			cardName: turnMeta.cardName,
+			steal: true,
+			stealData: this.getStealData(turnMeta),
+		});
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.actualQueue);
 

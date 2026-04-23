@@ -10,6 +10,10 @@ import type {
 
 import { txt } from '.';
 
+export function formatSuits ({ hearts, diamonds, spades, clubs }: Pick<Suits, 'hearts' | 'diamonds' | 'spades' | 'clubs'>): string {
+	return `♥️: ${hearts} ♦️: ${diamonds} ♠️: ${spades} ♣️: ${clubs}`;
+}
+
 export class GameMessage {
 	private static generateChoiceMessage (turnMeta: TurnMeta): string {
 		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n\n';
@@ -104,6 +108,6 @@ export class GameMessage {
 			'\n' +
 			`Игрок: ${turnMeta.player.name}\n` +
 			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Масти: ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+			`Масти: ${formatSuits(turnMeta.suits)}`;
 	}
 }
