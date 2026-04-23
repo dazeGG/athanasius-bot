@@ -1,5 +1,7 @@
 export {
 	CallbackUtils,
 	stringifyCallbackData,
-	type CallbackData,
 } from './callback-utils';
+export type {
+	CallbackData,
+} from '../types';

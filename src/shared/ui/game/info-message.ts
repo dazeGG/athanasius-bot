@@ -1,4 +1,5 @@
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
 import type { RoomSchema, UserSchema } from '~/db';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
@@ -9,7 +10,7 @@ import { formatSuits } from './game-message';
 export class InfoMessage {
 	/* MAILING */
 	private static players (turnMeta: TurnMeta, me: UserSchema): string {
-		return `🟨 <b>${me.name} -> ${turnMeta.player.name}</b>\n\n`;
+		return `🟨 <b>${escapeHtml(me.name)} -> ${escapeHtml(turnMeta.player.name)}</b>\n\n`;
 	}
 
 	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
@@ -17,7 +18,7 @@ export class InfoMessage {
 	}
 
 	public static gameStartedMailing (room: RoomSchema): string {
-		return `Комната ${room.name} | ${txt.gameStarted}\n` +
+		return `Комната ${escapeHtml(room.name)} | ${txt.gameStarted}\n` +
 			'\n' +
 			txt.players + ':\n' +
 			playersList(room.players) + '\n' +
@@ -27,7 +28,7 @@ export class InfoMessage {
 	}
 
 	private static formatPlayerResult (name: string, count: number): string {
-		return `${name} - ${count} ${this.athanasiusRightText(count)}`;
+		return `${escapeHtml(name)} - ${count} ${this.athanasiusRightText(count)}`;
 	}
 
 	private static athanasiusRightText (count: number): string {
@@ -76,7 +77,7 @@ export class InfoMessage {
 
 	public static dealAthanasiusMailing (player: UserSchema, cardNames: string[]): string {
 		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
-		return `🎴 Стоп.\n\nПри раздаче у ${player.name} выпал Афанасий ${cards}.\nЗапомните этот момент.`;
+		return `🎴 Стоп.\n\nПри раздаче у ${escapeHtml(player.name)} выпал Афанасий ${cards}.\nЗапомните этот момент.`;
 	}
 
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
@@ -100,12 +101,12 @@ export class InfoMessage {
 	}
 
 	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return `🟨 У <b>${me.name}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
+		return `🟨 У <b>${escapeHtml(me.name)}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
 	}
 
 	/* ME */
 	private static meWrongBase (turnMeta: TurnMeta): string {
-		return `🟥 <b>К сожалению, ты не угадал :(</b>\n\nИгрок: ${turnMeta.player.name}\n`;
+		return `🟥 <b>К сожалению, ты не угадал :(</b>\n\nИгрок: ${escapeHtml(turnMeta.player.name)}\n`;
 	}
 
 	private static meWrongWithCard (turnMeta: CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {

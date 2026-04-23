@@ -1,17 +1,10 @@
-import type { KeyboardButton } from 'grammy/types';
-
 import { STATES } from '~/core';
 import { DB, ORM } from '~/db';
 import type { MessageCtx } from '~/core';
 
-import { validateName } from '~/shared/lib';
+import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
 
 import * as lib from './lib';
-
-export const GLOBAL_KEYBOARD: KeyboardButton[][] = [
-	[{ text: 'Настройки' }, { text: 'Комнаты' }],
-	[{ text: 'Рука' }],
-];
 
 export const regStartMessageHandler = async (ctx: MessageCtx) => {
 	const u = DB.data.users.find(u => u.id === ctx.from!.id);

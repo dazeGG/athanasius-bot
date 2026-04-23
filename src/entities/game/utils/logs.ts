@@ -1,5 +1,6 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import { formatSuits } from '~/shared/ui/game';
 import type { GameLog, GameUtilsParsed } from '~/db';
 
@@ -22,7 +23,7 @@ function getLogMessage (log: GameLog): string {
 	const from = ORM.Users.get(log.from);
 	const to = ORM.Users.get(log.to);
 
-	let msg = `<b>${from.name} -> ${to.name}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+	let msg = `<b>${escapeHtml(from.name)} -> ${escapeHtml(to.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
 
 	if (log.stealData?.length) {
 		if (log.steal) {

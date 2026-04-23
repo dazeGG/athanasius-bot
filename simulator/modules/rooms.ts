@@ -5,9 +5,11 @@
 import type { CallbackData } from '~/core';
 import { ORM, DB } from '~/db';
 import { txt as roomTxt } from '~/modules/rooms/ui';
+import { escapeHtml } from '~/shared/lib';
 import { txt as gameTxt } from '~/shared/ui/game';
+import type * as RoomsHandlersModule from '~/modules/rooms/handlers';
 
-import { STATES, resetLog, getLog, clearDB, seedDB } from '../bootstrap';
+import { STATES, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -23,10 +25,9 @@ const [ALICE, BOB, CAROL, DAVE, EVE] = PLAYERS;
 const DEFAULT_ROOM_NAME = 'Комната Алисы';
 
 type PlayerFixture = (typeof PLAYERS)[number];
-type RoomsHandlersModule = typeof import('~/modules/rooms/handlers');
-
-const makeMessageCtx = (player: PlayerFixture, text: string) => ({
-	chatId: player.id,
+const makeMessageCtx = (player: PlayerFixture, text: string) => withMessageMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 	message: {
 		message_id: 1,
 		chat: { id: player.id, type: 'private' as const },
@@ -40,9 +41,11 @@ const makeCallbackCtx = (
 	player: PlayerFixture,
 	data: CallbackData,
 	messageId = 1,
-) => ({
-	chatId: player.id,
-	callback: {
+) => withCallbackMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
+	callbackData: data,
+	callbackQuery: {
 		id: `cb-${player.id}`,
 		from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 		message: {
@@ -50,7 +53,8 @@ const makeCallbackCtx = (
 			chat: { id: player.id, type: 'private' as const },
 			date: Math.floor(Date.now() / 1000),
 		},
-		data,
+		chat_instance: '',
+		data: `${data.module}|${data.action ?? ''}|${data.back ? '1' : ''}|${data.meta ?? ''}`,
 	},
 });
 
@@ -132,7 +136,7 @@ const createRoom = async (
 
 	const log = getLog();
 	assertSent(log, owner.id, 'Создал комнату');
-	assertSent(log, owner.id, roomName);
+	assertSent(log, owner.id, escapeHtml(roomName));
 	assertSent(log, owner.id, 'Вот список твоих комнат');
 	assertSent(log, owner.id, roomName);
 	assert(STATES.getState(owner.id) === undefined, `${owner.name}: state should be cleared after room creation`);
@@ -172,7 +176,7 @@ const joinRoomSuccessfully = async (
 	await handlers.joinRoomCodeMessageHandler(makeMessageCtx(player, joinCode));
 
 	const log = getLog();
-	assertSent(log, player.id, `Ты зашел в комнату ${roomName}`);
+	assertSent(log, player.id, `Ты зашел в комнату ${escapeHtml(roomName)}`);
 	assertSent(log, player.id, 'Вот список твоих комнат');
 	assert(STATES.getState(player.id) === undefined, `${player.name}: state should be cleared after successful join`);
 	assertRoomPlayers(roomId, [...playersBefore, player.id]);
@@ -236,6 +240,28 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 
 		const room = await createRoom(ALICE, handlers);
 		assert(room.settings.decksCount === 4, 'New room should start with 4 decks');
+	});
+
+	await runCase('Escapes unsafe room names in room headers, confirmations, and join mailings', async () => {
+		await resetRoomsCase();
+		await seedRegisteredUsers();
+
+		const unsafeRoomName = '<b>Зал & Co</b>';
+		const escapedRoomName = '&lt;b&gt;Зал &amp; Co&lt;/b&gt;';
+		const room = await createRoom(ALICE, handlers, unsafeRoomName);
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
+		let log = getLog();
+		assertSent(log, ALICE.id, `Комната ${escapedRoomName}`);
+		resetLog();
+
+		await startJoinRoomFlow(BOB, handlers);
+		await handlers.joinRoomCodeMessageHandler(makeMessageCtx(BOB, room.settings.joinCode));
+		log = getLog();
+
+		assertSent(log, BOB.id, `Ты зашел в комнату ${escapedRoomName}`);
+		assertSent(log, ALICE.id, `Комната ${escapedRoomName} | Борис зашел`);
+		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
 	});
 
 	await runCase('Rejects duplicate room name and keeps creation state', async () => {
@@ -474,6 +500,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		let log = getLog();
 		assertSent(log, ALICE.id, 'Напиши новое количество колод');
 		assert(STATES.getState(ALICE.id) === 'ROOM_CDC', 'Alice state should be ROOM_CDC after opening decks count change');
+		assert((STATES.getContext(ALICE.id) as { roomId?: string } | undefined)?.roomId === room.id, 'Deck count flow should persist the room id in state context');
 		resetLog();
 
 		await SettingsHandlers.changeDecksCountMessage(makeMessageCtx(ALICE, '101'));
@@ -487,6 +514,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		log = getLog();
 		assertSent(log, ALICE.id, 'Количество колод: 7');
 		assert(STATES.getState(ALICE.id) === undefined, 'Alice state should be cleared after valid decks count');
+		assert(STATES.getContext(ALICE.id) === undefined, 'Alice context should be cleared after valid decks count');
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 7, 'Valid decks count should update room settings');
 	});
 

@@ -1,7 +1,5 @@
 import type { CallbackData } from '../types';
-export {
-	CallbackData,
-} from '../types';
+
 export class CallbackUtils {
 	public static parseCallbackData (callbackData: string): CallbackData {
 		const [module, action, back, meta] = callbackData.split('|');

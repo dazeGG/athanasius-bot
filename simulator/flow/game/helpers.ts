@@ -5,7 +5,7 @@ import { ORM } from '~/db';
 import { Deck, DeckConfig } from '~/entities/deck';
 import type { GameSchema, RoomSchema, UserSchema } from '~/db';
 import type { CardName, SuitName } from '~/entities/deck';
-import type { CallbackContext } from '~/core';
+import type { CallbackCtx } from '~/core';
 
 import {
 	clearDB,
@@ -16,6 +16,7 @@ import {
 	resetLog,
 	seedDB,
 	sendFirstMessage,
+	withCallbackMethods,
 } from '../../bootstrap';
 
 /**
@@ -199,9 +200,11 @@ export const getRoom = (roomId = 'room-game'): RoomSchema => ORM.Rooms.getById(r
 /**
  * Builds a callback context for the staged game callback handler.
  */
-export const makeTurnCallbackCtx = (player: PlayerFixture, meta?: string, messageId = 1): CallbackContext => ({
-	chatId: player.id,
-	callback: {
+export const makeTurnCallbackCtx = (player: PlayerFixture, meta?: string, messageId = 1): CallbackCtx => withCallbackMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
+	callbackData: { module: 'g', action: 't', meta },
+	callbackQuery: {
 		id: `cb-${player.id}-${messageId}`,
 		from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 		message: {
@@ -209,9 +212,10 @@ export const makeTurnCallbackCtx = (player: PlayerFixture, meta?: string, messag
 			chat: { id: player.id, type: 'private' as const },
 			date: Math.floor(Date.now() / 1000),
 		},
-		data: { module: 'g', action: 't', meta },
+		chat_instance: '',
+		data: `g|t||${meta ?? ''}`,
 	},
-}) as unknown as CallbackContext;
+}) as unknown as CallbackCtx;
 
 /**
  * Generates callback payloads for every staged game interaction step.

@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "nodemon",
     "start": "tsx src/index.ts",
-    "lint": "eslint . --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
     "test": "tsx simulator/index.ts"
   },
   "keywords": [],
@@ -16,10 +18,10 @@
   "dependencies": {
     "dayjs": "^1.11.13",
     "dotenv": "^16.4.7",
+    "grammy": "^1.42.0",
     "lodash": "^4.17.23",
     "lowdb": "^7.0.1",
     "nanoid": "^5.1.5",
-    "node-telegram-bot-api": "^0.66.0",
     "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
@@ -27,7 +29,6 @@
     "@eslint/js": "^9.25.1",
     "@types/lodash": "^4.17.20",
     "@types/node": "^24.2.0",
-    "@types/node-telegram-bot-api": "^0.64.10",
     "@types/winston": "^2.4.4",
     "@typescript-eslint/eslint-plugin": "^8.39.0",
     "@typescript-eslint/parser": "^8.39.0",

@@ -3,7 +3,7 @@ type StateContext = Record<string, unknown>;
 type ClearStateOptions = {
 	state?: boolean;
 	context?: boolean;
-}
+};
 
 class States {
 	private readonly states: Map<number, string> = new Map();
@@ -14,6 +14,8 @@ class States {
 
 		if (context) {
 			this.context.set(userId, context);
+		} else {
+			this.context.delete(userId);
 		}
 	}
 
@@ -35,7 +37,7 @@ class States {
 		}
 
 		if (clearContext) {
-			this.states.delete(userId);
+			this.context.delete(userId);
 		}
 	}
 }

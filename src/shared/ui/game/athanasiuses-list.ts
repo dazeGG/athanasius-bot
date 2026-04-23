@@ -1,5 +1,6 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import type { CardName } from '~/entities/deck';
 import type { Game } from '~/entities/game';
 
@@ -8,7 +9,7 @@ export const athanasiusesList = (game: Game): string => {
 		.allPlayers
 		.map(playerId => {
 			const player = ORM.Users.get(playerId);
-			return '• ' + player.name + ': ' + game.getAthanasiuses()[playerId].map(athanasius => DeckConfig.CARDS_VIEW_MAP[athanasius as CardName]).join(' ');
+			return '• ' + escapeHtml(player.name) + ': ' + game.getAthanasiuses()[playerId].map(athanasius => DeckConfig.CARDS_VIEW_MAP[athanasius as CardName]).join(' ');
 		})
 		.join('\n');
 };
@@ -17,7 +18,7 @@ export const getAthanasiusesListText = (game: Game, roomName: string): string =>
 	const athanasiuses = game.getAthanasiuses();
 	const overallAthanasiusesCount = Object.values(athanasiuses).reduce((acc, current) => acc + current.length, 0);
 
-	let text = `Комната ${roomName}\n\n`;
+	let text = `Комната ${escapeHtml(roomName)}\n\n`;
 
 	if (overallAthanasiusesCount === 0) {
 		text += 'Афанасиев пока ни у кого нет';

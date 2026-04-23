@@ -2,7 +2,7 @@
  * start.ts — /start command coverage split into explicit cases.
  */
 
-import { clearDB, getLog, resetLog, seedDB } from '../bootstrap';
+import { clearDB, getLog, resetLog, seedDB, withMessageMethods } from '../bootstrap';
 import { assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -15,8 +15,9 @@ const [ALICE, BOB] = PLAYERS;
 
 type PlayerFixture = (typeof PLAYERS)[number];
 
-const makeMessageCtx = (player: PlayerFixture, text: string) => ({
-	chatId: player.id,
+const makeMessageCtx = (player: PlayerFixture, text: string) => withMessageMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 	message: {
 		message_id: 1,
 		chat: { id: player.id, type: 'private' as const },

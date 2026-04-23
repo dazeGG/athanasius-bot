@@ -105,7 +105,7 @@ export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: Upd
 
 async function notifyWrongTurn ({ ctx, game, me }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me'>, meText: string, mailingText: string): Promise<void> {
 	await ctx.editMessageText(meText);
-	await game.mailing({ text: mailingText }, [me.id, ...game.playersWithComposedUpdated]);
+	await game.realtimeMailing({ text: mailingText }, [me.id]);
 	await sendFirstMessage(game);
 }
 
@@ -127,12 +127,12 @@ export async function notifyWrongSuitsMessage ({ ctx, game, me, turnMeta }: Game
 
 export async function notifyStealMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
 	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta));
-	await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
+	await game.realtimeMailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id]);
 }
 
 export async function notifyComposeAthanasiusMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
 	await ctx.reply(InfoMessage.newAthanasiusMe(turnMeta));
-	await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
+	await game.realtimeMailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id]);
 }
 
 function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {

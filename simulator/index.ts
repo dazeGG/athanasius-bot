@@ -38,6 +38,7 @@ config({ path: '.env.test', override: true });
 await import('./bootstrap');
 
 const { run, printSummary, setRunnerOptions } = await import('./runner');
+const { coreModule }          = await import('./modules/core');
 const { registrationModule }  = await import('./modules/registration');
 const { roomsModule }         = await import('./modules/rooms');
 const { settingsModule }      = await import('./modules/settings');
@@ -53,6 +54,7 @@ setRunnerOptions({ fullLogs });
 console.log('\n🎮  Athanasius simulator\n');
 console.log('Modules:\n');
 
+await run('Core', coreModule);
 await run('Registration', registrationModule);
 await run('Rooms', roomsModule);
 await run('Settings', settingsModule);

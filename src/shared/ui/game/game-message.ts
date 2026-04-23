@@ -1,4 +1,5 @@
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import type {
 	TurnMeta,
 	Suits,
@@ -18,7 +19,7 @@ export class GameMessage {
 	private static generateChoiceMessage (turnMeta: TurnMeta): string {
 		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n\n';
 
-		choiceMessage += '• ' + txt.player + ': ' + '<b>' + turnMeta.player.name + '</b>\n';
+		choiceMessage += '• ' + txt.player + ': ' + '<b>' + escapeHtml(turnMeta.player.name) + '</b>\n';
 
 		if (turnMeta.cardName) {
 			choiceMessage += '• ' + txt.card + ': ' + '<b>' + DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName] + '</b>\n';
@@ -106,7 +107,7 @@ export class GameMessage {
 	public static getCardsStealMessage (turnMeta: SuitsStageMeta): string {
 		return '🟩 <b>Ты успешно украл карты :)</b>\n' +
 			'\n' +
-			`Игрок: ${turnMeta.player.name}\n` +
+			`Игрок: ${escapeHtml(turnMeta.player.name)}\n` +
 			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
 			`Масти: ${formatSuits(turnMeta.suits)}`;
 	}

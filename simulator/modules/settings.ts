@@ -4,7 +4,7 @@
 
 import { DB } from '~/db';
 
-import { STATES, resetLog, getLog, clearDB, seedDB } from '../bootstrap';
+import { STATES, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -14,13 +14,14 @@ const PLAYERS = [
 	{ id: 1003, username: 'carol_sim', name: 'Каролина', updatesView: 'composed' as const },
 ] as const;
 
-const [ALICE, BOB, CAROL] = PLAYERS;
+const [ALICE, , CAROL] = PLAYERS;
 const SETTINGS_KEYBOARD_LABELS = 'Имя · Вид обновлений · Выход';
 
 type PlayerFixture = (typeof PLAYERS)[number];
 
-const makeMessageCtx = (player: PlayerFixture, text: string) => ({
-	chatId: player.id,
+const makeMessageCtx = (player: PlayerFixture, text: string) => withMessageMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 	message: {
 		message_id: 1,
 		chat: { id: player.id, type: 'private' as const },
@@ -30,9 +31,11 @@ const makeMessageCtx = (player: PlayerFixture, text: string) => ({
 	},
 });
 
-const makeCallbackCtx = (player: PlayerFixture, action: 'name' | 'updatesView' | 'exit') => ({
-	chatId: player.id,
-	callback: {
+const makeCallbackCtx = (player: PlayerFixture, action: 'name' | 'updatesView' | 'exit') => withCallbackMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
+	callbackData: { module: 'settings' as const, action },
+	callbackQuery: {
 		id: `cb-${player.id}-${action}`,
 		from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 		message: {
@@ -40,10 +43,8 @@ const makeCallbackCtx = (player: PlayerFixture, action: 'name' | 'updatesView' |
 			chat: { id: player.id, type: 'private' as const },
 			date: Math.floor(Date.now() / 1000),
 		},
-		data: {
-			module: 'settings' as const,
-			action,
-		},
+		chat_instance: '',
+		data: `settings|${action}||`,
 	},
 });
 

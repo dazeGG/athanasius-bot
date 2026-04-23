@@ -1,12 +1,12 @@
 # athanasius-bot
 
-Telegram-бот для игры в «Афанасия» в комнатах. Проект написан на TypeScript, использует `node-telegram-bot-api` в режиме long polling и хранит рабочее состояние в `lowdb` через локальный файл `db.json`.
+Telegram-бот для игры в «Афанасия» в комнатах. Проект написан на TypeScript, использует `grammy` в режиме long polling и хранит рабочее состояние в `lowdb` через локальный файл `db.json`.
 
 ## Стек
 
 - TypeScript
 - Node.js `v22.5.1` из [.nvmrc](/Users/daze/Desktop/WORK/pet/athanasius-bot/.nvmrc)
-- `node-telegram-bot-api`
+- `grammy`
 - `lowdb`
 - `winston`
 - `pnpm`
@@ -118,6 +118,18 @@ pnpm start
 
 ```bash
 pnpm lint
+```
+
+Проверка типов:
+
+```bash
+pnpm typecheck
+```
+
+Симулятор сценариев и регрессий:
+
+```bash
+pnpm test
 ```
 
 ## Особенности рантайма

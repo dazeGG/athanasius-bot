@@ -1,32 +1,15 @@
-import type TelegramBot from 'node-telegram-bot-api';
-
-type BaseContext = {
-  chatId: TelegramBot.ChatId;
-};
-
-export type MessageContextMessage = Omit<(TelegramBot.Message), 'text' | 'from'> & {
-  text: string;
-  from: TelegramBot.User;
-};
-
-export type MessageContext = BaseContext & {
-  message: MessageContextMessage;
-};
+import type { Context, Filter } from 'grammy';
 
 export interface CallbackData {
-  module: string;
-  action?: string;
-  back?: boolean;
-  meta?: string;
+	module: string;
+	action?: string;
+	back?: boolean;
+	meta?: string;
 }
 
-export type CallbackContextCallback = Omit<(TelegramBot.CallbackQuery), 'message' | 'data'> & {
-  message: TelegramBot.Message;
-  data: CallbackData;
+export type AppContext = Context & {
+	callbackData?: CallbackData;
 };
 
-export type CallbackContext = BaseContext & {
-  callback: CallbackContextCallback;
-};
-
-export type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };
+export type MessageCtx = Filter<AppContext, 'message:text'>;
+export type CallbackCtx = Filter<AppContext, 'callback_query:data'>;

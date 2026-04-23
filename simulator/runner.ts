@@ -2,7 +2,6 @@
  * runner.ts — lightweight test runner, no project dependencies.
  */
 
-import type { CallbackContext } from '~/core/bot/types/context';
 import type { CapturedMsg } from './bootstrap';
 
 interface CaseResult {
@@ -348,7 +347,9 @@ export function printSummary (): void {
  * Throws with the provided message when a test condition is not met.
  */
 export function assert (condition: boolean, message: string): void {
-	if (!condition) { throw new Error(message); }
+	if (!condition) {
+		throw new Error(message);
+	}
 }
 
 /**
@@ -393,19 +394,4 @@ export function assertDeleted (log: readonly CapturedMsg[], toId: number, messag
 			: '      (no deletions)';
 		throw new Error(`Expected message ${messageId} to be deleted for ${toId}, but got:\n${got}`);
 	}
-}
-
-/**
- * Builds a minimal callback context for low-level helper assertions.
- */
-export function makeCtx (playerId: number): CallbackContext {
-	return {
-		chatId: playerId,
-		callback: {
-			id: `cb-${playerId}`,
-			from: { id: playerId, is_bot: false, first_name: 'Sim' },
-			message: { message_id: 1, chat: { id: playerId, type: 'private' }, date: 0 },
-			data: { module: 'game', meta: '' },
-		},
-	} as unknown as CallbackContext;
 }
