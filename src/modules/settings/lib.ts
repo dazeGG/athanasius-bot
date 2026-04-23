@@ -3,7 +3,6 @@ const NAME_RULES = 'Правила для имени:\n' +
 	'• Имя не должно быть длиннее 16 символов\n' +
 	'• Имя должно быть уникальным независимо от регистра';
 
-/* TEXTS */
 export const txt = {
 	yourSettings: 'Твои настройки',
 	name: 'Имя',
@@ -13,13 +12,4 @@ export const txt = {
 		'\n' +
 		NAME_RULES,
 	success: '<b>Применил изменения!</b>',
-} as const;
-
-/* KEYBOARDS */
-export const kb: ModuleKeyboards = {
-	baseSettings: [
-		[{ text: 'Имя', callback_data: { module: 'settings', action: 'name' } }],
-		[{ text: 'Вид обновлений', callback_data: { module: 'settings', action: 'updatesView' } }],
-		[{ text: 'Выход', callback_data: { module: 'settings', action: 'exit' } }],
-	],
 } as const;
