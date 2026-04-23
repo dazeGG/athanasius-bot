@@ -7,7 +7,7 @@ import { ORM, DB } from '~/db';
 import { txt as roomTxt } from '~/modules/rooms/ui';
 import { txt as gameTxt } from '~/shared/ui/game';
 
-import { STATES, resetLog, getLog, clearDB, seedDB } from '../bootstrap';
+import { STATES, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -25,8 +25,9 @@ const DEFAULT_ROOM_NAME = 'Комната Алисы';
 type PlayerFixture = (typeof PLAYERS)[number];
 type RoomsHandlersModule = typeof import('~/modules/rooms/handlers');
 
-const makeMessageCtx = (player: PlayerFixture, text: string) => ({
-	chatId: player.id,
+const makeMessageCtx = (player: PlayerFixture, text: string) => withMessageMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 	message: {
 		message_id: 1,
 		chat: { id: player.id, type: 'private' as const },
@@ -40,9 +41,11 @@ const makeCallbackCtx = (
 	player: PlayerFixture,
 	data: CallbackData,
 	messageId = 1,
-) => ({
-	chatId: player.id,
-	callback: {
+) => withCallbackMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
+	callbackData: data,
+	callbackQuery: {
 		id: `cb-${player.id}`,
 		from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 		message: {
@@ -50,7 +53,8 @@ const makeCallbackCtx = (
 			chat: { id: player.id, type: 'private' as const },
 			date: Math.floor(Date.now() / 1000),
 		},
-		data,
+		chat_instance: '',
+		data: `${data.module}|${data.action ?? ''}|${data.back ? '1' : ''}|${data.meta ?? ''}`,
 	},
 });
 

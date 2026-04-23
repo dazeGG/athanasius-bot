@@ -2,7 +2,7 @@
  * registration.ts — /reg flow coverage split into explicit cases.
  */
 
-import { DB, STATES, resetLog, getLog, clearDB } from '../bootstrap';
+import { DB, STATES, resetLog, getLog, clearDB, withMessageMethods } from '../bootstrap';
 import { assert, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -38,8 +38,9 @@ type RegistrationHandlers = {
 	regNameStateMessageHandler: (ctx: MessageCtx) => Promise<void>;
 };
 
-const makeMessageCtx = (playerId: number, text: string, username?: string) => ({
-	chatId: playerId,
+const makeMessageCtx = (playerId: number, text: string, username?: string) => withMessageMethods({
+	chat: { id: playerId, type: 'private' as const },
+	from: { id: playerId, is_bot: false, first_name: String(playerId), username },
 	message: {
 		message_id: 1,
 		chat: { id: playerId, type: 'private' as const },

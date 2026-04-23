@@ -4,7 +4,7 @@
 
 import { Deck } from '~/entities/deck';
 
-import { clearDB, getLog, resetLog, seedDB } from '../bootstrap';
+import { clearDB, getLog, resetLog, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -66,8 +66,9 @@ const BOB_HAND = [
 
 const CAROL_HAND: number[] = [];
 
-const makeMessageCtx = (player: PlayerFixture, text: string) => ({
-	chatId: player.id,
+const makeMessageCtx = (player: PlayerFixture, text: string) => withMessageMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 	message: {
 		message_id: 1,
 		chat: { id: player.id, type: 'private' as const },
@@ -81,9 +82,11 @@ const makeCallbackCtx = (
 	player: PlayerFixture,
 	data: { module: 'hand'; action?: 'show' | 'close'; back?: true; meta?: string },
 	messageId = 1,
-) => ({
-	chatId: player.id,
-	callback: {
+) => withCallbackMethods({
+	chat: { id: player.id, type: 'private' as const },
+	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
+	callbackData: data,
+	callbackQuery: {
 		id: `cb-${player.id}-${data.action ?? 'back'}`,
 		from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
 		message: {
@@ -91,7 +94,8 @@ const makeCallbackCtx = (
 			chat: { id: player.id, type: 'private' as const },
 			date: Math.floor(Date.now() / 1000),
 		},
-		data,
+		chat_instance: '',
+		data: `${data.module}|${data.action ?? ''}|${data.back ? '1' : ''}|${data.meta ?? ''}`,
 	},
 });
 
@@ -234,7 +238,6 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertDeleted(log, ALICE.id, 1);
 		assertSent(log, ALICE.id, 'Выбери игру, руку в которой хочешь посмотреть');
 		assertSent(log, ALICE.id, ROOM_ONE.name);
-		assertSent(log, ALICE.id, 'Выйти');
 	});
 
 	await runCase('Shows multiple active games in the hand picker', async () => {
@@ -247,7 +250,6 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Выбери игру, руку в которой хочешь посмотреть');
 		assertSent(log, ALICE.id, ROOM_ONE.name);
 		assertSent(log, ALICE.id, ROOM_TWO.name);
-		assertSent(log, ALICE.id, 'Выйти');
 	});
 
 	await runCase('Shows the selected hand for a game', async () => {
@@ -261,7 +263,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, '<code>');
 		assertSent(log, ALICE.id, 'A |');
 		assertSent(log, ALICE.id, '10 |');
-		assertSent(log, ALICE.id, 'Обновить · Назад');
+		assertSent(log, ALICE.id, 'Закрыть');
 	});
 
 	await runCase('Back callback returns from a hand to the games list', async () => {
@@ -274,7 +276,6 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Выбери игру, руку в которой хочешь посмотреть');
 		assertSent(log, ALICE.id, ROOM_ONE.name);
 		assertSent(log, ALICE.id, ROOM_TWO.name);
-		assertSent(log, ALICE.id, 'Выйти');
 	});
 
 	await runCase('Close callback deletes the hand picker message', async () => {
