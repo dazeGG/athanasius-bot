@@ -101,6 +101,7 @@ The declaration is only successful if the full statement is exact.
 
 1. The game ends when no player has cards left in hand.
 2. Final ranking is based on the number of completed Athanasius sets.
+3. The end-game summary always awards: 🥇 first place, 🥈 second place, 🥉 all middle positions, and 🦧 the last-placed player — regardless of total player count. The monkey emoji is always present and always belongs to the last player only.
 
 ## Architecture Map
 

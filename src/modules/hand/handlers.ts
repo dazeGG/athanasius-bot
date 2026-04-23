@@ -25,13 +25,8 @@ const getHandShowOptions = (ctx: CallbackContext): EditMessageOptions => {
 		throw new Error('Game id required');
 	}
 
-	const game = gameId ? new Game({ id: gameId }) : null;
-
-	if (!game) {
-		throw new Error('Game not found');
-	}
-
-	const room = ORM.Rooms.getById(game?.getRoomId());
+	const game = new Game({ id: gameId });
+	const room = ORM.Rooms.getById(game.getRoomId());
 	const hand = game.getHand(me.id);
 
 	if (!hand) {

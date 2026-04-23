@@ -53,27 +53,18 @@ export class InfoMessage {
 		let text = `🦎 <b>${txt.gameEnded}</b>\n\n`;
 		text += 'Вот они, победители, слева на право:\n\n';
 
-		const [first, second, third, ...others] = athMap;
+		const [first, second, ...rest] = athMap;
+		const middle = rest.slice(0, -1);
+		const last = rest[rest.length - 1];
 
 		text += `🥇 ${this.formatPlayerResult(first[0], first[1])}\n`;
 		text += `🥈 ${this.formatPlayerResult(second[0], second[1])}\n`;
 
-		if (others.length == 0) {
-			text += '\nОстальные результаты:\n\n';
-			text += `🦧 ${this.formatPlayerResult(third[0], third[1])}`;
-		} else {
-			text += `🥉 ${this.formatPlayerResult(third[0], third[1])}\n`;
+		middle.forEach(player => {
+			text += `🥉 ${this.formatPlayerResult(player[0], player[1])}\n`;
+		});
 
-			text += '\nОстальные результаты:\n\n';
-
-			others.forEach((other, i) => {
-				text += `🦧 ${this.formatPlayerResult(other[0], other[1])}`;
-
-				if (i !== others.length - 1) {
-					text += '\n';
-				}
-			});
-		}
+		text += `\n🦧 ${this.formatPlayerResult(last[0], last[1])}`;
 
 		return text;
 	}

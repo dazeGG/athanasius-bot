@@ -98,13 +98,7 @@ export const getGameFromMeta = (ctx: CallbackContext): Game => {
 		throw new Error('Game not found');
 	}
 
-	const game = gameId ? new Game({ id: gameId }) : null;
-
-	if (!game) {
-		throw new Error('Game not found');
-	}
-
-	return game;
+	return new Game({ id: gameId });
 };
 
 export const getSettingsStartOptions = (ctx: MessageContext | CallbackContext, room: RoomSchema) => {
