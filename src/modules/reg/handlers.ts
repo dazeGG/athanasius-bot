@@ -1,49 +1,52 @@
-import { BOT, STATES } from '~/core';
-import { DB, ORM } from '~/db';
-import type { MessageContext } from '~/core';
+import type { KeyboardButton } from 'grammy/types';
 
-import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
+import { STATES } from '~/core';
+import { DB, ORM } from '~/db';
+import type { MessageCtx } from '~/core';
+
+import { validateName } from '~/shared/lib';
 
 import * as lib from './lib';
 
-export const regStartMessageHandler = async (ctx: MessageContext) => {
-	const u = DB.data.users.find(u => u.id === ctx.message.from.id);
+export const GLOBAL_KEYBOARD: KeyboardButton[][] = [
+	[{ text: 'Настройки' }, { text: 'Комнаты' }],
+	[{ text: 'Рука' }],
+];
+
+export const regStartMessageHandler = async (ctx: MessageCtx) => {
+	const u = DB.data.users.find(u => u.id === ctx.from!.id);
 
 	if (u) {
-		await BOT.sendMessage({
-			ctx,
-			text: lib.txt.alreadyRegistered,
-			options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+		await ctx.reply(lib.txt.alreadyRegistered, {
+			reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true },
 		});
 		return;
 	}
 
-	const { from: user } = ctx.message;
-	STATES.setState(user.id, 'REGISTRATION');
+	STATES.setState(ctx.from!.id, 'REGISTRATION');
 
-	await BOT.sendMessage({ ctx, text: lib.txt.registerStart });
+	await ctx.reply(lib.txt.registerStart);
 };
 
-export const regNameStateMessageHandler = async (ctx: MessageContext) => {
+export const regNameStateMessageHandler = async (ctx: MessageCtx) => {
 	const name = ctx.message.text;
-	const userId = ctx.message.from.id;
+	const userId = ctx.from!.id;
 	const validationData = validateName(name, userId);
 
 	if (!validationData.success) {
-		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
+		await ctx.reply('<b>Ошибка!</b>\n\n' + validationData.message);
 		return;
 	}
 
-	const { from: user } = ctx.message;
-	const existingUser = DB.data.users.find(u => u.id === user.id);
+	const existingUser = DB.data.users.find(u => u.id === userId);
 
 	if (existingUser) {
 		existingUser.name = name;
 		await DB.write();
 	} else {
 		await ORM.Users.add({
-			id: user.id,
-			username: user.username,
+			id: userId,
+			username: ctx.from!.username,
 			name,
 			settings: {
 				updatesView: 'instant',
@@ -52,11 +55,9 @@ export const regNameStateMessageHandler = async (ctx: MessageContext) => {
 		});
 	}
 
-	await BOT.sendMessage({
-		ctx,
-		text: lib.txt.successfulRegistration,
-		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+	await ctx.reply(lib.txt.successfulRegistration, {
+		reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true },
 	});
 
-	STATES.clearState(ctx.message.from.id);
+	STATES.clearState(userId);
 };
