@@ -2,7 +2,7 @@ import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
-import { BOT } from '~/core';
+import { BOT, logGameEvent } from '~/core';
 import { dayjs } from '~/shared/plugins';
 import { InfoMessage } from '~/shared/ui/game';
 import { sendFirstMessage, notifyInitialAthanasiuses } from '~/entities/game/services';
@@ -71,6 +71,14 @@ export class Game {
 		const game = new Game({ room });
 		const sender: Sender = BOT.api.sendMessage.bind(BOT.api);
 		await game.save();
+
+		logGameEvent({
+			type: 'GAME_CREATED',
+			gameId: game.id,
+			roomId: room.id,
+			players: game.allPlayers,
+		});
+
 		await game.mailing({ text: InfoMessage.gameStartedMailing(room) }, [], sender);
 		await notifyInitialAthanasiuses(game, sender);
 		await sendFirstMessage(game, sender, true);
@@ -205,7 +213,29 @@ export class Game {
 
 		if (newAthanasiuses.length > 0) {
 			this.athanasiuses[me].push(...newAthanasiuses);
+
+			for (const rank of newAthanasiuses) {
+				logGameEvent({
+					type: 'ATHANASIUS_COMPLETED',
+					gameId: this.id,
+					playerId: me,
+					rank,
+				});
+			}
 		}
+
+		const cardsMoved = turnMeta.stage === TurnStage.suits
+			? turnMeta.suits.hearts + turnMeta.suits.diamonds + turnMeta.suits.spades + turnMeta.suits.clubs
+			: 0;
+
+		logGameEvent({
+			type: 'TURN_SUCCESS',
+			gameId: this.id,
+			from: me,
+			to: turnMeta.player.id,
+			cardName: turnMeta.cardName,
+			cardsCount: cardsMoved,
+		});
 
 		this.utils.logs.push({
 			from: me,
@@ -217,12 +247,19 @@ export class Game {
 
 		const gameEnded = this.hands.handleGameEnd(this.queue.actualQueue);
 
-		if (!gameEnded && this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0) {
-			this.shiftTurnToNextPlayerWithCards();
-		}
-
 		if (gameEnded) {
 			this.ended = dayjs();
+			logGameEvent({
+				type: 'GAME_ENDED',
+				gameId: this.id,
+				roomId: this.roomId,
+				winnerId: this.determineWinner(),
+				duration: this.ended.diff(this.started, 'ms'),
+			});
+		}
+
+		if (!gameEnded && this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0) {
+			this.shiftTurnToNextPlayerWithCards();
 		}
 
 		await this.save();
@@ -236,6 +273,13 @@ export class Game {
 
 	private async handleFailedTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
 		this.shiftTurnToNextPlayerWithCards();
+
+		logGameEvent({
+			type: 'TURN_FAILED',
+			gameId: this.id,
+			playerId: me,
+			failedAt: turnMeta.stage === TurnStage.count ? 'count' : turnMeta.stage === TurnStage.colors ? 'colors' : 'suits',
+		});
 
 		this.utils.logs.push({
 			from: me,
@@ -263,5 +307,15 @@ export class Game {
 				turnMeta.suits.clubs,
 			];
 		}
+	}
+
+	private determineWinner (): PlayerId {
+		const scores = this.allPlayers.map(id => ({
+			id,
+			athanasiusCount: this.athanasiuses[id]?.length ?? 0,
+		}));
+
+		scores.sort((a, b) => b.athanasiusCount - a.athanasiusCount);
+		return scores[0].id;
 	}
 }
