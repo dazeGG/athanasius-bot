@@ -1,0 +1,19 @@
+{
+  "model": "claude-sonnet-4-6",
+  "permissions": {
+    "allow": [
+      "Bash(pnpm *)",
+      "Bash(tsx *)",
+      "Bash(git *)",
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(cat *)"
+    ],
+    "deny": [
+      "Bash(rm -rf /)",
+      "Bash(curl *)",
+      "Bash(wget *)"
+    ]
+  }
+}
