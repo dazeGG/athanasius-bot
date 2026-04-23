@@ -1,7 +1,4 @@
 export {
-	CallbackUtils,
 	stringifyCallbackData,
+	getCallbackMeta,
 } from './callback-utils';
-export type {
-	CallbackData,
-} from '../types';

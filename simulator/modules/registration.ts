@@ -2,7 +2,7 @@
  * registration.ts — /reg flow coverage split into explicit cases.
  */
 
-import { DB, STATES, resetLog, getLog, clearDB, withMessageMethods } from '../bootstrap';
+import { DB, SESSIONS, resetLog, getLog, clearDB, withMessageMethods } from '../bootstrap';
 import { assert, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -54,7 +54,7 @@ const resetRegistrationCase = async (): Promise<void> => {
 	resetLog();
 	await clearDB();
 	ALL_TEST_PLAYERS.forEach(player => {
-		STATES.clearState(player.id);
+		SESSIONS.clear(player.id);
 	});
 };
 
@@ -75,7 +75,7 @@ const startRegistration = async (
 
 	const log = getLog();
 	assertSent(log, player.id, 'Напиши мне своё имя');
-	assert(STATES.getState(player.id) === 'REGISTRATION', `${player.name}: state should be REGISTRATION`);
+	assert(SESSIONS.get(player.id).flow.name === 'REGISTRATION', `${player.name}: state should be REGISTRATION`);
 	resetLog();
 };
 
@@ -90,7 +90,7 @@ const completeRegistration = async (
 	assertSent(log, player.id, 'Поздравляю');
 	assertSent(log, player.id, 'успешно зарегистрирован');
 	assertSent(log, player.id, GLOBAL_KEYBOARD_LABELS);
-	assert(STATES.getState(player.id) === undefined, `${player.name}: state should be cleared after registration`);
+	assert(SESSIONS.get(player.id).flow.name === undefined, `${player.name}: state should be cleared after registration`);
 	assertRegisteredUser(player, expectedName);
 	resetLog();
 };
@@ -123,7 +123,7 @@ const assertInvalidPendingName = async (
 
 	const log = getLog();
 	assertSent(log, player.id, expectedMessage);
-	assert(STATES.getState(player.id) === 'REGISTRATION', `${player.name}: state should stay REGISTRATION after "${name}"`);
+	assert(SESSIONS.get(player.id).flow.name === 'REGISTRATION', `${player.name}: state should stay REGISTRATION after "${name}"`);
 	assert(DB.data.users.length === expectedUsersCount, `${player.name}: DB count should stay ${expectedUsersCount} after "${name}"`);
 	assert(DB.data.users.find(u => u.id === player.id) === undefined, `${player.name}: user should not be created after "${name}"`);
 	resetLog();
@@ -133,7 +133,7 @@ const assertInvalidPendingName = async (
  * Runs simulator coverage for the registration command and name validation flow.
  */
 export async function registrationModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('~/modules/reg/handlers');
+	const handlers = await import('../../src/modules/reg/handlers');
 
 	await runCase('Prompts new users for a name and stores REGISTRATION state', async () => {
 		await resetRegistrationCase();
@@ -161,7 +161,7 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 			const log = getLog();
 			assertSent(log, player.id, 'Ты уже зарегистрирован');
 			assertSent(log, player.id, GLOBAL_KEYBOARD_LABELS);
-			assert(STATES.getState(player.id) === undefined, `${player.name}: state should stay cleared after repeated /reg`);
+			assert(SESSIONS.get(player.id).flow.name === undefined, `${player.name}: state should stay cleared after repeated /reg`);
 			assert(DB.data.users.length === usersBefore, `${player.name}: repeated /reg should not change DB count`);
 			assertRegisteredUser(player);
 			resetLog();

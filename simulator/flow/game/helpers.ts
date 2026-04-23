@@ -1,14 +1,15 @@
 /**
  * game/helpers.ts — shared fixtures, builders, and assertions for `Game Flow`.
  */
-import { ORM } from '~/db';
-import { Deck, DeckConfig } from '~/entities/deck';
-import type { GameSchema, RoomSchema, UserSchema } from '~/db';
-import type { CardName, SuitName } from '~/entities/deck';
-import type { CallbackCtx } from '~/core';
+import { ORM } from '../../../src/db';
+import { Deck, DeckConfig } from '../../../src/entities/deck';
+import type { GameSchema, RoomSchema, UserSchema } from '../../../src/db';
+import type { CardName, SuitName } from '../../../src/entities/deck';
+import type { CallbackCtx } from '../../../src/core';
 
 import {
 	clearDB,
+	BOT,
 	DB,
 	Game,
 	getLog,
@@ -213,7 +214,7 @@ export const makeTurnCallbackCtx = (player: PlayerFixture, meta?: string, messag
 			date: Math.floor(Date.now() / 1000),
 		},
 		chat_instance: '',
-		data: `g|t||${meta ?? ''}`,
+		data: `g:t:${meta ?? ''}`,
 	},
 }) as unknown as CallbackCtx;
 
@@ -265,7 +266,7 @@ export const turnMeta = {
  * Executes the real game callback handler with a staged simulator payload.
  */
 export const runTurn = async (player: PlayerFixture, meta?: string, messageId = 1): Promise<void> => {
-	const handlers = await import('~/modules/game/handlers');
+	const handlers = await import('../../../src/modules/game/handlers');
 	await handlers.gameTurnCallbackHandler(makeTurnCallbackCtx(player, meta, messageId));
 };
 
@@ -339,14 +340,14 @@ export const getPersistedGame = (gameId = 'game-flow'): GameSchema => {
  * Replays initial Athanasius notifications for an already seeded game fixture.
  */
 export const notifySeededInitialAthanasiuses = async (gameId = 'game-flow'): Promise<void> => {
-	await notifyInitialAthanasiuses(getGame(gameId));
+	await notifyInitialAthanasiuses(getGame(gameId), BOT.api.sendMessage.bind(BOT.api));
 };
 
 /**
  * Sends the next-turn message for a seeded game fixture.
  */
 export const sendSeededFirstMessage = async (gameId = 'game-flow', initial = false): Promise<void> => {
-	await sendFirstMessage(getGame(gameId), initial);
+	await sendFirstMessage(getGame(gameId), BOT.api.sendMessage.bind(BOT.api), initial);
 };
 
 /**

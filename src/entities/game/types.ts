@@ -95,6 +95,8 @@ export interface MailingOptions {
 	text: string;
 }
 
+export type Sender = (chatId: number, text: string, options?: Record<string, unknown>) => Promise<unknown>;
+
 export interface TurnOptions {
 	me: PlayerId;
 	turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta;

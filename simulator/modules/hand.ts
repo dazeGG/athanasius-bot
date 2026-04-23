@@ -2,7 +2,7 @@
  * hand.ts — hand lookup coverage split into explicit cases.
  */
 
-import { Deck } from '~/entities/deck';
+import { Deck } from '../../src/entities/deck';
 
 import { clearDB, getLog, resetLog, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent } from '../runner';
@@ -95,7 +95,7 @@ const makeCallbackCtx = (
 			date: Math.floor(Date.now() / 1000),
 		},
 		chat_instance: '',
-		data: `${data.module}|${data.action ?? ''}|${data.back ? '1' : ''}|${data.meta ?? ''}`,
+		data: `${data.module}:${data.back ? 'back' : (data.action ?? '')}:${data.meta ?? ''}`,
 	},
 });
 
@@ -215,7 +215,7 @@ const seedTwoActiveGames = async (): Promise<void> => {
  * Runs simulator coverage for hand listing, opening, navigation, and closing.
  */
 export async function handModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('~/modules/hand/handlers');
+	const handlers = await import('../../src/modules/hand/handlers');
 
 	await runCase('Shows empty hand state when there are no active games', async () => {
 		await resetHandCase();

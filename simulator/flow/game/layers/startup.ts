@@ -1,7 +1,7 @@
 /**
  * startup.ts — startup and deal invariants for the staged game flow.
  */
-import { Deck } from '~/entities/deck';
+import { Deck } from '../../../../src/entities/deck';
 
 import { DB, Game, getLog } from '../../../bootstrap';
 import { assert, assertNotSent, assertSent } from '../../../runner';

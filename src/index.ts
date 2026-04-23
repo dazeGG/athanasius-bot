@@ -5,8 +5,9 @@ import createModulesComposer from './modules/register-modules';
 
 BOT.use(createModulesComposer());
 
-BOT.init(commands)
+BOT.api.setMyCommands(commands)
 	.then(() => {
+		void BOT.start();
 		console.log('Bot started!');
 	})
 	.catch((error) => {

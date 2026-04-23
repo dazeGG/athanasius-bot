@@ -6,25 +6,11 @@ import type { AppContext } from '~/core';
 import * as handlers from './handlers';
 
 const composer = new Composer<AppContext>();
+const registered = composer.filter(isRegistered);
 
-composer.on('message:text').filter(
-	ctx => ctx.message.text === 'Рука' && isRegistered(ctx),
-	handlers.handMessageHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.action === 'show' && isRegistered(ctx),
-	handlers.handShowCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.action === 'close' && isRegistered(ctx),
-	handlers.handCloseCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.back === true && isRegistered(ctx),
-	handlers.handBackCallbackHandler,
-);
+registered.hears('Рука', handlers.handMessageHandler);
+registered.callbackQuery(/^hand:show:/, handlers.handShowCallbackHandler);
+registered.callbackQuery(/^hand:close:/, handlers.handCloseCallbackHandler);
+registered.callbackQuery(/^hand:back:/, handlers.handBackCallbackHandler);
 
 export default composer;

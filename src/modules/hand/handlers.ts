@@ -4,8 +4,8 @@ import { ORM } from '~/db';
 import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
-import { stringifyCallbackData } from '~/core/lib';
-import type { CallbackCtx, MessageCtx } from '~/core';
+import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
+import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
 
 import * as ui from './ui';
 
@@ -24,7 +24,7 @@ const getHandShowInlineKeyboard = (gameId: string) => {
 };
 
 const getHandShowText = (ctx: CallbackCtx) => {
-	const gameId = ctx.callbackData!.meta;
+	const gameId = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (!gameId) {
 		throw new Error('Game id required');
@@ -41,7 +41,7 @@ const getHandShowText = (ctx: CallbackCtx) => {
 	return `Комната ${escapeHtml(room.name)}\n\n${Deck.getMyHandView(hand.cardsInHand)}`;
 };
 
-export const handMessageHandler = async (ctx: MessageCtx) => {
+export const handMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	const gamesWithMe = ORM.Games.getActiveWithMe(ctx.from!.id);
@@ -55,7 +55,8 @@ export const handMessageHandler = async (ctx: MessageCtx) => {
 
 export const handShowCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
-	await ctx.editMessageText(getHandShowText(ctx), { reply_markup: getHandShowInlineKeyboard(ctx.callbackData!.meta!) });
+	const gameId = getCallbackMeta(ctx.callbackQuery.data);
+	await ctx.editMessageText(getHandShowText(ctx), { reply_markup: getHandShowInlineKeyboard(gameId!) });
 };
 
 export const handCloseCallbackHandler = async (ctx: CallbackCtx) => {

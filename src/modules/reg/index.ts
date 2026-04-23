@@ -1,16 +1,15 @@
 import { Composer } from 'grammy';
 
-import { STATES } from '~/core/states';
-import type { AppContext, MessageCtx } from '~/core';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 
 const composer = new Composer<AppContext>();
 
-composer.command('reg', ctx => handlers.regStartMessageHandler(ctx as unknown as MessageCtx));
+composer.command('reg', handlers.regStartMessageHandler);
 
 composer.on('message:text').filter(
-	ctx => STATES.getState(ctx.from.id) === 'REGISTRATION',
+	ctx => ctx.session.flow.name === 'REGISTRATION',
 	handlers.regNameStateMessageHandler,
 );
 

@@ -1,5 +1,3 @@
-import type { RoomId } from '~/db';
-import { STATES } from '~/core';
 import { ORM } from '~/db';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
@@ -45,7 +43,6 @@ export class SettingsHandlers {
 
 	public static async changeDecksCount (ctx: CallbackCtx) {
 		await ctx.answerCallbackQuery();
-		const roomId = ctx.callbackData!.meta;
 		const room = utils.getRoomFromMeta(ctx);
 
 		if (!await utils.ensureRoomMember(ctx, room)) {
@@ -57,13 +54,15 @@ export class SettingsHandlers {
 		}
 
 		await ctx.editMessageText('Напиши новое количество колод\nКоличество колод должно быть целым числом в диапазоне от 1 до 100');
-		STATES.setState(ctx.from.id, 'ROOM_CDC', { roomId });
+		ctx.session.flow = { name: 'ROOM_CDC', roomId: room.id };
 	}
 
 	public static async changeDecksCountMessage (ctx: MessageCtx) {
 		const me = ctx.from!;
 		const { text } = ctx.message;
-		const stateContext = STATES.getContext(me.id) as { roomId: RoomId | undefined };
+		const stateContext = ctx.session.flow.name === 'ROOM_CDC'
+			? { roomId: ctx.session.flow.roomId }
+			: undefined;
 
 		if (!stateContext || !stateContext.roomId) {
 			throw new Error('Room id required');
@@ -93,6 +92,6 @@ export class SettingsHandlers {
 			utils.getSettingsStartText(room),
 			{ reply_markup: utils.getSettingsInlineKeyboard(room) },
 		);
-		STATES.clearState(me.id);
+		ctx.session.flow = {};
 	}
 }

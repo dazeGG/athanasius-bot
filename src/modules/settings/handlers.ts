@@ -1,11 +1,10 @@
 import { InlineKeyboard } from 'grammy';
 
-import { STATES } from '~/core';
 import type { UserSchema } from '~/db';
 import { DB, ORM } from '~/db';
 import { escapeHtml, validateName } from '~/shared/lib';
 import { stringifyCallbackData } from '~/core/lib';
-import type { CallbackCtx, MessageCtx } from '~/core';
+import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
 
 import * as lib from './lib';
 
@@ -27,7 +26,7 @@ const getBaseSettingsKeyboard = () => {
 		.text('Выход', stringifyCallbackData({ module: 'settings', action: 'exit' }));
 };
 
-export const settingsStartMessageHandler = async (ctx: MessageCtx) => {
+export const settingsStartMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	if (ORM.Games.getActiveWithMe(ctx.from!.id).length) {
@@ -44,10 +43,10 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 
 	const me = ORM.Users.get(ctx.from.id);
 
-	switch (ctx.callbackData!.action) {
+	switch (ctx.callbackQuery.data.split(':')[1]) {
 	case 'name':
 		await ctx.editMessageText(lib.txt.changeName);
-		STATES.setState(ctx.from.id, 'SETTINGS_CHANGE_NAME');
+		ctx.session.flow = { name: 'SETTINGS_CHANGE_NAME' };
 		break;
 	case 'updatesView':
 		await ORM.Users.update(
@@ -86,5 +85,5 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageCtx) => 
 	await ctx.reply(lib.txt.success);
 	await ctx.reply(getBaseSettingsText(me), { reply_markup: getBaseSettingsKeyboard() });
 
-	STATES.clearState(ctx.from!.id);
+	ctx.session.flow = {};
 };

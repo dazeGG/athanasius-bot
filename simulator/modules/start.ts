@@ -53,7 +53,7 @@ const seedRegisteredUsers = async (players: readonly PlayerFixture[]): Promise<v
  * Runs simulator coverage for the `/start` command entrypoints.
  */
 export async function startModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('~/modules/start/handlers');
+	const handlers = await import('../../src/modules/start/handlers');
 
 	await runCase('Greets unregistered users and suggests /reg', async () => {
 		await resetStartCase();

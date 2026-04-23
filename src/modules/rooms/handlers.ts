@@ -1,11 +1,11 @@
-import { BOT, STATES } from '~/core';
+import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
 import { sendFirstMessage } from '~/entities/game/services';
 import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
-import type { CallbackCtx, MessageCtx } from '~/core';
-
+import { getCallbackMeta } from '~/core/lib';
+import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
 import * as ui from './ui';
 import * as utils from './utils';
 
@@ -13,7 +13,7 @@ const getErrorMessage = (error: unknown): string => {
 	return escapeHtml(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
 };
 
-export const roomsMessageHandler = async (ctx: MessageCtx) => {
+export const roomsMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	const roomsWithMe = ORM.Rooms.getWithMe(ctx.from!.id);
@@ -29,7 +29,7 @@ export const joinRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
 	await ctx.editMessageText('Напиши код подключения');
-	STATES.setState(ctx.from.id, 'ROOMS_JOIN');
+	ctx.session.flow = { name: 'ROOMS_JOIN' };
 };
 
 export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
@@ -49,13 +49,13 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 	}
 
-	STATES.clearState(me.id);
+	ctx.session.flow = {};
 };
 
 export const leaveRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const roomId = ctx.callbackData!.meta;
+	const roomId = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (!roomId) {
 		throw new Error('Room id required');
@@ -86,7 +86,7 @@ export const createRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
 	await ctx.editMessageText('Напиши название комнаты');
-	STATES.setState(ctx.from.id, 'ROOMS_CREATE');
+	ctx.session.flow = { name: 'ROOMS_CREATE' };
 };
 
 export const createRoomNameMessageHandler = async (ctx: MessageCtx) => {
@@ -96,7 +96,7 @@ export const createRoomNameMessageHandler = async (ctx: MessageCtx) => {
 	try {
 		await ORM.Rooms.createRoom(roomName, me.id);
 		await ctx.reply(ui.txt.createdRoom + ' ' + escapeHtml(roomName));
-		STATES.clearState(me.id);
+		ctx.session.flow = {};
 
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 	} catch (error) {
@@ -122,7 +122,7 @@ export const openRoomCallbackHandler = async (ctx: CallbackCtx) => {
 export const kickCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const meta = ctx.callbackData!.meta;
+	const meta = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (!meta) {
 		throw new Error('Meta is required');
@@ -232,7 +232,7 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 
 	const game = utils.getGameFromMeta(ctx);
 
-	await sendFirstMessage(game);
+	await sendFirstMessage(game, BOT.api.sendMessage.bind(BOT.api));
 	await ctx.editMessageText(
 		utils.getRoomBaseText(room, true) + `\n\n🟩 ${gameTxt.gameMessageResendSuccess}`,
 		{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
@@ -242,7 +242,7 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 export const backCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const meta = ctx.callbackData!.meta;
+	const meta = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (meta === 'list') {
 		await ctx.editMessageText(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(ctx.from.id)) });

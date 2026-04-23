@@ -1,12 +1,11 @@
-import { STATES } from '~/core';
 import { DB, ORM } from '~/db';
-import type { MessageCtx } from '~/core';
+import type { AppContext, MessageCtx } from '~/core';
 
 import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
 
 import * as lib from './lib';
 
-export const regStartMessageHandler = async (ctx: MessageCtx) => {
+export const regStartMessageHandler = async (ctx: AppContext) => {
 	const u = DB.data.users.find(u => u.id === ctx.from!.id);
 
 	if (u) {
@@ -16,7 +15,7 @@ export const regStartMessageHandler = async (ctx: MessageCtx) => {
 		return;
 	}
 
-	STATES.setState(ctx.from!.id, 'REGISTRATION');
+	ctx.session.flow = { name: 'REGISTRATION' };
 
 	await ctx.reply(lib.txt.registerStart);
 };
@@ -52,5 +51,5 @@ export const regNameStateMessageHandler = async (ctx: MessageCtx) => {
 		reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true },
 	});
 
-	STATES.clearState(userId);
+	ctx.session.flow = {};
 };

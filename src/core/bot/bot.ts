@@ -1,12 +1,11 @@
 import 'dotenv/config';
 
-import { Bot as GrammyBot } from 'grammy';
-import type { Middleware, Transformer } from 'grammy';
+import { Bot, session } from 'grammy';
+import type { Transformer } from 'grammy';
 
 import { logError } from '~/core/lib';
+import { createInitialSessionData } from './types';
 import type { AppContext } from './types';
-
-import { CallbackUtils } from './lib';
 
 const HTML_PARSE_MODE_METHODS = new Set(['sendMessage', 'editMessageText']);
 
@@ -27,45 +26,19 @@ const htmlParseModeTransformer: Transformer = async (prev, method, payload, sign
 	} as typeof payload, signal);
 };
 
-class Bot {
-	private readonly grammyBot: GrammyBot<AppContext>;
+export const BOT = new Bot<AppContext>(process.env.BOT_TOKEN ?? '');
 
-	constructor (token: string) {
-		this.grammyBot = new GrammyBot<AppContext>(token);
-		this.grammyBot.api.config.use(htmlParseModeTransformer);
+BOT.api.config.use(htmlParseModeTransformer);
 
-		this.grammyBot.use(async (ctx, next) => {
-			if (ctx.callbackQuery?.data) {
-				try {
-					ctx.callbackData = CallbackUtils.parseCallbackData(ctx.callbackQuery.data);
-				} catch {
-					// callbackData stays undefined — unroutable update
-				}
-			}
-			await next();
-		});
+BOT.use(session({
+	initial: createInitialSessionData,
+	getSessionKey: ctx => ctx.from?.id.toString(),
+}));
 
-		this.grammyBot.catch((err) => {
-			logError({
-				error: err.error,
-				errorText: 'Unhandled bot error',
-				chatId: err.ctx.chat?.id ?? 0,
-			});
-		});
-	}
-
-	get api () {
-		return this.grammyBot.api;
-	}
-
-	use (middleware: Middleware<AppContext>) {
-		this.grammyBot.use(middleware);
-	}
-
-	async init (commands: { command: string; description: string }[]) {
-		await this.grammyBot.api.setMyCommands(commands);
-		void this.grammyBot.start();
-	}
-}
-
-export const BOT = new Bot(process.env.BOT_TOKEN ?? '');
+BOT.catch((err) => {
+	logError({
+		error: err.error,
+		errorText: 'Unhandled bot error',
+		chatId: err.ctx.chat?.id ?? 0,
+	});
+});

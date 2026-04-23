@@ -1,7 +1,7 @@
 /**
  * progression.ts — happy-path staged progression for the game flow.
  */
-import { Deck } from '~/entities/deck';
+import { Deck } from '../../../../src/entities/deck';
 
 import { getLog } from '../../../bootstrap';
 import { assert, assertSent } from '../../../runner';

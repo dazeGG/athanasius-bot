@@ -8,6 +8,7 @@ import type {
 	ColorsStageMeta,
 	SuitsStageMeta,
 	Suits,
+	Sender,
 } from '~/entities/game';
 
 export interface GameServiceOptions {
@@ -15,6 +16,7 @@ export interface GameServiceOptions {
     game: Game;
     me: UserSchema;
     turnMeta: TurnMeta;
+    sender: Sender;
 }
 
 export interface GameServiceOptionsStage {

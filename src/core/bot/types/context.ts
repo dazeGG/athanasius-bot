@@ -1,15 +1,21 @@
-import type { Context, Filter } from 'grammy';
+import type { Context, Filter, SessionFlavor } from 'grammy';
 
-export interface CallbackData {
-	module: string;
-	action?: string;
-	back?: boolean;
-	meta?: string;
+import type { RoomId } from '~/db';
+
+export type AppFlowState =
+	| { name?: undefined }
+	| { name: 'REGISTRATION' | 'ROOMS_JOIN' | 'ROOMS_CREATE' | 'SETTINGS_CHANGE_NAME' }
+	| { name: 'ROOM_CDC'; roomId: RoomId };
+
+export interface AppSession {
+	flow: AppFlowState;
 }
 
-export type AppContext = Context & {
-	callbackData?: CallbackData;
-};
+export const createInitialSessionData = (): AppSession => ({
+	flow: {},
+});
+
+export type AppContext = Context & SessionFlavor<AppSession>;
 
 export type MessageCtx = Filter<AppContext, 'message:text'>;
 export type CallbackCtx = Filter<AppContext, 'callback_query:data'>;

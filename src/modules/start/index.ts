@@ -1,11 +1,11 @@
 import { Composer } from 'grammy';
 
-import type { AppContext, MessageCtx } from '~/core';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 
 const composer = new Composer<AppContext>();
 
-composer.command('start', ctx => handlers.startCommandHandler(ctx as unknown as MessageCtx));
+composer.command('start', handlers.startCommandHandler);
 
 export default composer;
