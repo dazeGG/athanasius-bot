@@ -10,6 +10,9 @@ export const txt = {
 	createdRoom: 'Создал комнату',
 	kickPlayer: 'Выбери кого хочешь выгнать',
 	sendTurnMessage: 'Отправить сообщение хода',
+	ownerOnly: 'Только владелец комнаты может управлять комнатой',
+	ownerCannotLeave: 'Владелец комнаты не может выйти из своей комнаты',
+	cannotKickOwner: 'Нельзя выгнать владельца комнаты',
 } as const;
 
 /* KEYBOARDS */

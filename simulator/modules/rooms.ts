@@ -2,11 +2,13 @@
  * rooms.ts — room creation, joining, settings, and membership flows split into explicit cases.
  */
 
-import { ORM, DB } from '~/db';
 import type { CallbackData } from '~/core';
+import { ORM, DB } from '~/db';
+import { txt as roomTxt } from '~/modules/rooms/ui';
+import { txt as gameTxt } from '~/shared/ui/game';
 
 import { STATES, resetLog, getLog, clearDB, seedDB } from '../bootstrap';
-import { assert, assertSent, assertNotSent } from '../runner';
+import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
@@ -21,7 +23,6 @@ const [ALICE, BOB, CAROL, DAVE, EVE] = PLAYERS;
 const DEFAULT_ROOM_NAME = 'Комната Алисы';
 
 type PlayerFixture = (typeof PLAYERS)[number];
-type MessageCtx = ReturnType<typeof makeMessageCtx>;
 type RoomsHandlersModule = typeof import('~/modules/rooms/handlers');
 
 const makeMessageCtx = (player: PlayerFixture, text: string) => ({
@@ -90,6 +91,23 @@ const assertRoomPlayers = (roomId: string, expectedPlayers: readonly number[]): 
 		JSON.stringify(room.players) === JSON.stringify([...expectedPlayers]),
 		`Room players should be ${expectedPlayers.join(', ')} but got ${room.players.join(', ')}`,
 	);
+};
+
+const assertExactlyOnePlayerReceived = (
+	log: ReturnType<typeof getLog>,
+	playerIds: readonly number[],
+	text: string,
+): number => {
+	const matchedPlayerIds = playerIds.filter(playerId => {
+		return log.some(message => message.to === playerId && message.type !== 'delete' && message.text.includes(text));
+	});
+
+	assert(
+		matchedPlayerIds.length === 1,
+		`Exactly one player should receive "${text}", but got ${matchedPlayerIds.join(', ') || 'nobody'}`,
+	);
+
+	return matchedPlayerIds[0]!;
 };
 
 const startCreateRoomFlow = async (
@@ -192,8 +210,21 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		await handlers.roomsMessageHandler(makeMessageCtx(ALICE, 'Комнаты'));
 
 		const log = getLog();
+		assertDeleted(log, ALICE.id, 1);
 		assertSent(log, ALICE.id, 'У тебя пока нет комнат');
 		assertSent(log, ALICE.id, 'Зайти по коду · Создать комнату');
+	});
+
+	await runCase('Shows existing rooms list with room buttons', async () => {
+		const room = await setupRoomWithPlayers([BOB], handlers);
+
+		await handlers.roomsMessageHandler(makeMessageCtx(BOB, 'Комнаты'));
+
+		const log = getLog();
+		assertDeleted(log, BOB.id, 1);
+		assertSent(log, BOB.id, 'Вот список твоих комнат');
+		assertSent(log, BOB.id, room.name);
+		assertSent(log, BOB.id, 'Зайти по коду · Создать комнату');
 	});
 
 	await runCase('Creates a room from callback and name input', async () => {
@@ -272,6 +303,38 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'Начать игру');
 	});
 
+	await runCase('Supports back navigation to rooms list and room details', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.backCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', back: true, meta: 'list' }));
+		let log = getLog();
+		assertSent(log, ALICE.id, 'Вот список твоих комнат');
+		assertSent(log, ALICE.id, room.name);
+		resetLog();
+
+		await handlers.backCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', back: true, meta: `room:${room.id}` }));
+		log = getLog();
+		assertSent(log, ALICE.id, 'Комната Алисы');
+		assertSent(log, ALICE.id, 'Код подключения');
+		assertSent(log, ALICE.id, 'Выгнать игроков · Начать игру · Назад');
+	});
+
+	await runCase('Blocks stale room access for non-members', async () => {
+		const room = await setupRoomWithPlayers([BOB], handlers);
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(DAVE, { module: 'rooms', action: 'open', meta: room.id }));
+		let log = getLog();
+		assertSent(log, DAVE.id, `Ты не в комнате ${room.name}`);
+		assertNotSent(log, DAVE.id, 'Код подключения');
+		resetLog();
+
+		await handlers.backCallbackHandler(makeCallbackCtx(DAVE, { module: 'rooms', back: true, meta: `room:${room.id}` }));
+		log = getLog();
+		assertSent(log, DAVE.id, `Ты не в комнате ${room.name}`);
+		assertNotSent(log, DAVE.id, 'Код подключения');
+		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
+	});
+
 	await runCase('Allows owner to kick a player and ignores stale leave callback safely', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
@@ -297,6 +360,31 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id]);
 	});
 
+	await runCase('Protects kick flow from stale player callbacks', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.kickCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'kick', meta: `${room.id}:${BOB.id}` }));
+		resetLog();
+
+		await handlers.kickCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'kick', meta: `${room.id}:${BOB.id}` }));
+		const log = getLog();
+
+		assertSent(log, ALICE.id, `Игрока уже нет в комнате ${room.name}`);
+		assertSent(log, ALICE.id, 'Выбери кого хочешь выгнать');
+		assertRoomPlayers(room.id, [ALICE.id, CAROL.id]);
+	});
+
+	await runCase('Prevents non-owners from kicking players', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.kickCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'kick', meta: `${room.id}:` }));
+		const log = getLog();
+
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+		assertNotSent(log, BOB.id, 'Выбери кого хочешь выгнать');
+		assertRoomPlayers(room.id, [ALICE.id, BOB.id, CAROL.id]);
+	});
+
 	await runCase('Allows a member to leave room and notifies remaining players', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
@@ -308,6 +396,21 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'вышел');
 		assertSent(log, CAROL.id, 'вышел');
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id]);
+	});
+
+	await runCase('Prevents the owner from leaving or being kicked', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.leaveRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'leave', meta: room.id }));
+		let log = getLog();
+		assertSent(log, ALICE.id, roomTxt.ownerCannotLeave);
+		assertRoomPlayers(room.id, [ALICE.id, BOB.id, CAROL.id]);
+		resetLog();
+
+		await handlers.kickCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'kick', meta: `${room.id}:${ALICE.id}` }));
+		log = getLog();
+		assertSent(log, ALICE.id, roomTxt.cannotKickOwner);
+		assertRoomPlayers(room.id, [ALICE.id, BOB.id, CAROL.id]);
 	});
 
 	await runCase('Changes join code and accepts only the new one', async () => {
@@ -338,6 +441,29 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id, EVE.id]);
 	});
 
+	await runCase('Prevents non-owners from changing room settings', async () => {
+		const room = await setupRoomWithPlayers([BOB], handlers);
+		const oldJoinCode = room.settings.joinCode;
+
+		await SettingsHandlers.start(makeCallbackCtx(BOB, { module: 'room', action: 'settings', meta: room.id }));
+		let log = getLog();
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+		assertNotSent(log, BOB.id, 'Выбери что хочешь изменить');
+		resetLog();
+
+		await SettingsHandlers.changeJoinCode(makeCallbackCtx(BOB, { module: 'room', action: 'cjc', meta: room.id }));
+		log = getLog();
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+		assert(ORM.Rooms.getById(room.id).settings.joinCode === oldJoinCode, 'Member should not be able to change join code');
+		resetLog();
+
+		await SettingsHandlers.changeDecksCount(makeCallbackCtx(BOB, { module: 'room', action: 'cdc', meta: room.id }));
+		log = getLog();
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+		assert(STATES.getState(BOB.id) === undefined, 'Member should not enter ROOM_CDC state');
+		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Member should not be able to change decks count');
+	});
+
 	await runCase('Validates decks count changes in room settings', async () => {
 		const room = await setupRoomWithPlayers([], handlers);
 
@@ -361,6 +487,20 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 7, 'Valid decks count should update room settings');
 	});
 
+	await runCase('Rejects fractional decks count values', async () => {
+		const room = await setupRoomWithPlayers([], handlers);
+
+		await SettingsHandlers.changeDecksCount(makeCallbackCtx(ALICE, { module: 'room', action: 'cdc', meta: room.id }));
+		resetLog();
+
+		await SettingsHandlers.changeDecksCountMessage(makeMessageCtx(ALICE, '7.5'));
+		const log = getLog();
+
+		assertSent(log, ALICE.id, 'Количество колод должно быть целым числом в диапазоне от 1 до 100');
+		assert(STATES.getState(ALICE.id) === 'ROOM_CDC', 'Alice state should stay ROOM_CDC after fractional decks count');
+		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Fractional decks count should not change room settings');
+	});
+
 	await runCase('Shows start-game error when there are fewer than three players', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
@@ -369,5 +509,47 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 
 		assertSent(log, ALICE.id, 'Чтобы начать игру, необходимо как минимум 3 игрока');
 		assert(DB.data.games.length === 0, 'Game should not start with fewer than three players');
+	});
+
+	await runCase('Prevents non-owners from starting the game', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'start', meta: room.id }));
+		const log = getLog();
+
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+		assert(DB.data.games.length === 0, 'Member should not be able to start the game');
+	});
+
+	await runCase('Starts a game with three players and sends initial messages', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		const log = getLog();
+
+		assertDeleted(log, ALICE.id, 1);
+		assert(DB.data.games.length === 1, 'Game should be created for a room with three players');
+		assert(DB.data.games[0]!.roomId === room.id, 'Created game should belong to the started room');
+		[ALICE, BOB, CAROL].forEach(player => {
+			assertSent(log, player.id, gameTxt.gameStarted);
+		});
+		assertExactlyOnePlayerReceived(log, [ALICE.id, BOB.id, CAROL.id], gameTxt.firstTurnMessage);
+	});
+
+	await runCase('Allows room members to inspect ongoing game info', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		resetLog();
+
+		await handlers.gameWhoseTurnCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'whoseturn', meta: room.id }));
+		let log = getLog();
+		assertSent(log, BOB.id, 'Сейчас ход');
+		assertSent(log, BOB.id, 'Обновить · Назад');
+		resetLog();
+
+		await handlers.gameGetAthanasiusesCallbackHandler(makeCallbackCtx(CAROL, { module: 'room', action: 'getath', meta: room.id }));
+		log = getLog();
+		assertSent(log, CAROL.id, `Комната ${room.name}`);
+		assertSent(log, CAROL.id, 'Обновить · Назад');
 	});
 }

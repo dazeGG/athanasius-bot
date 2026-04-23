@@ -61,6 +61,11 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
 
 	const room = ORM.Rooms.getById(roomId);
 
+	if (room.owner === me.id) {
+		await BOT.sendMessage({ ctx, text: ui.txt.ownerCannotLeave });
+		return;
+	}
+
 	if (!room.players.includes(me.id)) {
 		await BOT.editMessage({ ctx, text: `Ты уже не в комнате ${room.name}` });
 		return;
@@ -109,6 +114,10 @@ export const openRoomCallbackHandler = async (ctx: CallbackContext) => {
 
 	const room = ORM.Rooms.getById(roomId);
 
+	if (!await utils.ensureRoomMember(ctx, room)) {
+		return;
+	}
+
 	await BOT.editMessage({ ctx, ...utils.getRoomOptions(me, room) });
 };
 
@@ -123,10 +132,27 @@ export const kickCallbackHandler = async (ctx: CallbackContext) => {
 	const [roomId, playerId] = meta.split(':');
 	const room = ORM.Rooms.getById(roomId);
 
+	if (!await utils.ensureRoomOwner(ctx, room)) {
+		return;
+	}
+
 	if (playerId) {
-		await ORM.Rooms.removePlayer(Number(playerId), roomId);
-		await BOT.sendMessageByChatId({ chatId: Number(playerId), text: `Комната ${room.name} | Тебя выгнали :(` });
-		await utils.mailing(`Комната ${room.name} | ${ORM.Users.get(Number(playerId)).name} был выгнан`, room);
+		const targetPlayerId = Number(playerId);
+
+		if (targetPlayerId === room.owner) {
+			await BOT.sendMessage({ ctx, text: ui.txt.cannotKickOwner });
+			return;
+		}
+
+		if (!room.players.includes(targetPlayerId)) {
+			await BOT.sendMessage({ ctx, text: `Игрока уже нет в комнате ${room.name}` });
+			await BOT.editMessage({ ctx, text: ui.txt.kickPlayer, keyboard: ui.gkb.kickList(me.id, room) });
+			return;
+		}
+
+		await ORM.Rooms.removePlayer(targetPlayerId, roomId);
+		await BOT.sendMessageByChatId({ chatId: targetPlayerId, text: `Комната ${room.name} | Тебя выгнали :(` });
+		await utils.mailing(`Комната ${room.name} | ${ORM.Users.get(targetPlayerId).name} был выгнан`, room);
 	}
 
 	await BOT.editMessage({ ctx, text: ui.txt.kickPlayer, keyboard: ui.gkb.kickList(me.id, room) });
@@ -136,6 +162,14 @@ export const gameStartCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
 	const room = utils.getRoomFromMeta(ctx);
+
+	if (!await utils.ensureRoomMember(ctx, room)) {
+		return;
+	}
+
+	if (!await utils.ensureRoomOwner(ctx, room)) {
+		return;
+	}
 
 	if (room.players.length < MIN_PLAYERS_TO_START) {
 		await BOT.editMessage({
@@ -155,6 +189,11 @@ export const gameGetAthanasiusesCallbackHandler = async (ctx: CallbackContext) =
 	await BOT.answerCallbackQuery(ctx);
 
 	const room = utils.getRoomFromMeta(ctx);
+
+	if (!await utils.ensureRoomMember(ctx, room)) {
+		return;
+	}
+
 	const game = utils.getGameFromMeta(ctx);
 
 	await BOT.editMessage({
@@ -168,6 +207,11 @@ export const gameWhoseTurnCallbackHandler = async (ctx: CallbackContext) => {
 	await BOT.answerCallbackQuery(ctx);
 
 	const room = utils.getRoomFromMeta(ctx);
+
+	if (!await utils.ensureRoomMember(ctx, room)) {
+		return;
+	}
+
 	const game = utils.getGameFromMeta(ctx);
 
 	await BOT.editMessage({
@@ -182,7 +226,11 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackContext) =
 
 	const room = utils.getRoomFromMeta(ctx);
 
-	if (room.owner !== ctx.callback.from.id) {
+	if (!await utils.ensureRoomMember(ctx, room)) {
+		return;
+	}
+
+	if (!await utils.ensureRoomOwner(ctx, room)) {
 		return;
 	}
 
@@ -209,6 +257,11 @@ export const backCallbackHandler = async (ctx: CallbackContext) => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-vars
 		const [_, roomId] = meta?.split(':');
 		const room = ORM.Rooms.getById(roomId);
+
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
 		await BOT.editMessage({ ctx, ...utils.getRoomOptions(me, room) });
 	}
 };

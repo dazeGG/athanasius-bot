@@ -11,6 +11,8 @@ import type { PlayerId } from '~/entities/game';
 
 import * as ui from './ui';
 
+type RoomActionContext = MessageContext | CallbackContext;
+
 class RoomTexts {
 	private readonly room: RoomSchema;
 	private readonly gameStarted: boolean;
@@ -107,4 +109,38 @@ export const getSettingsStartOptions = (ctx: MessageContext | CallbackContext, r
 		text: getRoomBaseText(room) + '\n\nВыбери что хочешь изменить',
 		keyboard: ui.gkb.settings(room),
 	};
+};
+
+const getActorId = (ctx: RoomActionContext): number => {
+	if ('message' in ctx) {
+		return ctx.message.from.id;
+	}
+
+	return ctx.callback.from.id;
+};
+
+export const isRoomMember = (room: RoomSchema, userId: number): boolean => {
+	return room.players.includes(userId);
+};
+
+export const isRoomOwner = (room: RoomSchema, userId: number): boolean => {
+	return room.owner === userId;
+};
+
+export const ensureRoomMember = async (ctx: RoomActionContext, room: RoomSchema): Promise<boolean> => {
+	if (isRoomMember(room, getActorId(ctx))) {
+		return true;
+	}
+
+	await BOT.sendMessage({ ctx, text: `Ты не в комнате ${room.name}` });
+	return false;
+};
+
+export const ensureRoomOwner = async (ctx: RoomActionContext, room: RoomSchema): Promise<boolean> => {
+	if (isRoomOwner(room, getActorId(ctx))) {
+		return true;
+	}
+
+	await BOT.sendMessage({ ctx, text: ui.txt.ownerOnly });
+	return false;
 };

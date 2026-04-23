@@ -10,12 +10,28 @@ export class SettingsHandlers {
 		await BOT.answerCallbackQuery(ctx);
 		const room = utils.getRoomFromMeta(ctx);
 
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
+		if (!await utils.ensureRoomOwner(ctx, room)) {
+			return;
+		}
+
 		await BOT.editMessage(utils.getSettingsStartOptions(ctx, room));
 	}
 
 	public static async changeJoinCode (ctx: CallbackContext) {
 		await BOT.answerCallbackQuery(ctx);
 		const room = utils.getRoomFromMeta(ctx);
+
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
+		if (!await utils.ensureRoomOwner(ctx, room)) {
+			return;
+		}
 
 		await ORM.Rooms.changeJoinCode(room.id);
 		await BOT.editMessage(utils.getSettingsStartOptions(ctx, room));
@@ -24,6 +40,15 @@ export class SettingsHandlers {
 	public static async changeDecksCount (ctx: CallbackContext) {
 		await BOT.answerCallbackQuery(ctx);
 		const { from: me, data: { meta: roomId } } = ctx.callback;
+		const room = utils.getRoomFromMeta(ctx);
+
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
+		if (!await utils.ensureRoomOwner(ctx, room)) {
+			return;
+		}
 
 		await BOT.editMessage({
 			ctx,
@@ -45,7 +70,15 @@ export class SettingsHandlers {
 		const room = ORM.Rooms.getById(roomId);
 		const newDecksCount = Number(text);
 
-		if (isNaN(newDecksCount) || newDecksCount < 1 || newDecksCount > 100) {
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
+		if (!await utils.ensureRoomOwner(ctx, room)) {
+			return;
+		}
+
+		if (!Number.isInteger(newDecksCount) || newDecksCount < 1 || newDecksCount > 100) {
 			await BOT.sendMessage({ ctx, text: 'Количество колод должно быть целым числом в диапазоне от 1 до 100' });
 			return;
 		}
