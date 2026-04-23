@@ -1,5 +1,6 @@
 import { BOT } from '~/core';
 import { ORM } from '~/db';
+import { Achievements } from '~/shared/lib';
 import { TurnStage } from '~/entities/game';
 import { txt, gkb, InfoMessage, GameMessage } from '~/shared/ui/game';
 import type { GameSchema } from '~/db';
@@ -7,6 +8,20 @@ import type { Game } from '~/entities/game';
 
 import { SERVICES_CONFIG } from './config';
 import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsStage } from './types';
+
+export async function notifyInitialAthanasiuses (game: Game): Promise<void> {
+	for (const [playerIdStr, cardNames] of Object.entries(game.getAthanasiuses())) {
+		if (cardNames.length === 0) { continue; }
+
+		const playerId = Number(playerIdStr);
+		await ORM.Users.awardAchievement(playerId, Achievements.DEAL_ATHANASIUS);
+		await BOT.sendMessageByChatId({ chatId: playerId, text: InfoMessage.dealAthanasiusMe(cardNames) });
+		await game.mailing(
+			{ text: InfoMessage.dealAthanasiusMailing(ORM.Users.get(playerId), cardNames) },
+			[playerId],
+		);
+	}
+}
 
 export async function sendFirstMessage (game: Game, initial: boolean = false) {
 	const canSendTurnMessage = await game.ensureActivePlayerHasCards();

@@ -92,6 +92,17 @@ export class Hands {
 		return this.hand(me).handleAthanasiuses(utils);
 	}
 
+	public collectInitialAthanasiuses (utils: GameUtilsParsed): Record<PlayerId, CardName[]> {
+		const result: Record<PlayerId, CardName[]> = {};
+		this.hands.forEach((hand, playerId) => {
+			const athanasiuses = hand.handleAthanasiuses(utils);
+			if (athanasiuses.length > 0) {
+				result[playerId] = athanasiuses;
+			}
+		});
+		return result;
+	}
+
 	public handleGameEnd (queue: PlayerId[]): boolean {
 		for (const playerId of queue) {
 			if (this.hand(playerId).cardsInHand.length > 0) {

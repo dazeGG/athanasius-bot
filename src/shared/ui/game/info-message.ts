@@ -69,6 +69,16 @@ export class InfoMessage {
 		return text;
 	}
 
+	public static dealAthanasiusMe (cardNames: string[]): string {
+		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
+		return `🎴 Стоп.\n\nПри раздаче тебе выпал Афанасий ${cards}.\nТакое случается раз в тысячу игр.`;
+	}
+
+	public static dealAthanasiusMailing (player: UserSchema, cardNames: string[]): string {
+		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
+		return `🎴 Стоп.\n\nПри раздаче у ${player.name} выпал Афанасий ${cards}.\nЗапомните этот момент.`;
+	}
+
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
 		return this.players(turnMeta, me) + `Нет карт ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
 	}

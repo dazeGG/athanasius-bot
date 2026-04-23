@@ -42,6 +42,7 @@ export const regNameStateMessageHandler = async (ctx: MessageContext) => {
 		settings: {
 			updatesView: 'instant',
 		},
+		achievements: [],
 	});
 
 	await BOT.sendMessage({

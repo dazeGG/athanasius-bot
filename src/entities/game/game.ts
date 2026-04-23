@@ -4,7 +4,7 @@ import type { Dayjs } from 'dayjs';
 import { DB, ORM } from '~/db';
 import { dayjs } from '~/shared/plugins';
 import { InfoMessage } from '~/shared/ui/game';
-import { sendFirstMessage } from '~/entities/game/services';
+import { sendFirstMessage, notifyInitialAthanasiuses } from '~/entities/game/services';
 import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
 import { Queue } from './model/queue';
@@ -58,6 +58,11 @@ export class Game {
 			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
 			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
+
+			const initialAthanasiuses = this.hands.collectInitialAthanasiuses(this.utils);
+			Object.entries(initialAthanasiuses).forEach(([playerIdStr, cardNames]) => {
+				this.athanasiuses[Number(playerIdStr) as PlayerId].push(...cardNames);
+			});
 		}
 	}
 
@@ -65,6 +70,7 @@ export class Game {
 		const game = new Game({ room });
 		await game.save();
 		await game.mailing({ text: InfoMessage.gameStartedMailing(room) });
+		await notifyInitialAthanasiuses(game);
 		await sendFirstMessage(game, true);
 		return game;
 	}
