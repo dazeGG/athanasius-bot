@@ -1,17 +1,16 @@
-import type TelegramBot from 'node-telegram-bot-api';
+import { InlineKeyboard } from 'grammy';
 
 import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
 import { playersList } from '~/shared/ui';
-import { txt } from '~/shared/ui/game';
-import type { CallbackContext, MessageContext } from '~/core';
+import { txt, MIN_PLAYERS_TO_START } from '~/shared/ui/game';
+import { stringifyCallbackData } from '~/core/lib';
+import type { AppContext, CallbackCtx } from '~/core';
 import type { RoomSchema, RoomId } from '~/db';
 import type { PlayerId } from '~/entities/game';
 
 import * as ui from './ui';
-
-type RoomActionContext = MessageContext | CallbackContext;
 
 class RoomTexts {
 	private readonly room: RoomSchema;
@@ -56,12 +55,25 @@ export const mailing = async (text: string, room: RoomSchema, exclude: PlayerId[
 	const playersToMailing = room.players.filter(playerId => !exclude.includes(playerId));
 
 	for (const playerId of playersToMailing) {
-		await BOT.sendMessageByChatId({ chatId: playerId, text: text });
+		await BOT.api.sendMessage(playerId, text);
 	}
 };
 
-export const getRoomsListOptions = (me: TelegramBot.User) => {
-	return { text: ui.txt.roomsList, keyboard: ui.gkb.roomsList(ORM.Rooms.getWithMe(me.id)) };
+export const getRoomsListText = () => ui.txt.roomsList;
+
+export const getRoomsInlineKeyboard = (rooms: RoomSchema[]) => {
+	const keyboard = new InlineKeyboard();
+
+	rooms.forEach(r => {
+		keyboard.text(r.name, stringifyCallbackData({ module: 'rooms', action: 'open', meta: r.id }));
+		keyboard.row();
+	});
+
+	keyboard.text('Зайти по коду', stringifyCallbackData({ module: 'rooms', action: 'join' }));
+	keyboard.row();
+	keyboard.text('Создать комнату', stringifyCallbackData({ module: 'rooms', action: 'create' }));
+
+	return keyboard;
 };
 
 export const getRoomBaseText = (room: RoomSchema, gameStarted?: boolean): string => {
@@ -69,16 +81,47 @@ export const getRoomBaseText = (room: RoomSchema, gameStarted?: boolean): string
 	return roomTexts.roomBaseText();
 };
 
-export const getRoomOptions = (me: TelegramBot.User, room: RoomSchema) => {
+export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
+	const keyboard = new InlineKeyboard();
 	const gameStarted = !!ORM.Games.getActive(room.id);
-	return {
-		text: getRoomBaseText(room, gameStarted),
-		keyboard: gameStarted ? ui.gkb.roomOngoing(me.id, room) : ui.gkb.room(me.id, room),
-	};
+
+	if (gameStarted) {
+		keyboard.text('Афанасии', stringifyCallbackData({ module: 'room', action: 'getath', meta: room.id }));
+		keyboard.row();
+		keyboard.text('Чей ход', stringifyCallbackData({ module: 'room', action: 'whoseturn', meta: room.id }));
+		keyboard.row();
+
+		if (room.owner === meId) {
+			keyboard.text('Отправить сообщение хода', stringifyCallbackData({ module: 'room', action: 'sendturnmsg', meta: room.id }));
+			keyboard.row();
+		}
+	} else {
+		if (room.owner === meId) {
+			keyboard.text('Настройки', stringifyCallbackData({ module: 'room', action: 'settings', meta: room.id }));
+			keyboard.row();
+
+			if (room.players.length > 1) {
+				keyboard.text('Выгнать игроков', stringifyCallbackData({ module: 'room', action: 'kick', meta: `${room.id}:` }));
+				keyboard.row();
+			}
+
+			if (room.players.length >= MIN_PLAYERS_TO_START) {
+				keyboard.text('Начать игру', stringifyCallbackData({ module: 'room', action: 'start', meta: room.id }));
+				keyboard.row();
+			}
+		} else {
+			keyboard.text('Выйти', stringifyCallbackData({ module: 'room', action: 'leave', meta: room.id }));
+			keyboard.row();
+		}
+	}
+
+	keyboard.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: 'list' }));
+
+	return keyboard;
 };
 
-export const getRoomIdFromMeta = (ctx: CallbackContext): RoomId => {
-	const { data: { meta: roomId } } = ctx.callback;
+export const getRoomIdFromMeta = (ctx: CallbackCtx): RoomId => {
+	const roomId = ctx.callbackData!.meta;
 
 	if (!roomId) {
 		throw new Error('Room id required');
@@ -87,11 +130,11 @@ export const getRoomIdFromMeta = (ctx: CallbackContext): RoomId => {
 	return roomId;
 };
 
-export const getRoomFromMeta = (ctx: CallbackContext): RoomSchema => {
+export const getRoomFromMeta = (ctx: CallbackCtx): RoomSchema => {
 	return ORM.Rooms.getById(getRoomIdFromMeta(ctx));
 };
 
-export const getGameFromMeta = (ctx: CallbackContext): Game => {
+export const getGameFromMeta = (ctx: CallbackCtx): Game => {
 	const roomId = getRoomIdFromMeta(ctx);
 
 	const gameId = ORM.Games.getActive(roomId)?.id;
@@ -103,20 +146,18 @@ export const getGameFromMeta = (ctx: CallbackContext): Game => {
 	return new Game({ id: gameId });
 };
 
-export const getSettingsStartOptions = (ctx: MessageContext | CallbackContext, room: RoomSchema) => {
-	return {
-		ctx,
-		text: getRoomBaseText(room) + '\n\nВыбери что хочешь изменить',
-		keyboard: ui.gkb.settings(room),
-	};
+export const getSettingsStartText = (room: RoomSchema) => {
+	return getRoomBaseText(room) + '\n\nВыбери что хочешь изменить';
 };
 
-const getActorId = (ctx: RoomActionContext): number => {
-	if ('message' in ctx) {
-		return ctx.message.from.id;
-	}
-
-	return ctx.callback.from.id;
+export const getSettingsInlineKeyboard = (room: RoomSchema) => {
+	const keyboard = new InlineKeyboard();
+	keyboard.text('Код подключения', stringifyCallbackData({ module: 'room', action: 'cjc', meta: room.id }));
+	keyboard.row();
+	keyboard.text('Количество колод', stringifyCallbackData({ module: 'room', action: 'cdc', meta: room.id }));
+	keyboard.row();
+	keyboard.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${room.id}` }));
+	return keyboard;
 };
 
 export const isRoomMember = (room: RoomSchema, userId: number): boolean => {
@@ -127,20 +168,20 @@ export const isRoomOwner = (room: RoomSchema, userId: number): boolean => {
 	return room.owner === userId;
 };
 
-export const ensureRoomMember = async (ctx: RoomActionContext, room: RoomSchema): Promise<boolean> => {
-	if (isRoomMember(room, getActorId(ctx))) {
+export const ensureRoomMember = async (ctx: AppContext, room: RoomSchema): Promise<boolean> => {
+	if (isRoomMember(room, ctx.from!.id)) {
 		return true;
 	}
 
-	await BOT.sendMessage({ ctx, text: `Ты не в комнате ${room.name}` });
+	await ctx.reply(`Ты не в комнате ${room.name}`);
 	return false;
 };
 
-export const ensureRoomOwner = async (ctx: RoomActionContext, room: RoomSchema): Promise<boolean> => {
-	if (isRoomOwner(room, getActorId(ctx))) {
+export const ensureRoomOwner = async (ctx: AppContext, room: RoomSchema): Promise<boolean> => {
+	if (isRoomOwner(room, ctx.from!.id)) {
 		return true;
 	}
 
-	await BOT.sendMessage({ ctx, text: ui.txt.ownerOnly });
+	await ctx.reply(ui.txt.ownerOnly);
 	return false;
 };
