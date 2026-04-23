@@ -15,14 +15,25 @@ config({ path: '.env.test', override: true });
 await import('./bootstrap');
 
 const { run, printSummary } = await import('./runner');
-const { scenarioGameFlow }      = await import('./scenarios/game-flow');
 const { scenarioRegistration }  = await import('./scenarios/registration');
 
 // ─── Run all scenarios ────────────────────────────────────────────────────────
 console.log('\n🎮  Athanasius simulator\n');
 
 await run('Registration flow (5 players, /reg → name → /reg again)', scenarioRegistration);
-await run('Initial Athanasius at deal + failed turn + successful steal', scenarioGameFlow);
+
+const dbg = process.argv.includes('--debug');
+if (dbg) {
+	const { DB } = await import('../src/db');
+	const { getLog } = await import('./bootstrap');
+	const log = getLog();
+	console.log('\n--- DEBUG MESSAGES ---');
+	log.forEach(m => console.log(`  [${m.type}] to ${m.to}: ${m.text.slice(0, 120)}`));
+	console.log('\n--- DEBUG DB ROOMS ---');
+	DB.data.rooms.forEach(r => {
+		console.log(`  Room "${r.name}" (${r.id}): owner=${r.owner}, players=${r.players}, code=${r.settings.joinCode}`);
+	});
+}
 
 // ─── Summary ─────────────────────────────────────────────────────────────────
 printSummary();

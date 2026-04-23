@@ -56,7 +56,7 @@ export const settingsChangeNameStateMessageHandler = async (ctx: MessageContext)
 	const me = ORM.Users.get(ctx.message.from.id);
 	const newName = ctx.message.text;
 
-	const validationData = validateName(newName);
+	const validationData = validateName(newName, me.id);
 
 	if (!validationData.success) {
 		await BOT.sendMessage({ ctx, text: '<b>Ошибка!</b>\n\n' + validationData.message });
