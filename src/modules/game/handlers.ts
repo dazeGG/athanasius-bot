@@ -8,6 +8,18 @@ import * as lib from './lib';
 
 const SLOW_OPERATION_THRESHOLD_MS = 5000;
 
+const logSlowOperation = (startTime: number): void => {
+	const duration = Date.now() - startTime;
+	if (duration > SLOW_OPERATION_THRESHOLD_MS) {
+		logGameEvent({
+			type: 'SLOW_OPERATION',
+			operation: 'processTurn',
+			durationMs: duration,
+			thresholdMs: SLOW_OPERATION_THRESHOLD_MS,
+		});
+	}
+};
+
 export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
@@ -32,32 +44,14 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 		lib.validateTurnMeta({ game, me, turnMeta });
 
 		await processTurn({ ctx, game, me, turnMeta, sender: BOT.api.sendMessage.bind(BOT.api) });
-
-		const duration = Date.now() - startTime;
-		if (duration > SLOW_OPERATION_THRESHOLD_MS) {
-			logGameEvent({
-				type: 'SLOW_OPERATION',
-				operation: 'processTurn',
-				durationMs: duration,
-				thresholdMs: SLOW_OPERATION_THRESHOLD_MS,
-			});
-		}
 	} catch (error) {
-		const duration = Date.now() - startTime;
-		if (duration > SLOW_OPERATION_THRESHOLD_MS) {
-			logGameEvent({
-				type: 'SLOW_OPERATION',
-				operation: 'processTurn',
-				durationMs: duration,
-				thresholdMs: SLOW_OPERATION_THRESHOLD_MS,
-			});
-		}
-
 		if (lib.isInvalidGameFlowError(error) || (error instanceof Error && error.message === 'Game not found')) {
 			await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
 			return;
 		}
 
 		throw error;
+	} finally {
+		logSlowOperation(startTime);
 	}
 };

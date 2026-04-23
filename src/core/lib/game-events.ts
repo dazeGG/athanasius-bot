@@ -4,7 +4,6 @@ import type { PlayerId } from '~/entities/game/types';
 export type GameEvent =
 	| { type: 'GAME_CREATED'; gameId: string; roomId: string; players: PlayerId[] }
 	| { type: 'GAME_ENDED'; gameId: string; roomId: string; winnerId: PlayerId; duration: number }
-	| { type: 'TURN_START'; gameId: string; playerId: PlayerId }
 	| { type: 'TURN_SUCCESS'; gameId: string; from: PlayerId; to: PlayerId; cardName: string; cardsCount: number }
 	| { type: 'TURN_FAILED'; gameId: string; playerId: PlayerId; failedAt: string }
 	| { type: 'ATHANASIUS_COMPLETED'; gameId: string; playerId: PlayerId; rank: string }
@@ -15,6 +14,7 @@ export type GameEvent =
 	| { type: 'BOT_ERROR'; error: string; context: string; chatId?: number; userId?: number }
 	| { type: 'ACTION_ON_ENDED_GAME'; gameId: string; playerId: PlayerId }
 	| { type: 'SLOW_OPERATION'; operation: string; durationMs: number; thresholdMs: number }
+	// TODO: implement BOT_RECONNECT tracking via grammY reconnect handler
 	| { type: 'BOT_RECONNECT'; reconnectCount: number };
 
 export const logGameEvent = (event: GameEvent): void => {
@@ -32,12 +32,6 @@ export const logGameEvent = (event: GameEvent): void => {
 			roomId: event.roomId,
 			winnerId: event.winnerId,
 			durationMs: event.duration,
-		});
-		break;
-	case 'TURN_START':
-		LOGGER.debug('Turn started', {
-			gameId: event.gameId,
-			activePlayerId: event.playerId,
 		});
 		break;
 	case 'TURN_SUCCESS':

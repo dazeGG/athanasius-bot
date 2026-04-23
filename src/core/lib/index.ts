@@ -1,4 +1,3 @@
-export * from './log-error';
 export * from './game-events';
 export {
 	stringifyCallbackData,
