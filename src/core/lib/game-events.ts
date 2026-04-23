@@ -10,6 +10,7 @@ export type GameEvent =
 	| { type: 'PLAYER_JOINED_ROOM'; roomId: string; playerId: PlayerId; playerName: string }
 	| { type: 'PLAYER_LEFT_ROOM'; roomId: string; playerId: PlayerId; playerName: string }
 	| { type: 'PLAYER_KICKED'; roomId: string; playerId: PlayerId; playerName: string }
+	| { type: 'ROOM_DELETED'; roomId: string; ownerId: PlayerId; ownerName: string }
 	| { type: 'USER_REGISTERED'; playerId: PlayerId; username?: string }
 	| { type: 'BOT_ERROR'; error: string; context: string; chatId?: number; userId?: number }
 	| { type: 'ACTION_ON_ENDED_GAME'; gameId: string; playerId: PlayerId }
@@ -76,6 +77,13 @@ export const logGameEvent = (event: GameEvent): void => {
 			roomId: event.roomId,
 			playerId: event.playerId,
 			playerName: event.playerName,
+		});
+		break;
+	case 'ROOM_DELETED':
+		LOGGER.info('Room deleted', {
+			roomId: event.roomId,
+			ownerId: event.ownerId,
+			ownerName: event.ownerName,
 		});
 		break;
 	case 'USER_REGISTERED':

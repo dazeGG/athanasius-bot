@@ -110,6 +110,9 @@ export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 				keyboard.text('Начать игру', stringifyCallbackData({ module: 'room', action: 'start', meta: room.id }));
 				keyboard.row();
 			}
+
+			keyboard.text('Удалить комнату', stringifyCallbackData({ module: 'room', action: 'delete', meta: room.id }));
+			keyboard.row();
 		} else {
 			keyboard.text('Выйти', stringifyCallbackData({ module: 'room', action: 'leave', meta: room.id }));
 			keyboard.row();

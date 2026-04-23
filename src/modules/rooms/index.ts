@@ -36,6 +36,7 @@ registered.callbackQuery(/^room:leave:/, handlers.leaveRoomCallbackHandler);
 registered.callbackQuery(/^rooms:create:/, handlers.createRoomCallbackHandler);
 registered.callbackQuery(/^rooms:open:/, handlers.openRoomCallbackHandler);
 registered.callbackQuery(/^room:start:/, handlers.gameStartCallbackHandler);
+registered.callbackQuery(/^room:delete:/, handlers.deleteRoomCallbackHandler);
 registered.callbackQuery(/^room:getath:/, handlers.gameGetAthanasiusesCallbackHandler);
 registered.callbackQuery(/^room:whoseturn:/, handlers.gameWhoseTurnCallbackHandler);
 registered.callbackQuery(/^room:sendturnmsg:/, handlers.gameSendTurnMessageCallbackHandler);
