@@ -89,6 +89,7 @@ const getKeyboard = ({ keyboard, options }: MessageOptions): RawReplyKeyboard | 
 	options?: MessageOptions['options'];
 }) => capture('edit', ctx.chatId, appendKeyboardLabels(text, getKeyboard({ keyboard, options })));
 
+(BOT as any).deleteMessage = async () => {};
 (BOT as any).answerCallbackQuery = async () => {};
 
 // ─── Log API ──────────────────────────────────────────────────────────────────

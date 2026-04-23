@@ -17,6 +17,7 @@ await import('./bootstrap');
 
 const { run, printSummary, setRunnerOptions } = await import('./runner');
 const { scenarioRegistration }  = await import('./scenarios/registration');
+const { scenarioRooms }         = await import('./scenarios/rooms');
 
 // ─── Run all scenarios ────────────────────────────────────────────────────────
 const fullLogs = process.argv.includes('--full-logs');
@@ -27,6 +28,7 @@ console.log('\n🎮  Athanasius simulator\n');
 console.log('Scenarios:\n');
 
 await run('Registration', scenarioRegistration);
+await run('Rooms', scenarioRooms);
 
 const dbg = process.argv.includes('--debug');
 if (dbg) {

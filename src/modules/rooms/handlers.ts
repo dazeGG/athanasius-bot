@@ -59,7 +59,14 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackContext) => {
 		throw new Error('Room id required');
 	}
 
-	const room = await ORM.Rooms.removePlayer(me.id, roomId);
+	const room = ORM.Rooms.getById(roomId);
+
+	if (!room.players.includes(me.id)) {
+		await BOT.editMessage({ ctx, text: `Ты уже не в комнате ${room.name}` });
+		return;
+	}
+
+	await ORM.Rooms.removePlayer(me.id, roomId);
 	const meUser = ORM.Users.get(me.id);
 
 	await BOT.editMessage({ ctx, text: `Ты вышел из комнаты ${room.name}` });

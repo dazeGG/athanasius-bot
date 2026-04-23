@@ -128,8 +128,13 @@ class Rooms {
 
 	public static async removePlayer (playerId: number, roomId: RoomId): Promise<RoomSchema> {
 		const room = this.getById(roomId);
+		const playerIndex = room.players.indexOf(playerId);
 
-		room.players.splice(room.players.indexOf(playerId), 1);
+		if (playerIndex < 0) {
+			throw new Error('Игрока нет в комнате');
+		}
+
+		room.players.splice(playerIndex, 1);
 		await DB.write();
 
 		return room;
