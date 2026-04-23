@@ -14,6 +14,7 @@ export const txt = {
 	ownerOnly: 'Только владелец комнаты может управлять комнатой',
 	ownerCannotLeave: 'Владелец комнаты не может выйти из своей комнаты',
 	cannotKickOwner: 'Нельзя выгнать владельца комнаты',
+	roomDeleted: 'Комната удалена',
 } as const;
 
 /* DEFAULT KEYBOARD */

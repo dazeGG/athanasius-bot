@@ -262,6 +262,46 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 	);
 };
 
+export const deleteRoomCallbackHandler = async (ctx: CallbackCtx) => {
+	await ctx.answerCallbackQuery();
+
+	const roomId = getCallbackMeta(ctx.callbackQuery.data);
+
+	if (!roomId) {
+		throw new Error('Room id required');
+	}
+
+	const room = ORM.Rooms.getById(roomId);
+
+	if (!await utils.ensureRoomOwner(ctx, room)) {
+		return;
+	}
+
+	try {
+		await ORM.Rooms.deleteRoom(roomId);
+	} catch (error) {
+		await ctx.editMessageText(
+			utils.getRoomBaseText(room) + `\n\n${getErrorMessage(error)}`,
+			{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
+		);
+		return;
+	}
+
+	const meUser = ORM.Users.get(ctx.from.id);
+
+	logGameEvent({
+		type: 'ROOM_DELETED',
+		roomId,
+		ownerId: ctx.from.id,
+		ownerName: meUser.name,
+	});
+
+	await utils.mailing(`Комната ${escapeHtml(room.name)} была удалена`, room, [ctx.from.id]);
+
+	await ctx.editMessageText(ui.txt.roomDeleted);
+	await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(ctx.from.id)) });
+};
+
 export const backCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 

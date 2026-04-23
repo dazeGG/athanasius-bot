@@ -157,6 +157,20 @@ class Rooms {
 
 		return room;
 	}
+
+	public static async deleteRoom (roomId: RoomId): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+		const activeGame = Games.getActive(roomId);
+
+		if (activeGame) {
+			throw new Error('Нельзя удалить комнату с активной игрой');
+		}
+
+		DB.data.rooms = DB.data.rooms.filter(r => r.id !== roomId);
+		await DB.write();
+
+		return room;
+	}
 }
 
 class Games {
