@@ -12,7 +12,10 @@ export type GameEvent =
 	| { type: 'PLAYER_LEFT_ROOM'; roomId: string; playerId: PlayerId; playerName: string }
 	| { type: 'PLAYER_KICKED'; roomId: string; playerId: PlayerId; playerName: string }
 	| { type: 'USER_REGISTERED'; playerId: PlayerId; username?: string }
-	| { type: 'BOT_ERROR'; error: string; context: string; chatId?: number; userId?: number };
+	| { type: 'BOT_ERROR'; error: string; context: string; chatId?: number; userId?: number }
+	| { type: 'ACTION_ON_ENDED_GAME'; gameId: string; playerId: PlayerId }
+	| { type: 'SLOW_OPERATION'; operation: string; durationMs: number; thresholdMs: number }
+	| { type: 'BOT_RECONNECT'; reconnectCount: number };
 
 export const logGameEvent = (event: GameEvent): void => {
 	switch (event.type) {
@@ -92,6 +95,24 @@ export const logGameEvent = (event: GameEvent): void => {
 			context: event.context,
 			chatId: event.chatId,
 			userId: event.userId,
+		});
+		break;
+	case 'ACTION_ON_ENDED_GAME':
+		LOGGER.warn('Action attempted on ended game', {
+			gameId: event.gameId,
+			playerId: event.playerId,
+		});
+		break;
+	case 'SLOW_OPERATION':
+		LOGGER.warn('Slow operation detected', {
+			operation: event.operation,
+			durationMs: event.durationMs,
+			thresholdMs: event.thresholdMs,
+		});
+		break;
+	case 'BOT_RECONNECT':
+		LOGGER.warn('Bot reconnected', {
+			reconnectCount: event.reconnectCount,
 		});
 		break;
 	}

@@ -1,3 +1,4 @@
+import { logGameEvent } from '~/core/lib';
 import type { UserSchema } from '~/db';
 import type { Game, TurnMeta } from '~/entities/game';
 import { TurnStage } from '~/entities/game';
@@ -30,6 +31,11 @@ export const validateTurnMeta = ({
 	turnMeta: TurnMeta;
 }): void => {
 	if (game.isEnded) {
+		logGameEvent({
+			type: 'ACTION_ON_ENDED_GAME',
+			gameId: game.gameId,
+			playerId: me.id,
+		});
 		throwInvalidGameFlow();
 	}
 
