@@ -1,4 +1,5 @@
 import { DB } from '~/db';
+import { BOT } from '~/core';
 import { Game, processTurn } from '~/entities/game';
 import { getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx } from '~/core';
@@ -26,7 +27,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 
 		lib.validateTurnMeta({ game, me, turnMeta });
 
-		await processTurn({ ctx, game, me, turnMeta });
+		await processTurn({ ctx, game, me, turnMeta, sender: BOT.api.sendMessage.bind(BOT.api) });
 	} catch (error) {
 		if (lib.isInvalidGameFlowError(error) || (error instanceof Error && error.message === 'Game not found')) {
 			await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);

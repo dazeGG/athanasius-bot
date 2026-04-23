@@ -47,26 +47,26 @@ function getNewSuits (turnMeta: SuitsStageMeta): Suits {
 	return newSuits;
 }
 
-export async function processTurn ({ ctx, game, me, turnMeta }: GameServiceOptions) {
+export async function processTurn ({ ctx, game, me, turnMeta, sender }: GameServiceOptions) {
 	switch (turnMeta.stage) {
 	case TurnStage.player:
-		await notifyNextStage({ ctx, game, me, turnMeta });
+		await notifyNextStage({ ctx, game, me, turnMeta, sender });
 		break;
 
 	case TurnStage.card: {
 		const { success } = await game.turn({ me: me.id, turnMeta, options: { cardName: turnMeta.cardName } });
 		if (!success) {
-			await notifyWrongCardMessage({ ctx, game, me, turnMeta });
+			await notifyWrongCardMessage({ ctx, game, me, turnMeta, sender });
 			return;
 		}
-		await notifyNextStage({ ctx, game, me, turnMeta });
+		await notifyNextStage({ ctx, game, me, turnMeta, sender });
 		break;
 	}
 
 	case TurnStage.count: {
 		if (turnMeta.countAction !== 'select') {
 			const newCount = adjustCount(turnMeta.count, turnMeta.countAction);
-			await updateCountMessage({ ctx, game, turnMeta, newCount });
+			await updateCountMessage({ ctx, game, turnMeta, newCount, sender });
 			return;
 		}
 		const { success } = await game.turn({
@@ -75,17 +75,17 @@ export async function processTurn ({ ctx, game, me, turnMeta }: GameServiceOptio
 			options: { cardName: turnMeta.cardName, count: turnMeta.count },
 		});
 		if (!success) {
-			await notifyWrongCountMessage({ ctx, game, me, turnMeta });
+			await notifyWrongCountMessage({ ctx, game, me, turnMeta, sender });
 			return;
 		}
-		await notifyNextStage({ ctx, game, me, turnMeta });
+		await notifyNextStage({ ctx, game, me, turnMeta, sender });
 		break;
 	}
 
 	case TurnStage.colors: {
 		if (turnMeta.redCountAction !== 'select') {
 			const newRedCount = adjustCount(turnMeta.redCount, turnMeta.redCountAction);
-			await updateColorsMessage({ ctx, game, turnMeta, newRedCount });
+			await updateColorsMessage({ ctx, game, turnMeta, newRedCount, sender });
 			return;
 		}
 		const { success } = await game.turn({
@@ -94,17 +94,17 @@ export async function processTurn ({ ctx, game, me, turnMeta }: GameServiceOptio
 			options: { cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
 		});
 		if (!success) {
-			await notifyWrongColorsMessage({ ctx, game, me, turnMeta });
+			await notifyWrongColorsMessage({ ctx, game, me, turnMeta, sender });
 			return;
 		}
-		await notifyNextStage({ ctx, game, me, turnMeta });
+		await notifyNextStage({ ctx, game, me, turnMeta, sender });
 		break;
 	}
 
 	case TurnStage.suits: {
 		if (turnMeta.suits?.action !== 'select') {
 			const newSuits = getNewSuits(turnMeta);
-			await updateSuitsMessage({ ctx, game, turnMeta, newSuits });
+			await updateSuitsMessage({ ctx, game, turnMeta, newSuits, sender });
 			return;
 		}
 		const { success, composeAthanasius, gameEnded } = await game.turn({
@@ -113,18 +113,18 @@ export async function processTurn ({ ctx, game, me, turnMeta }: GameServiceOptio
 			options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
 		});
 		if (!success) {
-			await notifyWrongSuitsMessage({ ctx, game, me, turnMeta });
+			await notifyWrongSuitsMessage({ ctx, game, me, turnMeta, sender });
 			return;
 		}
-		await notifyStealMessage({ ctx, game, me, turnMeta });
+		await notifyStealMessage({ ctx, game, me, turnMeta, sender });
 		if (composeAthanasius) {
-			await notifyComposeAthanasiusMessage({ ctx, game, me, turnMeta });
+			await notifyComposeAthanasiusMessage({ ctx, game, me, turnMeta, sender });
 		}
 		if (gameEnded) {
-			await notifyEndGameMessage(game);
+			await notifyEndGameMessage(game, sender);
 			return;
 		}
-		await sendFirstMessage(game);
+		await sendFirstMessage(game, sender);
 		break;
 	}
 	}

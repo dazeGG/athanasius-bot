@@ -9,6 +9,7 @@ import type { CallbackCtx } from '../../../src/core';
 
 import {
 	clearDB,
+	BOT,
 	DB,
 	Game,
 	getLog,
@@ -339,14 +340,14 @@ export const getPersistedGame = (gameId = 'game-flow'): GameSchema => {
  * Replays initial Athanasius notifications for an already seeded game fixture.
  */
 export const notifySeededInitialAthanasiuses = async (gameId = 'game-flow'): Promise<void> => {
-	await notifyInitialAthanasiuses(getGame(gameId));
+	await notifyInitialAthanasiuses(getGame(gameId), BOT.api.sendMessage.bind(BOT.api));
 };
 
 /**
  * Sends the next-turn message for a seeded game fixture.
  */
 export const sendSeededFirstMessage = async (gameId = 'game-flow', initial = false): Promise<void> => {
-	await sendFirstMessage(getGame(gameId), initial);
+	await sendFirstMessage(getGame(gameId), BOT.api.sendMessage.bind(BOT.api), initial);
 };
 
 /**

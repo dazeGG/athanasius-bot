@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import type { Dayjs } from 'dayjs';
 
 import { DB, ORM } from '~/db';
+import { BOT } from '~/core';
 import { dayjs } from '~/shared/plugins';
 import { InfoMessage } from '~/shared/ui/game';
 import { sendFirstMessage, notifyInitialAthanasiuses } from '~/entities/game/services';
@@ -13,7 +14,7 @@ import { parseGameUtils, generateGameUtils } from './services';
 import { getLastRoundLogs, mailing as gameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
-import type { MailingOptions, PlayerId, TurnOptions, TurnReturn } from './types';
+import type { MailingOptions, PlayerId, Sender, TurnOptions, TurnReturn } from './types';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -68,10 +69,11 @@ export class Game {
 
 	public static async create (room: RoomSchema): Promise<Game> {
 		const game = new Game({ room });
+		const sender: Sender = BOT.api.sendMessage.bind(BOT.api);
 		await game.save();
-		await game.mailing({ text: InfoMessage.gameStartedMailing(room) });
-		await notifyInitialAthanasiuses(game);
-		await sendFirstMessage(game, true);
+		await game.mailing({ text: InfoMessage.gameStartedMailing(room) }, [], sender);
+		await notifyInitialAthanasiuses(game, sender);
+		await sendFirstMessage(game, sender, true);
 		return game;
 	}
 
@@ -166,12 +168,12 @@ export class Game {
 	}
 
 	/* MAILING */
-	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		await gameMailing(options, this.allPlayers, exclude);
+	public async mailing (options: MailingOptions, exclude: PlayerId[] = [], sender: Sender = BOT.api.sendMessage.bind(BOT.api)): Promise<void> {
+		await gameMailing(options, this.allPlayers, exclude, sender);
 	}
 
-	public async realtimeMailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
-		await this.mailing(options, [...exclude, ...this.playersWithComposedUpdates]);
+	public async realtimeMailing (options: MailingOptions, exclude: PlayerId[] = [], sender: Sender = BOT.api.sendMessage.bind(BOT.api)): Promise<void> {
+		await this.mailing(options, [...exclude, ...this.playersWithComposedUpdates], sender);
 	}
 
 	/* TURNS */

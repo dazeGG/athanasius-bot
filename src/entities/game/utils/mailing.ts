@@ -1,10 +1,9 @@
-import { BOT } from '~/core';
-import type { MailingOptions, PlayerId } from '~/entities/game';
+import type { MailingOptions, PlayerId, Sender } from '~/entities/game';
 
-export async function mailing (options: MailingOptions, allPlayers: PlayerId[], exclude: PlayerId[] = []): Promise<void> {
+export async function mailing (options: MailingOptions, allPlayers: PlayerId[], exclude: PlayerId[] = [], sender: Sender): Promise<void> {
 	const playersToMailing = allPlayers.filter(p => !exclude.includes(p));
 
 	await Promise.allSettled(
-		playersToMailing.map(playerId => BOT.api.sendMessage(playerId, options.text)),
+		playersToMailing.map(playerId => sender(playerId, options.text)),
 	);
 }

@@ -6,7 +6,6 @@ import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import { getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx, MessageCtx } from '~/core';
-
 import * as ui from './ui';
 import * as utils from './utils';
 
@@ -233,7 +232,7 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 
 	const game = utils.getGameFromMeta(ctx);
 
-	await sendFirstMessage(game);
+	await sendFirstMessage(game, BOT.api.sendMessage.bind(BOT.api));
 	await ctx.editMessageText(
 		utils.getRoomBaseText(room, true) + `\n\n🟩 ${gameTxt.gameMessageResendSuccess}`,
 		{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
