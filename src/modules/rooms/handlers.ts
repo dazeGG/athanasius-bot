@@ -1,4 +1,4 @@
-import { BOT } from '~/core';
+import { BOT, logGameEvent } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
 import { sendFirstMessage } from '~/entities/game/services';
@@ -40,6 +40,13 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
 		const room = await ORM.Rooms.joinRoom(me.id, joinCode);
 		const meUser = ORM.Users.get(me.id);
 
+		logGameEvent({
+			type: 'PLAYER_JOINED_ROOM',
+			roomId: room.id,
+			playerId: me.id,
+			playerName: meUser.name,
+		});
+
 		await ctx.reply(`Ты зашел в комнату ${escapeHtml(room.name)}`);
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 
@@ -73,8 +80,15 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackCtx) => {
 		return;
 	}
 
-	await ORM.Rooms.removePlayer(ctx.from.id, roomId);
 	const meUser = ORM.Users.get(ctx.from.id);
+	await ORM.Rooms.removePlayer(ctx.from.id, roomId);
+
+	logGameEvent({
+		type: 'PLAYER_LEFT_ROOM',
+		roomId,
+		playerId: ctx.from.id,
+		playerName: meUser.name,
+	});
 
 	await ctx.editMessageText(`Ты вышел из комнаты ${escapeHtml(room.name)}`);
 	await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(ctx.from.id)) });
@@ -149,9 +163,18 @@ export const kickCallbackHandler = async (ctx: CallbackCtx) => {
 			return;
 		}
 
+		const kickedUser = ORM.Users.get(targetPlayerId);
 		await ORM.Rooms.removePlayer(targetPlayerId, roomId);
+
+		logGameEvent({
+			type: 'PLAYER_KICKED',
+			roomId,
+			playerId: targetPlayerId,
+			playerName: kickedUser.name,
+		});
+
 		await BOT.api.sendMessage(targetPlayerId, `Комната ${escapeHtml(room.name)} | Тебя выгнали :(`);
-		await utils.mailing(`Комната ${escapeHtml(room.name)} | ${escapeHtml(ORM.Users.get(targetPlayerId).name)} был выгнан`, room);
+		await utils.mailing(`Комната ${escapeHtml(room.name)} | ${escapeHtml(kickedUser.name)} был выгнан`, room);
 	}
 
 	await ctx.editMessageText(ui.txt.kickPlayer, { reply_markup: ui.gkb.kickList(ctx.from.id, room) });

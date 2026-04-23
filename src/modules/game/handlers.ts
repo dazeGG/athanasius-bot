@@ -1,10 +1,24 @@
 import { DB } from '~/db';
-import { BOT } from '~/core';
+import { BOT, logGameEvent } from '~/core';
 import { Game, processTurn } from '~/entities/game';
 import { getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx } from '~/core';
 
 import * as lib from './lib';
+
+const SLOW_OPERATION_THRESHOLD_MS = 5000;
+
+const logSlowOperation = (startTime: number): void => {
+	const duration = Date.now() - startTime;
+	if (duration > SLOW_OPERATION_THRESHOLD_MS) {
+		logGameEvent({
+			type: 'SLOW_OPERATION',
+			operation: 'processTurn',
+			durationMs: duration,
+			thresholdMs: SLOW_OPERATION_THRESHOLD_MS,
+		});
+	}
+};
 
 export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
@@ -15,6 +29,8 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 		await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
 		return;
 	}
+
+	const startTime = Date.now();
 
 	try {
 		const turnMeta = lib.parseTurnMeta(callbackMeta);
@@ -35,5 +51,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 		}
 
 		throw error;
+	} finally {
+		logSlowOperation(startTime);
 	}
 };

@@ -1,4 +1,5 @@
 import { DB, ORM } from '~/db';
+import { logGameEvent } from '~/core';
 import type { AppContext, MessageCtx } from '~/core';
 
 import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
@@ -44,6 +45,12 @@ export const regNameStateMessageHandler = async (ctx: MessageCtx) => {
 				updatesView: 'instant',
 			},
 			achievements: [],
+		});
+
+		logGameEvent({
+			type: 'USER_REGISTERED',
+			playerId: userId,
+			username: ctx.from!.username,
 		});
 	}
 

@@ -3,7 +3,7 @@ import 'dotenv/config';
 import { Bot, session } from 'grammy';
 import type { Transformer } from 'grammy';
 
-import { logError } from '~/core/lib';
+import { logGameEvent } from '~/core/lib';
 import { createInitialSessionData } from './types';
 import type { AppContext } from './types';
 
@@ -36,9 +36,11 @@ BOT.use(session({
 }));
 
 BOT.catch((err) => {
-	logError({
-		error: err.error,
-		errorText: 'Unhandled bot error',
-		chatId: err.ctx.chat?.id ?? 0,
+	logGameEvent({
+		type: 'BOT_ERROR',
+		error: err.error instanceof Error ? err.error.message : String(err.error),
+		context: 'Unhandled bot error',
+		chatId: err.ctx.chat?.id,
+		userId: err.ctx.from?.id,
 	});
 });
