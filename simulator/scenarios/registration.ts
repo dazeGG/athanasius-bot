@@ -1,20 +1,10 @@
 /**
- * registration.ts — /reg flow coverage.
- *
- * Covers:
- *   - initial /reg prompt and state
- *   - successful registration and default user fields
- *   - global keyboard after success and repeated /reg
- *   - repeated /reg does not change state or DB
- *   - invalid names keep player in REGISTRATION and do not create DB records
- *   - recovery after invalid input without sending /reg again
- *   - valid boundary names (2 and 16 chars)
- *   - valid names with '-' and '_'
- *   - case-insensitive uniqueness for names
+ * registration.ts — /reg flow coverage split into explicit cases.
  */
 
 import { DB, STATES, resetLog, getLog, clearDB } from '../bootstrap';
 import { assert, assertSent } from '../runner';
+import type { ScenarioTools } from '../runner';
 
 const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Рука';
 
@@ -32,6 +22,22 @@ const MAX_NAME_PLAYER = { id: 1008, username: 'heidi_sim', name: 'АБВГДЕЖ
 const DASH_NAME_PLAYER = { id: 1009, username: 'ivan_sim', name: 'Анна-Юг' } as const;
 const UNDERSCORE_NAME_PLAYER = { id: 1010, username: 'judy_sim', name: 'Анна_Юг' } as const;
 
+const ALL_TEST_PLAYERS = [
+	...PLAYERS,
+	RECOVERY_PLAYER,
+	MIN_NAME_PLAYER,
+	MAX_NAME_PLAYER,
+	DASH_NAME_PLAYER,
+	UNDERSCORE_NAME_PLAYER,
+] as const;
+
+type PlayerFixture = (typeof ALL_TEST_PLAYERS)[number];
+type MessageCtx = ReturnType<typeof makeMessageCtx>;
+type RegistrationHandlers = {
+	regStartMessageHandler: (ctx: MessageCtx) => Promise<void>;
+	regNameStateMessageHandler: (ctx: MessageCtx) => Promise<void>;
+};
+
 const makeMessageCtx = (playerId: number, text: string, username?: string) => ({
 	chatId: playerId,
 	message: {
@@ -43,10 +49,15 @@ const makeMessageCtx = (playerId: number, text: string, username?: string) => ({
 	},
 });
 
-const assertRegisteredUser = (
-	player: { id: number; username: string; name: string },
-	expectedName = player.name,
-): void => {
+const resetRegistrationCase = async (): Promise<void> => {
+	resetLog();
+	await clearDB();
+	ALL_TEST_PLAYERS.forEach(player => {
+		STATES.clearState(player.id);
+	});
+};
+
+const assertRegisteredUser = (player: PlayerFixture, expectedName = player.name): void => {
 	const dbUser = DB.data.users.find(u => u.id === player.id);
 	assert(dbUser !== undefined, `${player.name}: should exist in DB`);
 	assert(dbUser!.name === expectedName, `${player.name}: name should match`);
@@ -55,10 +66,25 @@ const assertRegisteredUser = (
 	assert(Array.isArray(dbUser!.achievements), `${player.name}: achievements array should exist`);
 };
 
-const assertSuccessWithKeyboard = (
-	player: { id: number; username: string; name: string },
+const startRegistration = async (
+	player: PlayerFixture,
+	{ regStartMessageHandler }: RegistrationHandlers,
+): Promise<void> => {
+	await regStartMessageHandler(makeMessageCtx(player.id, '/reg', player.username));
+
+	const log = getLog();
+	assertSent(log, player.id, 'Напиши мне своё имя');
+	assert(STATES.getState(player.id) === 'REGISTRATION', `${player.name}: state should be REGISTRATION`);
+	resetLog();
+};
+
+const completeRegistration = async (
+	player: PlayerFixture,
+	{ regNameStateMessageHandler }: RegistrationHandlers,
 	expectedName = player.name,
-): void => {
+): Promise<void> => {
+	await regNameStateMessageHandler(makeMessageCtx(player.id, expectedName, player.username));
+
 	const log = getLog();
 	assertSent(log, player.id, 'Поздравляю');
 	assertSent(log, player.id, 'успешно зарегистрирован');
@@ -69,93 +95,122 @@ const assertSuccessWithKeyboard = (
 };
 
 const registerFreshPlayer = async (
-	player: { id: number; username: string; name: string },
-	regStartMessageHandler: (ctx: ReturnType<typeof makeMessageCtx>) => Promise<void>,
-	regNameStateMessageHandler: (ctx: ReturnType<typeof makeMessageCtx>) => Promise<void>,
+	player: PlayerFixture,
+	handlers: RegistrationHandlers,
 ): Promise<void> => {
-	await regStartMessageHandler(makeMessageCtx(player.id, '/reg', player.username));
+	await startRegistration(player, handlers);
+	await completeRegistration(player, handlers);
+};
 
-	let log = getLog();
-	assertSent(log, player.id, 'Напиши мне своё имя');
-	assert(STATES.getState(player.id) === 'REGISTRATION', `${player.name}: state should be REGISTRATION`);
-	resetLog();
+const seedRegisteredPlayers = async (
+	players: readonly PlayerFixture[],
+	handlers: RegistrationHandlers,
+): Promise<void> => {
+	for (const player of players) {
+		await registerFreshPlayer(player, handlers);
+	}
+};
 
-	await regNameStateMessageHandler(makeMessageCtx(player.id, player.name, player.username));
+const assertInvalidPendingName = async (
+	player: PlayerFixture,
+	name: string,
+	expectedMessage: string,
+	{ regNameStateMessageHandler }: RegistrationHandlers,
+	expectedUsersCount: number,
+): Promise<void> => {
+	await regNameStateMessageHandler(makeMessageCtx(player.id, name, player.username));
 
-	log = getLog();
-	assertSent(log, player.id, 'Поздравляю');
-	assertSent(log, player.id, 'успешно зарегистрирован');
-	assertSent(log, player.id, GLOBAL_KEYBOARD_LABELS);
-	assert(STATES.getState(player.id) === undefined, `${player.name}: state should be cleared after registration`);
-	assertRegisteredUser(player);
+	const log = getLog();
+	assertSent(log, player.id, expectedMessage);
+	assert(STATES.getState(player.id) === 'REGISTRATION', `${player.name}: state should stay REGISTRATION after "${name}"`);
+	assert(DB.data.users.length === expectedUsersCount, `${player.name}: DB count should stay ${expectedUsersCount} after "${name}"`);
+	assert(DB.data.users.find(u => u.id === player.id) === undefined, `${player.name}: user should not be created after "${name}"`);
 	resetLog();
 };
 
-export async function scenarioRegistration (): Promise<void> {
-	resetLog();
-	await clearDB();
+export async function scenarioRegistration ({ runCase }: ScenarioTools): Promise<void> {
+	const handlers = await import('~/modules/reg/handlers');
 
-	const { regStartMessageHandler, regNameStateMessageHandler } = await import('~/modules/reg/handlers');
+	await runCase('Prompts new users for a name and stores REGISTRATION state', async () => {
+		await resetRegistrationCase();
 
-	for (const player of PLAYERS) {
-		await regStartMessageHandler(makeMessageCtx(player.id, '/reg', player.username));
+		for (const player of PLAYERS) {
+			await startRegistration(player, handlers);
+		}
+	});
 
-		const log = getLog();
-		assertSent(log, player.id, 'Напиши мне своё имя');
-		assert(STATES.getState(player.id) === 'REGISTRATION', `${player.name}: state should be REGISTRATION`);
-		resetLog();
-	}
+	await runCase('Registers users with default profile data and global keyboard', async () => {
+		await resetRegistrationCase();
 
-	for (const player of PLAYERS) {
-		await regNameStateMessageHandler(makeMessageCtx(player.id, player.name, player.username));
-		assertSuccessWithKeyboard(player);
-	}
+		await seedRegisteredPlayers(PLAYERS, handlers);
+		assert(DB.data.users.length === PLAYERS.length, `DB should have ${PLAYERS.length} registered users`);
+	});
 
-	for (const player of PLAYERS) {
-		const usersBefore = DB.data.users.length;
-		await regStartMessageHandler(makeMessageCtx(player.id, '/reg', player.username));
+	await runCase('Repeated /reg keeps registered users untouched', async () => {
+		await resetRegistrationCase();
+		await seedRegisteredPlayers(PLAYERS, handlers);
 
-		const log = getLog();
-		assertSent(log, player.id, 'Ты уже зарегистрирован');
-		assertSent(log, player.id, GLOBAL_KEYBOARD_LABELS);
-		assert(STATES.getState(player.id) === undefined, `${player.name}: state should stay cleared after repeated /reg`);
-		assert(DB.data.users.length === usersBefore, `${player.name}: repeated /reg should not change DB count`);
-		assertRegisteredUser(player);
-		resetLog();
-	}
+		for (const player of PLAYERS) {
+			const usersBefore = DB.data.users.length;
+			await handlers.regStartMessageHandler(makeMessageCtx(player.id, '/reg', player.username));
 
-	await regStartMessageHandler(makeMessageCtx(RECOVERY_PLAYER.id, '/reg', RECOVERY_PLAYER.username));
-	let log = getLog();
-	assertSent(log, RECOVERY_PLAYER.id, 'Напиши мне своё имя');
-	assert(STATES.getState(RECOVERY_PLAYER.id) === 'REGISTRATION', 'Recovery player: state should be REGISTRATION');
-	resetLog();
+			const log = getLog();
+			assertSent(log, player.id, 'Ты уже зарегистрирован');
+			assertSent(log, player.id, GLOBAL_KEYBOARD_LABELS);
+			assert(STATES.getState(player.id) === undefined, `${player.name}: state should stay cleared after repeated /reg`);
+			assert(DB.data.users.length === usersBefore, `${player.name}: repeated /reg should not change DB count`);
+			assertRegisteredUser(player);
+			resetLog();
+		}
+	});
 
-	const assertInvalidPendingName = async (name: string, expectedMessage: string): Promise<void> => {
-		const usersBefore = DB.data.users.length;
-		await regNameStateMessageHandler(makeMessageCtx(RECOVERY_PLAYER.id, name, RECOVERY_PLAYER.username));
+	await runCase('Rejects invalid names while keeping the registration pending', async () => {
+		await resetRegistrationCase();
+		await seedRegisteredPlayers([PLAYERS[1]], handlers);
+		await startRegistration(RECOVERY_PLAYER, handlers);
 
-		const currentLog = getLog();
-		assertSent(currentLog, RECOVERY_PLAYER.id, expectedMessage);
-		assert(STATES.getState(RECOVERY_PLAYER.id) === 'REGISTRATION', `Recovery player: state should stay REGISTRATION after "${name}"`);
-		assert(DB.data.users.length === usersBefore, `Recovery player: DB count should not change after "${name}"`);
-		assert(DB.data.users.find(u => u.id === RECOVERY_PLAYER.id) === undefined, `Recovery player: user should not be created after "${name}"`);
-		resetLog();
-	};
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'АБВГДЕЖЗИЙКЛМНОПР', 'Имя не должно быть длиннее 16 символов', handlers, 1);
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'ab', 'Имя может содержать только русские буквы', handlers, 1);
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'б', 'Имя не должно быть короче 2 символов', handlers, 1);
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'Имя', 'Это имя нельзя взять', handlers, 1);
+		await assertInvalidPendingName(RECOVERY_PLAYER, PLAYERS[1].name, 'Это имя уже используется', handlers, 1);
+	});
 
-	await assertInvalidPendingName('АБВГДЕЖЗИЙКЛМНОПР', 'Имя не должно быть длиннее 16 символов');
-	await assertInvalidPendingName('ab', 'Имя может содержать только русские буквы');
-	await assertInvalidPendingName('б', 'Имя не должно быть короче 2 символов');
-	await assertInvalidPendingName('Имя', 'Это имя нельзя взять');
-	await assertInvalidPendingName(PLAYERS[1].name, 'Это имя уже используется');
-	await assertInvalidPendingName('бОрИс', 'Это имя уже используется');
+	await runCase('Rejects names that differ only by case', async () => {
+		await resetRegistrationCase();
+		await seedRegisteredPlayers([PLAYERS[1]], handlers);
+		await startRegistration(RECOVERY_PLAYER, handlers);
 
-	await regNameStateMessageHandler(makeMessageCtx(RECOVERY_PLAYER.id, RECOVERY_PLAYER.name, RECOVERY_PLAYER.username));
-	assertSuccessWithKeyboard(RECOVERY_PLAYER);
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'бОрИс', 'Это имя уже используется', handlers, 1);
+	});
 
-	await registerFreshPlayer(MIN_NAME_PLAYER, regStartMessageHandler, regNameStateMessageHandler);
-	await registerFreshPlayer(MAX_NAME_PLAYER, regStartMessageHandler, regNameStateMessageHandler);
-	await registerFreshPlayer(DASH_NAME_PLAYER, regStartMessageHandler, regNameStateMessageHandler);
-	await registerFreshPlayer(UNDERSCORE_NAME_PLAYER, regStartMessageHandler, regNameStateMessageHandler);
+	await runCase('Allows finishing registration after previous invalid attempts', async () => {
+		await resetRegistrationCase();
+		await seedRegisteredPlayers([PLAYERS[1]], handlers);
+		await startRegistration(RECOVERY_PLAYER, handlers);
 
-	assert(DB.data.users.length === 10, 'DB should have 10 registered users after all registration checks');
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'ab', 'Имя может содержать только русские буквы', handlers, 1);
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'бОрИс', 'Это имя уже используется', handlers, 1);
+
+		await completeRegistration(RECOVERY_PLAYER, handlers);
+		assert(DB.data.users.length === 2, 'DB should contain Bob and the recovered player after successful registration');
+	});
+
+	await runCase('Accepts names with 2 and 16 characters', async () => {
+		await resetRegistrationCase();
+
+		await registerFreshPlayer(MIN_NAME_PLAYER, handlers);
+		await registerFreshPlayer(MAX_NAME_PLAYER, handlers);
+
+		assert(DB.data.users.length === 2, 'DB should contain players with valid boundary-length names');
+	});
+
+	await runCase('Accepts names with dash and underscore', async () => {
+		await resetRegistrationCase();
+
+		await registerFreshPlayer(DASH_NAME_PLAYER, handlers);
+		await registerFreshPlayer(UNDERSCORE_NAME_PLAYER, handlers);
+
+		assert(DB.data.users.length === 2, 'DB should contain players with separator-based names');
+	});
 }

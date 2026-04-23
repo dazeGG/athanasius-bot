@@ -19,8 +19,9 @@ const { scenarioRegistration }  = await import('./scenarios/registration');
 
 // ─── Run all scenarios ────────────────────────────────────────────────────────
 console.log('\n🎮  Athanasius simulator\n');
+console.log('Scenarios:\n');
 
-await run('Registration flow (5 players, /reg → name → /reg again)', scenarioRegistration);
+await run('Registration', scenarioRegistration);
 
 const dbg = process.argv.includes('--debug');
 if (dbg) {
