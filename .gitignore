@@ -5,7 +5,6 @@ generated
 
 .env
 .env.test
-.claude/settings.local.json
 db.json
 db.*.json
 .DS_Store
