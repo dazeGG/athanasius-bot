@@ -61,8 +61,9 @@ export class InfoMessage {
 		text += `🥇 ${this.formatPlayerResult(first[0], first[1])}\n`;
 		text += `🥈 ${this.formatPlayerResult(second[0], second[1])}\n`;
 
-		middle.forEach(player => {
-			text += `🥉 ${this.formatPlayerResult(player[0], player[1])}\n`;
+		middle.forEach((player, i) => {
+			const marker = i === 0 ? '🥉' : `${i + 3}.`;
+			text += `${marker} ${this.formatPlayerResult(player[0], player[1])}\n`;
 		});
 
 		text += `\n🦧 ${this.formatPlayerResult(last[0], last[1])}`;
