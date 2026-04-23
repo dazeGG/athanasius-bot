@@ -1,9 +1,8 @@
-import type TelegramBot from 'node-telegram-bot-api';
 import type { nanoid } from 'nanoid';
 
 import type { CardName } from '~/entities/deck';
 
-export type UserId = TelegramBot.User['id'];
+export type UserId = number;
 export type RoomId = ReturnType<typeof nanoid>;
 export type GameId = ReturnType<typeof nanoid>;
 

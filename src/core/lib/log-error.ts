@@ -1,11 +1,9 @@
-import type TelegramBot from 'node-telegram-bot-api';
-
 import { LOGGER } from '~/core';
 
 type LogErrorOptions = {
 	error: unknown;
 	errorText: string;
-	chatId: TelegramBot.ChatId;
+	chatId: number | string;
 	userId?: number;
 };
 

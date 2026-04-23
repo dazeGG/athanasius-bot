@@ -1,10 +1,8 @@
-import type TelegramBot from 'node-telegram-bot-api';
-
 import type { UserId, GameId, RoomId, UserSettings, RoomSettings, GameUtils } from './types';
 
 export interface UserSchema {
 	id: UserId;
-	username: TelegramBot.User['username'];
+	username: string | undefined;
 	name: string;
 	settings: UserSettings;
 	achievements?: string[];
