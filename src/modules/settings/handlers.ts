@@ -43,7 +43,7 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 
 	const me = ORM.Users.get(ctx.from.id);
 
-	switch (ctx.callbackData!.action) {
+	switch (ctx.callbackQuery.data.split(':')[1]) {
 	case 'name':
 		await ctx.editMessageText(lib.txt.changeName);
 		ctx.session.flow = { name: 'SETTINGS_CHANGE_NAME' };

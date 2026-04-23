@@ -12,19 +12,8 @@ composer.on('message:text').filter(
 	handlers.handMessageHandler,
 );
 
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.action === 'show' && isRegistered(ctx),
-	handlers.handShowCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.action === 'close' && isRegistered(ctx),
-	handlers.handCloseCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'hand' && ctx.callbackData?.back === true && isRegistered(ctx),
-	handlers.handBackCallbackHandler,
-);
+composer.callbackQuery(/^hand:show:/, ctx => isRegistered(ctx) && handlers.handShowCallbackHandler(ctx));
+composer.callbackQuery(/^hand:close:/, ctx => isRegistered(ctx) && handlers.handCloseCallbackHandler(ctx));
+composer.callbackQuery(/^hand:back:/, ctx => isRegistered(ctx) && handlers.handBackCallbackHandler(ctx));
 
 export default composer;

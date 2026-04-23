@@ -4,6 +4,7 @@ import { Game } from '~/entities/game';
 import { sendFirstMessage } from '~/entities/game/services';
 import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
+import { getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
 import * as ui from './ui';
@@ -55,7 +56,7 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
 export const leaveRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const roomId = ctx.callbackData!.meta;
+	const roomId = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (!roomId) {
 		throw new Error('Room id required');
@@ -122,7 +123,7 @@ export const openRoomCallbackHandler = async (ctx: CallbackCtx) => {
 export const kickCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const meta = ctx.callbackData!.meta;
+	const meta = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (!meta) {
 		throw new Error('Meta is required');
@@ -242,7 +243,7 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 export const backCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const meta = ctx.callbackData!.meta;
+	const meta = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (meta === 'list') {
 		await ctx.editMessageText(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(ctx.from.id)) });

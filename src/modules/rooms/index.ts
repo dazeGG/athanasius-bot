@@ -32,69 +32,18 @@ composer.on('message:text').filter(
 
 // ── Callback handlers ─────────────────────────────────────────────────────────
 
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.action === 'join' && isRegistered(ctx),
-	handlers.joinRoomCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'kick' && isRegistered(ctx),
-	handlers.kickCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'leave' && isRegistered(ctx),
-	handlers.leaveRoomCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.action === 'create' && isRegistered(ctx),
-	handlers.createRoomCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.action === 'open' && isRegistered(ctx),
-	handlers.openRoomCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'start' && isRegistered(ctx),
-	handlers.gameStartCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'getath' && isRegistered(ctx),
-	handlers.gameGetAthanasiusesCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'whoseturn' && isRegistered(ctx),
-	handlers.gameWhoseTurnCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'sendturnmsg' && isRegistered(ctx),
-	handlers.gameSendTurnMessageCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'rooms' && ctx.callbackData?.back === true && isRegistered(ctx),
-	handlers.backCallbackHandler,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'settings' && isRegistered(ctx),
-	SettingsHandlers.start,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'cjc' && isRegistered(ctx),
-	SettingsHandlers.changeJoinCode,
-);
-
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'room' && ctx.callbackData?.action === 'cdc' && isRegistered(ctx),
-	SettingsHandlers.changeDecksCount,
-);
+composer.callbackQuery(/^rooms:join:/, ctx => isRegistered(ctx) && handlers.joinRoomCallbackHandler(ctx));
+composer.callbackQuery(/^room:kick:/, ctx => isRegistered(ctx) && handlers.kickCallbackHandler(ctx));
+composer.callbackQuery(/^room:leave:/, ctx => isRegistered(ctx) && handlers.leaveRoomCallbackHandler(ctx));
+composer.callbackQuery(/^rooms:create:/, ctx => isRegistered(ctx) && handlers.createRoomCallbackHandler(ctx));
+composer.callbackQuery(/^rooms:open:/, ctx => isRegistered(ctx) && handlers.openRoomCallbackHandler(ctx));
+composer.callbackQuery(/^room:start:/, ctx => isRegistered(ctx) && handlers.gameStartCallbackHandler(ctx));
+composer.callbackQuery(/^room:getath:/, ctx => isRegistered(ctx) && handlers.gameGetAthanasiusesCallbackHandler(ctx));
+composer.callbackQuery(/^room:whoseturn:/, ctx => isRegistered(ctx) && handlers.gameWhoseTurnCallbackHandler(ctx));
+composer.callbackQuery(/^room:sendturnmsg:/, ctx => isRegistered(ctx) && handlers.gameSendTurnMessageCallbackHandler(ctx));
+composer.callbackQuery(/^rooms:back:/, ctx => isRegistered(ctx) && handlers.backCallbackHandler(ctx));
+composer.callbackQuery(/^room:settings:/, ctx => isRegistered(ctx) && SettingsHandlers.start(ctx));
+composer.callbackQuery(/^room:cjc:/, ctx => isRegistered(ctx) && SettingsHandlers.changeJoinCode(ctx));
+composer.callbackQuery(/^room:cdc:/, ctx => isRegistered(ctx) && SettingsHandlers.changeDecksCount(ctx));
 
 export default composer;

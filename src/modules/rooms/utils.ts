@@ -6,7 +6,7 @@ import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
 import { txt, MIN_PLAYERS_TO_START } from '~/shared/ui/game';
-import { stringifyCallbackData } from '~/core/lib';
+import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
 import type { AppContext, CallbackCtx } from '~/core';
 import type { RoomSchema, RoomId } from '~/db';
 import type { PlayerId } from '~/entities/game';
@@ -122,7 +122,7 @@ export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 };
 
 export const getRoomIdFromMeta = (ctx: CallbackCtx): RoomId => {
-	const roomId = ctx.callbackData!.meta;
+	const roomId = getCallbackMeta(ctx.callbackQuery.data);
 
 	if (!roomId) {
 		throw new Error('Room id required');

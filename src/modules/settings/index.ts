@@ -17,9 +17,6 @@ composer.on('message:text').filter(
 	handlers.settingsChangeNameStateMessageHandler,
 );
 
-composer.on('callback_query:data').filter(
-	ctx => ctx.callbackData?.module === 'settings' && isRegistered(ctx),
-	handlers.settingsCallbackHandler,
-);
+composer.callbackQuery(/^settings:/, ctx => isRegistered(ctx) && handlers.settingsCallbackHandler(ctx));
 
 export default composer;

@@ -7,8 +7,6 @@ import { logError } from '~/core/lib';
 import { createInitialSessionData } from './types';
 import type { AppContext } from './types';
 
-import { CallbackUtils } from './lib';
-
 const HTML_PARSE_MODE_METHODS = new Set(['sendMessage', 'editMessageText']);
 
 const htmlParseModeTransformer: Transformer = async (prev, method, payload, signal) => {
@@ -38,17 +36,6 @@ class Bot {
 			initial: createInitialSessionData,
 			getSessionKey: ctx => ctx.from?.id.toString(),
 		}));
-
-		this.grammyBot.use(async (ctx, next) => {
-			if (ctx.callbackQuery?.data) {
-				try {
-					ctx.callbackData = CallbackUtils.parseCallbackData(ctx.callbackQuery.data);
-				} catch {
-					// callbackData stays undefined — unroutable update
-				}
-			}
-			await next();
-		});
 
 		this.grammyBot.catch((err) => {
 			logError({
