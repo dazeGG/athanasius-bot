@@ -2,12 +2,31 @@
  * simulator/index.ts — test entry point.
  *
  * Run all scenarios: pnpm test
- * Show detailed case logs: pnpm test -- --full-logs
- * Keep db.test.json after run: pnpm test -- --save-db
+ * Show help: pnpm test --help
  */
 
 import { config } from 'dotenv';
 import { unlink } from 'fs/promises';
+
+const args = process.argv.slice(2);
+const showHelp = args.includes('--help') || args.includes('-h');
+
+if (showHelp) {
+	console.log(`
+🎮  Athanasius simulator
+
+Usage:
+  pnpm test
+  pnpm test --help
+  pnpm test --full-logs
+  pnpm test --save-db
+
+Flags:
+  --full-logs  Show detailed case-level logs for every scenario.
+  --save-db    Keep db.test.json after the run for inspection.
+`);
+	process.exit(0);
+}
 
 // ─── Load test env BEFORE any project code is imported ───────────────────────
 config({ path: '.env.test', override: true });
@@ -20,7 +39,7 @@ const { scenarioRegistration }  = await import('./scenarios/registration');
 const { scenarioRooms }         = await import('./scenarios/rooms');
 
 // ─── Run all scenarios ────────────────────────────────────────────────────────
-const fullLogs = process.argv.includes('--full-logs');
+const fullLogs = args.includes('--full-logs');
 
 setRunnerOptions({ fullLogs });
 
@@ -30,7 +49,7 @@ console.log('Scenarios:\n');
 await run('Registration', scenarioRegistration);
 await run('Rooms', scenarioRooms);
 
-const dbg = process.argv.includes('--debug');
+const dbg = args.includes('--debug');
 if (dbg) {
 	const { DB } = await import('../src/db');
 	const { getLog } = await import('./bootstrap');
@@ -48,11 +67,11 @@ printSummary();
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
 const dbFile = process.env.DB_FILE ?? 'db.test.json';
-const saveDb = process.argv.includes('--save-db');
+const saveDb = args.includes('--save-db');
 
 if (saveDb) {
-	console.log(`\n  💾  ${dbFile} kept (--save-db)`);
+	console.log(`\n  💾  ${dbFile} kept\n`);
 } else {
 	await unlink(dbFile).catch(() => {});
-	console.log(`\n  🗑   ${dbFile} deleted  (pass --save-db to keep)\n`);
+	console.log(`\n  🗑   ${dbFile} deleted\n`);
 }
