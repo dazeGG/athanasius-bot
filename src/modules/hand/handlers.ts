@@ -3,6 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import { ORM } from '~/db';
 import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
+import { escapeHtml } from '~/shared/lib';
 import { stringifyCallbackData } from '~/core/lib';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
@@ -37,7 +38,7 @@ const getHandShowText = (ctx: CallbackCtx) => {
 		throw new Error('Hand not found');
 	}
 
-	return `Комната ${room.name}\n\n${Deck.getMyHandView(hand.cardsInHand)}`;
+	return `Комната ${escapeHtml(room.name)}\n\n${Deck.getMyHandView(hand.cardsInHand)}`;
 };
 
 export const handMessageHandler = async (ctx: MessageCtx) => {

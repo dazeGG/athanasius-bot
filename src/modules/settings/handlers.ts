@@ -3,7 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import { STATES } from '~/core';
 import type { UserSchema } from '~/db';
 import { DB, ORM } from '~/db';
-import { validateName } from '~/shared/lib';
+import { escapeHtml, validateName } from '~/shared/lib';
 import { stringifyCallbackData } from '~/core/lib';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
@@ -12,7 +12,7 @@ import * as lib from './lib';
 const getBaseSettingsText = (me: UserSchema) => {
 	return '<b>' + lib.txt.yourSettings + ':</b>\n' +
 		'\n' +
-		'• ' + lib.txt.name + ': ' + me.name + '\n' +
+		'• ' + lib.txt.name + ': ' + escapeHtml(me.name) + '\n' +
 		'• ' + lib.txt.updatesView + ': ' + me.settings.updatesView + '\n' +
 		'\n' +
 		lib.txt.chooseWhatToChange;

@@ -3,6 +3,7 @@ import { InlineKeyboard } from 'grammy';
 import { BOT } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
+import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
 import { txt, MIN_PLAYERS_TO_START } from '~/shared/ui/game';
 import { stringifyCallbackData } from '~/core/lib';
@@ -22,7 +23,7 @@ class RoomTexts {
 	}
 
 	private header (): string {
-		return `Комната ${this.room.name}`;
+		return `Комната ${escapeHtml(this.room.name)}`;
 	}
 
 	private gameStatus (): string {
@@ -54,9 +55,9 @@ class RoomTexts {
 export const mailing = async (text: string, room: RoomSchema, exclude: PlayerId[] = []) => {
 	const playersToMailing = room.players.filter(playerId => !exclude.includes(playerId));
 
-	for (const playerId of playersToMailing) {
-		await BOT.api.sendMessage(playerId, text);
-	}
+	await Promise.allSettled(
+		playersToMailing.map(playerId => BOT.api.sendMessage(playerId, text)),
+	);
 };
 
 export const getRoomsListText = () => ui.txt.roomsList;
@@ -173,7 +174,7 @@ export const ensureRoomMember = async (ctx: AppContext, room: RoomSchema): Promi
 		return true;
 	}
 
-	await ctx.reply(`Ты не в комнате ${room.name}`);
+	await ctx.reply(`Ты не в комнате ${escapeHtml(room.name)}`);
 	return false;
 };
 

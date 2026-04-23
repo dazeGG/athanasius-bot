@@ -31,6 +31,14 @@ const commonRules = {
 };
 
 export default defineConfig([
+	{
+		ignores: [
+			'.claude/**',
+			'.idea/**',
+			'logs/**',
+			'node_modules/**',
+		],
+	},
 	// JS
 	{
 		files: ['**/*.{js,mjs,cjs}'],
@@ -48,7 +56,7 @@ export default defineConfig([
 		languageOptions: {
 			parser: tseslint.parser,
 			parserOptions: {
-				project: './tsconfig.json',
+				project: './tsconfig.eslint.json',
 				tsconfigRootDir: import.meta.dirname,
 			},
 			globals: globals.node,

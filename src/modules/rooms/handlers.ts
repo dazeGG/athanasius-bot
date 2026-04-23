@@ -2,11 +2,16 @@ import { BOT, STATES } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
 import { sendFirstMessage } from '~/entities/game/services';
+import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
 import * as ui from './ui';
 import * as utils from './utils';
+
+const getErrorMessage = (error: unknown): string => {
+	return escapeHtml(error instanceof Error ? error.message : 'Произошла неизвестная ошибка');
+};
 
 export const roomsMessageHandler = async (ctx: MessageCtx) => {
 	await ctx.deleteMessage();
@@ -35,14 +40,12 @@ export const joinRoomCodeMessageHandler = async (ctx: MessageCtx) => {
 		const room = await ORM.Rooms.joinRoom(me.id, joinCode);
 		const meUser = ORM.Users.get(me.id);
 
-		await ctx.reply(`Ты зашел в комнату ${room.name}`);
+		await ctx.reply(`Ты зашел в комнату ${escapeHtml(room.name)}`);
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 
-		await utils.mailing(`Комната ${room.name} | ${meUser.name} зашел`, room, [me.id]);
-	} catch (e) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error
-		await ctx.reply(e.message);
+		await utils.mailing(`Комната ${escapeHtml(room.name)} | ${escapeHtml(meUser.name)} зашел`, room, [me.id]);
+	} catch (error) {
+		await ctx.reply(getErrorMessage(error));
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
 	}
 
@@ -66,17 +69,17 @@ export const leaveRoomCallbackHandler = async (ctx: CallbackCtx) => {
 	}
 
 	if (!room.players.includes(ctx.from.id)) {
-		await ctx.editMessageText(`Ты уже не в комнате ${room.name}`);
+		await ctx.editMessageText(`Ты уже не в комнате ${escapeHtml(room.name)}`);
 		return;
 	}
 
 	await ORM.Rooms.removePlayer(ctx.from.id, roomId);
 	const meUser = ORM.Users.get(ctx.from.id);
 
-	await ctx.editMessageText(`Ты вышел из комнаты ${room.name}`);
+	await ctx.editMessageText(`Ты вышел из комнаты ${escapeHtml(room.name)}`);
 	await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(ctx.from.id)) });
 
-	await utils.mailing(`Комната ${room.name} | ${meUser.name} вышел`, room, [ctx.from.id]);
+	await utils.mailing(`Комната ${escapeHtml(room.name)} | ${escapeHtml(meUser.name)} вышел`, room, [ctx.from.id]);
 };
 
 export const createRoomCallbackHandler = async (ctx: CallbackCtx) => {
@@ -92,14 +95,12 @@ export const createRoomNameMessageHandler = async (ctx: MessageCtx) => {
 
 	try {
 		await ORM.Rooms.createRoom(roomName, me.id);
-		await ctx.reply(ui.txt.createdRoom + ' ' + roomName);
+		await ctx.reply(ui.txt.createdRoom + ' ' + escapeHtml(roomName));
 		STATES.clearState(me.id);
 
 		await ctx.reply(ui.txt.roomsList, { reply_markup: utils.getRoomsInlineKeyboard(ORM.Rooms.getWithMe(me.id)) });
-	} catch (e) {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		// @ts-expect-error
-		await ctx.reply(e.message);
+	} catch (error) {
+		await ctx.reply(getErrorMessage(error));
 	}
 };
 
@@ -143,14 +144,14 @@ export const kickCallbackHandler = async (ctx: CallbackCtx) => {
 		}
 
 		if (!room.players.includes(targetPlayerId)) {
-			await ctx.reply(`Игрока уже нет в комнате ${room.name}`);
+			await ctx.reply(`Игрока уже нет в комнате ${escapeHtml(room.name)}`);
 			await ctx.editMessageText(ui.txt.kickPlayer, { reply_markup: ui.gkb.kickList(ctx.from.id, room) });
 			return;
 		}
 
 		await ORM.Rooms.removePlayer(targetPlayerId, roomId);
-		await BOT.api.sendMessage(targetPlayerId, `Комната ${room.name} | Тебя выгнали :(`);
-		await utils.mailing(`Комната ${room.name} | ${ORM.Users.get(targetPlayerId).name} был выгнан`, room);
+		await BOT.api.sendMessage(targetPlayerId, `Комната ${escapeHtml(room.name)} | Тебя выгнали :(`);
+		await utils.mailing(`Комната ${escapeHtml(room.name)} | ${escapeHtml(ORM.Users.get(targetPlayerId).name)} был выгнан`, room);
 	}
 
 	await ctx.editMessageText(ui.txt.kickPlayer, { reply_markup: ui.gkb.kickList(ctx.from.id, room) });
@@ -211,7 +212,7 @@ export const gameWhoseTurnCallbackHandler = async (ctx: CallbackCtx) => {
 	const game = utils.getGameFromMeta(ctx);
 
 	await ctx.editMessageText(
-		`Комната ${room.name}\n\nСейчас ход ${game.activePlayer.name}`,
+		`Комната ${escapeHtml(room.name)}\n\nСейчас ход ${escapeHtml(game.activePlayer.name)}`,
 		{ reply_markup: ui.gkb.whoseTurn(room.id) },
 	);
 };

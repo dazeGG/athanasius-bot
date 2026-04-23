@@ -1,18 +1,38 @@
 import 'dotenv/config';
 
 import { Bot as GrammyBot } from 'grammy';
-import type { Middleware } from 'grammy';
+import type { Middleware, Transformer } from 'grammy';
 
 import { logError } from '~/core/lib';
 import type { AppContext } from './types';
 
 import { CallbackUtils } from './lib';
 
+const HTML_PARSE_MODE_METHODS = new Set(['sendMessage', 'editMessageText']);
+
+const htmlParseModeTransformer: Transformer = async (prev, method, payload, signal) => {
+	if (!HTML_PARSE_MODE_METHODS.has(method)) {
+		return prev(method, payload, signal);
+	}
+
+	const payloadRecord = payload as Record<string, unknown>;
+
+	if ('parse_mode' in payloadRecord || 'entities' in payloadRecord) {
+		return prev(method, payload, signal);
+	}
+
+	return prev(method, {
+		...payloadRecord,
+		parse_mode: 'HTML',
+	} as typeof payload, signal);
+};
+
 class Bot {
 	private readonly grammyBot: GrammyBot<AppContext>;
 
 	constructor (token: string) {
 		this.grammyBot = new GrammyBot<AppContext>(token);
+		this.grammyBot.api.config.use(htmlParseModeTransformer);
 
 		this.grammyBot.use(async (ctx, next) => {
 			if (ctx.callbackQuery?.data) {

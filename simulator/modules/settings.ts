@@ -14,7 +14,7 @@ const PLAYERS = [
 	{ id: 1003, username: 'carol_sim', name: 'Каролина', updatesView: 'composed' as const },
 ] as const;
 
-const [ALICE, BOB, CAROL] = PLAYERS;
+const [ALICE, , CAROL] = PLAYERS;
 const SETTINGS_KEYBOARD_LABELS = 'Имя · Вид обновлений · Выход';
 
 type PlayerFixture = (typeof PLAYERS)[number];

@@ -347,7 +347,9 @@ export function printSummary (): void {
  * Throws with the provided message when a test condition is not met.
  */
 export function assert (condition: boolean, message: string): void {
-	if (!condition) { throw new Error(message); }
+	if (!condition) {
+		throw new Error(message);
+	}
 }
 
 /**
@@ -393,4 +395,3 @@ export function assertDeleted (log: readonly CapturedMsg[], toId: number, messag
 		throw new Error(`Expected message ${messageId} to be deleted for ${toId}, but got:\n${got}`);
 	}
 }
-

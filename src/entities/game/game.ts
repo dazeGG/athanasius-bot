@@ -100,7 +100,7 @@ export class Game {
 		return this.queue.actualQueue.filter(id => this.hands.hand(id).cardsInHand.length > 0);
 	}
 
-	public get playersWithComposedUpdated (): PlayerId[] {
+	public get playersWithComposedUpdates (): PlayerId[] {
 		const players = DB.data.users.filter(u => this.allPlayers.includes(u.id));
 		return players.filter(p => p.settings.updatesView === 'composed').map(p => p.id);
 	}
@@ -168,6 +168,10 @@ export class Game {
 	/* MAILING */
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
 		await gameMailing(options, this.allPlayers, exclude);
+	}
+
+	public async realtimeMailing (options: MailingOptions, exclude: PlayerId[] = []): Promise<void> {
+		await this.mailing(options, [...exclude, ...this.playersWithComposedUpdates]);
 	}
 
 	/* TURNS */
