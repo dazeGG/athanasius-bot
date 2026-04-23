@@ -49,6 +49,10 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 		ctx.session.flow = { name: 'SETTINGS_CHANGE_NAME' };
 		break;
 	case 'updatesView':
+		if (ORM.Games.getActiveWithMe(ctx.from.id).length) {
+			await ctx.editMessageText('Нельзя менять настройки во время игры :(');
+			return;
+		}
 		await ORM.Users.update(
 			ctx.from.id,
 			{ updatesView: me.settings.updatesView === 'instant' ? 'composed' : 'instant' },
