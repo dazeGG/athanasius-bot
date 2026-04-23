@@ -52,21 +52,31 @@ export class InfoMessage {
 
 	public static gameEndedMailing (athMap: [string, number][]): string {
 		let text = `🏁 <b>${txt.gameEnded}</b>\n\n`;
-		text += 'Вот они, победители, слева направо:\n\n';
+		text += 'Вот они, победители, слева направо:\n';
 
 		const [first, second, ...rest] = athMap;
 		const middle = rest.slice(0, -1);
 		const last = rest[rest.length - 1];
 
+		const bronze = middle[0];
+		const plainPlayers = middle.slice(1);
+
 		text += `🥇 ${this.formatPlayerResult(first[0], first[1])}\n`;
 		text += `🥈 ${this.formatPlayerResult(second[0], second[1])}\n`;
 
-		middle.forEach((player, i) => {
-			const marker = i === 0 ? '🥉' : `${i + 3}.`;
-			text += `${marker} ${this.formatPlayerResult(player[0], player[1])}\n`;
-		});
+		if (bronze) {
+			text += `🥉 ${this.formatPlayerResult(bronze[0], bronze[1])}\n`;
+		}
 
-		text += `\n🦧 ${this.formatPlayerResult(last[0], last[1])}`;
+		if (plainPlayers.length > 0) {
+			text += '\n<b>Простые ребята:</b>\n';
+			plainPlayers.forEach((player, i) => {
+				text += `${i + 4}. ${this.formatPlayerResult(player[0], player[1])}\n`;
+			});
+		}
+
+		text += '\n<b>Главный неудачник:</b>\n';
+		text += `🦧 ${this.formatPlayerResult(last[0], last[1])}`;
 
 		return text;
 	}
