@@ -8,7 +8,7 @@
     "dev": "nodemon",
     "start": "tsx src/index.ts",
     "lint": "eslint . --fix",
-    "generate-images": "tsx image-generator/index.ts"
+    "test": "tsx scripts/simulate.ts"
   },
   "keywords": [],
   "author": "",

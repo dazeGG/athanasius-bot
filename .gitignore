@@ -5,4 +5,5 @@ generated
 
 .env
 db.json
+db.*.json
 .DS_Store
