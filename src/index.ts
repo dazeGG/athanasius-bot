@@ -1,7 +1,9 @@
 import { BOT } from '~/core';
 
 import { commands } from './commands';
-import registerModules from './modules/register-modules';
+import createModulesComposer from './modules/register-modules';
+
+BOT.use(createModulesComposer());
 
 BOT.init(commands)
 	.then(() => {
@@ -10,5 +12,3 @@ BOT.init(commands)
 	.catch((error) => {
 		console.log('Failed to start bot.', error);
 	});
-
-registerModules();
