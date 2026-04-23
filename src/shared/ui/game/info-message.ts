@@ -51,8 +51,8 @@ export class InfoMessage {
 	}
 
 	public static gameEndedMailing (athMap: [string, number][]): string {
-		let text = `🦎 <b>${txt.gameEnded}</b>\n\n`;
-		text += 'Вот они, победители, слева на право:\n\n';
+		let text = `🏁 <b>${txt.gameEnded}</b>\n\n`;
+		text += 'Вот они, победители, слева направо:\n\n';
 
 		const [first, second, ...rest] = athMap;
 		const middle = rest.slice(0, -1);
