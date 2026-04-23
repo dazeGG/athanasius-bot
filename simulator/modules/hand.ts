@@ -95,7 +95,7 @@ const makeCallbackCtx = (
 			date: Math.floor(Date.now() / 1000),
 		},
 		chat_instance: '',
-		data: `${data.module}|${data.action ?? ''}|${data.back ? '1' : ''}|${data.meta ?? ''}`,
+		data: `${data.module}:${data.back ? 'back' : (data.action ?? '')}:${data.meta ?? ''}`,
 	},
 });
 

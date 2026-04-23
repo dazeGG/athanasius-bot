@@ -213,7 +213,7 @@ export const makeTurnCallbackCtx = (player: PlayerFixture, meta?: string, messag
 			date: Math.floor(Date.now() / 1000),
 		},
 		chat_instance: '',
-		data: `g|t||${meta ?? ''}`,
+		data: `g:t:${meta ?? ''}`,
 	},
 }) as unknown as CallbackCtx;
 

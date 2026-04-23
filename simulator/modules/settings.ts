@@ -44,7 +44,7 @@ const makeCallbackCtx = (player: PlayerFixture, action: 'name' | 'updatesView' |
 			date: Math.floor(Date.now() / 1000),
 		},
 		chat_instance: '',
-		data: `settings|${action}||`,
+		data: `settings:${action}:`,
 	},
 });
 
