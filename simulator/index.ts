@@ -40,6 +40,7 @@ const { roomsModule }         = await import('./modules/rooms');
 const { settingsModule }      = await import('./modules/settings');
 const { handModule }          = await import('./modules/hand');
 const { startModule }         = await import('./modules/start');
+const { gameFlow }            = await import('./flow/game');
 
 // ─── Run all modules ──────────────────────────────────────────────────────────
 const fullLogs = args.includes('--full-logs');
@@ -54,6 +55,8 @@ await run('Rooms', roomsModule);
 await run('Settings', settingsModule);
 await run('Hand', handModule);
 await run('Start', startModule);
+console.log('\nFlows:\n');
+await run('Game Flow', gameFlow, { kind: 'flow' });
 
 const dbg = args.includes('--debug');
 if (dbg) {

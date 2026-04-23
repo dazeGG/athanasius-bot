@@ -13,14 +13,18 @@ const turnGuard = (ctx: CallbackContextCallback): boolean => {
 		return false;
 	}
 
-	const user = DB.data.users.find(user => user.id === ctx.from.id);
-	const game = new Game({ id: gameId });
+	try {
+		const user = DB.data.users.find(user => user.id === ctx.from.id);
+		const game = new Game({ id: gameId });
 
-	if (!user || !game) {
+		if (!user || game.isEnded) {
+			return false;
+		}
+
+		return game.activePlayer.id === user.id && isRegistered(ctx);
+	} catch {
 		return false;
 	}
-
-	return game.activePlayer.id === user.id && isRegistered(ctx);
 };
 
 const registerGame = () => {

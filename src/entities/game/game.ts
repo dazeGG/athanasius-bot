@@ -88,6 +88,10 @@ export class Game {
 		return ORM.Users.get(this.queue.activePlayer);
 	}
 
+	public get isEnded (): boolean {
+		return this.ended !== undefined;
+	}
+
 	public get allPlayers (): PlayerId[] {
 		return this.queue.actualQueue;
 	}
