@@ -162,6 +162,30 @@ Follow repository conventions:
 
 The project lint rules are defined in [eslint.config.js](/Users/daze/Desktop/WORK/pet/athanasius-bot/eslint.config.js).
 
+## Commit Convention
+
+Recent history establishes the default commit style for this repository.
+
+Use semantic commits in the form:
+
+```text
+type(scope): imperative summary
+```
+
+Default expectations:
+
+- prefer lowercase commit types such as `refactor`, `fix`, `feat`, `test`, `docs`, `chore`;
+- prefer a scope when the change is localized, for example `core`, `modules`, `game`, `simulator`, `db`, `deps`;
+- keep the summary short, in English, and action-oriented;
+- keep each commit behaviorally coherent — do not mix unrelated refactors and test rewrites in one commit unless they are inseparable;
+- avoid `wip` and vague subjects such as `misc changes` or `fix stuff`.
+
+Examples aligned with recent commits:
+
+- `refactor(modules): migrate rooms module to grammY InlineKeyboard and ctx methods`
+- `refactor(game): migrate game module and notifications to ctx.api and InlineKeyboard`
+- `refactor: update bootstrap and shared modules after ctx.reply migration`
+
 ## Coding Preferences
 
 - Preserve the current modular separation between `core`, `modules`, `entities`, `shared`, and `db`.
