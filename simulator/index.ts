@@ -38,6 +38,8 @@ const { run, printSummary, setRunnerOptions } = await import('./runner');
 const { registrationModule }  = await import('./modules/registration');
 const { roomsModule }         = await import('./modules/rooms');
 const { settingsModule }      = await import('./modules/settings');
+const { handModule }          = await import('./modules/hand');
+const { startModule }         = await import('./modules/start');
 
 // ─── Run all modules ──────────────────────────────────────────────────────────
 const fullLogs = args.includes('--full-logs');
@@ -50,6 +52,8 @@ console.log('Modules:\n');
 await run('Registration', registrationModule);
 await run('Rooms', roomsModule);
 await run('Settings', settingsModule);
+await run('Hand', handModule);
+await run('Start', startModule);
 
 const dbg = args.includes('--debug');
 if (dbg) {
