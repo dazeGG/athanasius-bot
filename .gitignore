@@ -4,6 +4,7 @@ node_modules
 generated
 
 .env
+.env.test
 db.json
 db.*.json
 .DS_Store
