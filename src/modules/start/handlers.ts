@@ -1,9 +1,9 @@
 import { isRegistered } from '~/shared/lib';
-import type { MessageCtx } from '~/core';
+import type { AppContext } from '~/core';
 
 import * as lib from './lib';
 
-export const startCommandHandler = async (ctx: MessageCtx) => {
+export const startCommandHandler = async (ctx: AppContext) => {
 	if (isRegistered(ctx)) {
 		await ctx.reply(lib.txt.alreadyRegistered);
 	} else {

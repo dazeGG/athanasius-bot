@@ -1,11 +1,11 @@
 import { DB, ORM } from '~/db';
-import type { MessageCtx } from '~/core';
+import type { AppContext, MessageCtx } from '~/core';
 
 import { GLOBAL_KEYBOARD, validateName } from '~/shared/lib';
 
 import * as lib from './lib';
 
-export const regStartMessageHandler = async (ctx: MessageCtx) => {
+export const regStartMessageHandler = async (ctx: AppContext) => {
 	const u = DB.data.users.find(u => u.id === ctx.from!.id);
 
 	if (u) {
