@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file is a Claude-specific overlay on top of [AGENTS.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/AGENTS.md). Read AGENTS.md first — it is the primary source of game rules, architecture, code style, and agent expectations. This file only adds or overrides where Claude's behavior differs from the general agent contract.
+This file is a Claude-specific overlay on top of [AGENTS.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/AGENTS.md). Read AGENTS.md first — it is the authoritative reference for game rules, architecture, code style, and agent expectations. This file only adds or overrides where Claude's behavior differs from the general agent contract.
 
 ## Decision Policy
 
@@ -37,7 +37,7 @@ When making gameplay changes, explicitly sanity-check before calling the task do
 These invariants are easy to break silently because the project compiles fine without them:
 
 - The target-selection keyboard must never show players with empty hands.
-- Every completed turn (success or failure at the final stage) must produce a log entry.
+- Every turn resolution must produce a log entry: failures at any declaration stage, and every successful suits-stage outcome.
 - Keyboard constraints and server-side validation must describe the same rules — keyboard-only enforcement is not enough.
 - Notification text must match actual game behavior; a mismatch is an information leak.
 - A change in any turn stage usually requires updates in parsing, keyboard generation, stage text, `Game` aggregate, `Hand` validation, notifications, and log formatting.

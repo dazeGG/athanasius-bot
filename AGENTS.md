@@ -42,12 +42,16 @@ The project has three main persistent domains:
 
 Data is stored in `lowdb` inside the root [db.json](/Users/daze/Desktop/WORK/pet/athanasius-bot/db.json) file.
 
-Important active settings:
+Active room settings:
 
 - `joinCode`
 - `decksCount`
 
-If other persisted room settings exist in code but are not part of the intended live product behavior, do not treat them as active gameplay features unless the user asks for that work explicitly.
+The following room settings exist in the schema but are not active product features — do not treat them as gameplay unless the user explicitly asks: `deckType`, `towHands`, `allowMailing`, `allowMailingAtTurn`.
+
+Active user settings:
+
+- `updatesView`: controls how in-game notifications are delivered. `'instant'` sends each event (steal, fail, Athanasius) as it happens. `'composed'` suppresses real-time events for that player and instead delivers a summary of the last round at the start of their next turn. Players with `composed` view are excluded from broadcast mailings in the notification service — preserve this exclusion whenever adding new game notifications.
 
 ## Target Game Rules
 
