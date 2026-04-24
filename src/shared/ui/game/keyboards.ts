@@ -99,7 +99,8 @@ export const gkb = {
 
 	countSelect: ({ game, turnMeta, count }: CountSelectGKBOptions): InlineKeyboard => {
 		const baseMeta = `${TurnStage.count}#${game.gameId}#${turnMeta.player.id}#${turnMeta.cardName}#${count}`;
-		return buildSelectKeyboard(baseMeta, count > 1, count < game.cardsToAthanasius - 1);
+		const maxForRank = game.getCardsToAthanasiusForRank(turnMeta.cardName) - 1;
+		return buildSelectKeyboard(baseMeta, count > 1, count < maxForRank);
 	},
 
 	colorsSelect: ({ game, turnMeta, redCount }: ColorsSelectGKBOptions): InlineKeyboard => {

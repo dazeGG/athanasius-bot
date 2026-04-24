@@ -22,13 +22,15 @@ export class InfoMessage {
 
 	/* GAME LIFECYCLE */
 	public static gameStartedMailing (room: RoomSchema): string {
+		const deckTypeLabel = room.settings.deckType === 54 ? '54 карты' : room.settings.deckType === 36 ? '36 карт' : '52 карты';
 		return `Комната ${escapeHtml(room.name)} | ${txt.gameStarted}\n` +
 			'\n' +
 			txt.players + ':\n' +
 			playersList(room.players) + '\n' +
 			'\n' +
 			txt.gameSettings + ':\n' +
-			'• ' + txt.decksCount + ': ' + room.settings.decksCount;
+			'• ' + txt.decksCount + ': ' + room.settings.decksCount + '\n' +
+			'• Тип колоды: ' + deckTypeLabel;
 	}
 
 	private static formatPlayerResult (name: string, count: number): string {
@@ -124,6 +126,20 @@ export class InfoMessage {
 		const base = `🟧 <b>${escapeHtml(me.name)} → Ты</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
 		const suits = formatSuits(turnMeta.suits);
 		return suits ? `${base} | ${suits}` : base;
+	}
+
+	public static jokerStealMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟩', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount));
+	}
+
+	public static jokerStealWithAthanasiusMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.mailingLine('⭐', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount)) + ' — Афанасий!';
+	}
+
+	public static jokerStealVictimMessage (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		const base = `🟧 <b>${escapeHtml(me.name)} → Ты</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const colors = formatColors(turnMeta.redCount, turnMeta.blackCount);
+		return colors ? `${base} | ${colors}` : base;
 	}
 
 	/* ME — paragraph format with ❌ on wrong field */

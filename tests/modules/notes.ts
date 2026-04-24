@@ -61,7 +61,7 @@ const makeGame = (id: string, roomId: string, decksCount: number, extra: Record<
 	players: [ALICE.id, BOB.id, CAROL.id],
 	hands: { [ALICE.id]: [], [BOB.id]: [], [CAROL.id]: [] },
 	athanasiuses: { [ALICE.id]: [], [BOB.id]: [], [CAROL.id]: [] },
-	utils: { cardsToAthanasius: decksCount * 4, logs: [] },
+	utils: { cardsToAthanasius: decksCount * 4, jokerCardsToAthanasius: decksCount * 2, logs: [] },
 	...extra,
 });
 

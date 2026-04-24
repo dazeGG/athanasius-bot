@@ -77,10 +77,13 @@ export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptio
 		);
 		break;
 	case TurnStage.colors:
-		await ctx.editMessageText(
-			GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
-			{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }) },
-		);
+		// Only show suits stage if the rank is NOT a Joker
+		if (turnMeta.cardName !== 'Joker') {
+			await ctx.editMessageText(
+				GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
+				{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }) },
+			);
+		}
 		break;
 	}
 }
@@ -138,6 +141,18 @@ export async function notifyStealMessage (
 		: InfoMessage.stealCardsMailing(turnMeta, me);
 	await game.realtimeMailing({ text: mailingText }, [me.id, turnMeta.player.id], sender);
 	await sender(turnMeta.player.id, InfoMessage.stealVictimMessage(turnMeta, me));
+}
+
+export async function notifyJokerStealMessage (
+	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Colors'],
+	composeAthanasius: boolean,
+) {
+	await ctx.editMessageText(GameMessage.getJokerStealMessage(turnMeta, composeAthanasius));
+	const mailingText = composeAthanasius
+		? InfoMessage.jokerStealWithAthanasiusMailing(turnMeta, me)
+		: InfoMessage.jokerStealMailing(turnMeta, me);
+	await game.realtimeMailing({ text: mailingText }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, InfoMessage.jokerStealVictimMessage(turnMeta, me));
 }
 
 function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {

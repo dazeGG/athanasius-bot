@@ -1,10 +1,14 @@
 import type { CardName } from './types';
 
+export type DeckType = 52 | 36 | 54;
+
 export class DeckConfig {
 	public static CARD_NAMES: CardName[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
+	public static JOKER_NAME: CardName = 'Joker';
+
 	public static isCardName (value: string): value is CardName {
-		return this.CARD_NAMES.includes(value as CardName);
+		return this.CARD_NAMES.includes(value as CardName) || value === this.JOKER_NAME;
 	}
 
 	public static SUITS = [
@@ -47,7 +51,10 @@ export class DeckConfig {
 		{ name: 'A', value: 14 },
 	] as const;
 
-	public static RANKS_MAP = {
+	/** Ranks for 36-card deck (6–A). */
+	public static RANKS_36 = DeckConfig.RANKS.slice(4); // index 4 = '6'
+
+	public static RANKS_MAP: Record<string, number> = {
 		'2': 2,
 		'3': 3,
 		'4': 4,
@@ -61,9 +68,10 @@ export class DeckConfig {
 		'Q': 12,
 		'K': 13,
 		'A': 14,
-	} as const;
+		'Joker': 15,
+	};
 
-	public static CARDS_VIEW_MAP = {
+	public static CARDS_VIEW_MAP: Record<string, string> = {
 		'2': '2',
 		'3': '3',
 		'4': '4',
@@ -77,9 +85,10 @@ export class DeckConfig {
 		Q: 'Q',
 		K: 'K',
 		A: 'A',
+		Joker: '🃏',
 		hearts: '♥️',
 		diamonds: '♦️',
 		spades: '♠️',
 		clubs: '♣️',
-	} as const;
+	};
 }

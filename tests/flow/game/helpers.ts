@@ -60,6 +60,7 @@ interface GameOptions {
 	hands?: Record<number, number[]>;
 	athanasiuses?: Record<number, string[]>;
 	cardsToAthanasius?: number;
+	jokerCardsToAthanasius?: number;
 	logs?: string[];
 	started?: number;
 	ended?: number;
@@ -127,6 +128,7 @@ export const makeGame = ({
 	hands,
 	athanasiuses,
 	cardsToAthanasius = 4,
+	jokerCardsToAthanasius = 2,
 	logs = [],
 	started = Date.now(),
 	ended,
@@ -146,6 +148,7 @@ export const makeGame = ({
 		athanasiuses: { ...defaultAthanasiuses, ...(athanasiuses ?? {}) },
 		utils: {
 			cardsToAthanasius,
+			jokerCardsToAthanasius,
 			logs,
 		},
 	};

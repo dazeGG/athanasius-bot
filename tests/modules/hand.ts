@@ -149,7 +149,7 @@ const seedOneActiveGame = async (): Promise<void> => {
 					[BOB.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},
@@ -186,7 +186,7 @@ const seedTwoActiveGames = async (): Promise<void> => {
 					[BOB.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},
@@ -205,7 +205,7 @@ const seedTwoActiveGames = async (): Promise<void> => {
 					[CAROL.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},
@@ -243,7 +243,7 @@ const seedEndedGame = async (): Promise<void> => {
 					[BOB.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},
@@ -280,7 +280,7 @@ const seedActiveAndEndedGames = async (): Promise<void> => {
 					[BOB.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},
@@ -300,7 +300,7 @@ const seedActiveAndEndedGames = async (): Promise<void> => {
 					[CAROL.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},
@@ -337,7 +337,7 @@ const seedGameWithEmptyHand = async (): Promise<void> => {
 					[BOB.id]: [],
 				},
 				utils: {
-					cardsToAthanasius: 16,
+					cardsToAthanasius: 16, jokerCardsToAthanasius: 8,
 					logs: [],
 				},
 			},

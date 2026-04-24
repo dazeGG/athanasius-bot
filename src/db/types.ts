@@ -38,10 +38,12 @@ export interface GameLog {
 
 export interface GameUtils {
 	cardsToAthanasius: number;
+	jokerCardsToAthanasius: number;
 	logs: string[];
 }
 
 export interface GameUtilsParsed {
 	cardsToAthanasius: number;
+	jokerCardsToAthanasius: number;
 	logs: GameLog[];
 }

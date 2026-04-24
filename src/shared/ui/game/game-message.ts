@@ -141,4 +141,18 @@ export class GameMessage {
 
 		return msg;
 	}
+
+	public static getJokerStealMessage (turnMeta: ColorsStageMeta, composeAthanasius: boolean): string {
+		let msg = '🟩 <b>Ты успешно украл джокеров</b>\n' +
+			'\n' +
+			`Игрок: ${escapeHtml(turnMeta.player.name)}\n` +
+			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
+			`Цвет: ${formatColors(turnMeta.redCount, turnMeta.blackCount)}`;
+
+		if (composeAthanasius) {
+			msg += '\n\n⭐ <b>И это новый Афанасий!</b>';
+		}
+
+		return msg;
+	}
 }
