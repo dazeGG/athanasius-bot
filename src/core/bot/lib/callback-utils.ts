@@ -1,10 +1,12 @@
 // Format: "module:action:meta" or "module:back:meta"
-export function stringifyCallbackData (opts: {
+export interface CallbackData {
 	module: string;
 	action?: string;
 	back?: boolean;
 	meta?: string;
-}): string {
+}
+
+export function stringifyCallbackData (opts: CallbackData): string {
 	const action = opts.back ? 'back' : (opts.action ?? '');
 	const meta = opts.meta ?? '';
 	return `${opts.module}:${action}:${meta}`;

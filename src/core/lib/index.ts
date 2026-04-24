@@ -3,3 +3,6 @@ export {
 	stringifyCallbackData,
 	getCallbackMeta,
 } from '../bot/lib';
+export type {
+	CallbackData,
+} from '../bot/lib';

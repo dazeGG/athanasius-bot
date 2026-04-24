@@ -2,10 +2,17 @@
  * rooms.ts — room creation, joining, settings, and membership flows split into explicit cases.
  */
 
+import type { CallbackData } from '../../src/core';
 import { ORM, DB } from '../../src/db';
 import { txt as roomTxt } from '../../src/modules/rooms/ui';
 import { escapeHtml } from '../../src/shared/lib';
 import { txt as gameTxt } from '../../src/shared/ui/game';
+import type {
+	createRoomCallbackHandler,
+	createRoomNameMessageHandler,
+	joinRoomCallbackHandler,
+	joinRoomCodeMessageHandler,
+} from '../../src/modules/rooms/handlers';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
@@ -23,12 +30,6 @@ const [ALICE, BOB, CAROL, DAVE, EVE] = PLAYERS;
 const DEFAULT_ROOM_NAME = 'Комната Алисы';
 
 type PlayerFixture = (typeof PLAYERS)[number];
-type CallbackData = {
-	module: string;
-	action?: string;
-	back?: boolean;
-	meta?: string;
-};
 const makeMessageCtx = (player: PlayerFixture, text: string) => withMessageMethods({
 	chat: { id: player.id, type: 'private' as const },
 	from: { id: player.id, is_bot: false, first_name: player.name, username: player.username },
@@ -63,10 +64,10 @@ const makeCallbackCtx = (
 });
 
 type RoomsHandlersModule = {
-	createRoomCallbackHandler: (ctx: ReturnType<typeof makeCallbackCtx>) => Promise<void>;
-	createRoomNameMessageHandler: (ctx: ReturnType<typeof makeMessageCtx>) => Promise<void>;
-	joinRoomCallbackHandler: (ctx: ReturnType<typeof makeCallbackCtx>) => Promise<void>;
-	joinRoomCodeMessageHandler: (ctx: ReturnType<typeof makeMessageCtx>) => Promise<void>;
+	createRoomCallbackHandler: typeof createRoomCallbackHandler;
+	createRoomNameMessageHandler: typeof createRoomNameMessageHandler;
+	joinRoomCallbackHandler: typeof joinRoomCallbackHandler;
+	joinRoomCodeMessageHandler: typeof joinRoomCodeMessageHandler;
 };
 
 const resetRoomsCase = async (): Promise<void> => {

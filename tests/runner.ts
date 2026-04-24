@@ -361,6 +361,8 @@ interface MessageAssertOptions {
 	count?: number;
 }
 
+type MessageMatchOptions = Omit<MessageAssertOptions, 'count'>;
+
 const getVisibleMessages = (
 	log: readonly CapturedMsg[],
 	toId: number,
@@ -373,6 +375,15 @@ const getComparableText = (message: CapturedMsg, exact: boolean): string => {
 	return exact ? message.body : message.text;
 };
 
+const messageMatches = (
+	message: CapturedMsg,
+	contains: string,
+	options: MessageMatchOptions,
+): boolean => {
+	const text = getComparableText(message, options.exact ?? false);
+	return options.exact ? text === contains : text.includes(contains);
+};
+
 /**
  * Asserts that a user received a message containing the expected fragment.
  */
@@ -383,14 +394,9 @@ export function assertSent (
 	options: MessageAssertOptions = {},
 ): void {
 	const msgs = getVisibleMessages(log, toId, options.type);
-	const matches = msgs.filter(m => {
-		const text = getComparableText(m, options.exact ?? false);
-		return options.exact ? text === contains : text.includes(contains);
-	});
 	const targetMessages = options.latest ? msgs.slice(-1) : msgs;
-	const hasMatch = options.latest
-		? targetMessages.some(m => matches.includes(m))
-		: matches.length > 0;
+	const matches = targetMessages.filter(m => messageMatches(m, contains, options));
+	const hasMatch = matches.length > 0;
 
 	if (!hasMatch || (options.count !== undefined && matches.length !== options.count)) {
 		const got = msgs.length
@@ -406,10 +412,18 @@ export function assertSent (
 /**
  * Asserts that a user did not receive a message containing the given fragment.
  */
-export function assertNotSent (log: readonly CapturedMsg[], toId: number, contains: string): void {
-	const msgs = getVisibleMessages(log, toId);
-	if (msgs.some(m => m.text.includes(contains))) {
-		throw new Error(`Expected NO message to ${toId} containing "${contains}", but one was sent`);
+export function assertNotSent (
+	log: readonly CapturedMsg[],
+	toId: number,
+	contains: string,
+	options: MessageMatchOptions = {},
+): void {
+	const msgs = getVisibleMessages(log, toId, options.type);
+	const targetMessages = options.latest ? msgs.slice(-1) : msgs;
+	if (targetMessages.some(m => messageMatches(m, contains, options))) {
+		const expectation = options.exact ? 'equal to' : 'containing';
+		const latestExpectation = options.latest ? ' in the latest message' : '';
+		throw new Error(`Expected NO message to ${toId} ${expectation} "${contains}"${latestExpectation}, but one was sent`);
 	}
 }
 

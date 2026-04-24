@@ -278,7 +278,7 @@ const mockedBot = BOT as unknown as {
 		message?: { message_id: number };
 		callbackQuery?: { message?: { message_id: number } };
 	}) => Promise<void>;
-	api: typeof BOT.api & {
+	api: {
 		sendMessage: (chatId: number, text: string, options?: MessageOptions['options']) => Promise<void>;
 	};
 };
@@ -346,13 +346,13 @@ mockedBot.deleteMessage = async (ctx: {
 	capture('delete', ctx.chat?.id ?? 0, messageId === undefined ? 'message' : `message#${messageId}`, messageId);
 };
 
-mockedBot.api.sendMessage = (async (chatId: number, text: string, options?: MessageOptions['options']) => {
+mockedBot.api.sendMessage = async (chatId: number, text: string, options?: MessageOptions['options']) => {
 	assertHtmlCompatibleText(text);
 	capture('send', chatId, text, undefined, {
 		keyboard: normalizeKeyboard(getKeyboard({ options })),
 		parseMode: getParseMode({ options }),
 	});
-}) as never;
+};
 
 // ─── Log API ──────────────────────────────────────────────────────────────────
 /**
