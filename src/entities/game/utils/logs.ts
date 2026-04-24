@@ -1,7 +1,6 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
 import { escapeHtml } from '~/shared/lib';
-import { formatSuits } from '~/shared/ui/game';
 import type { GameLog, GameUtilsParsed } from '~/db';
 
 import type { PlayerId } from '../types';
@@ -10,27 +9,66 @@ function formatStealData (stealData: number[]): string {
 	switch (stealData.length) {
 	case 1:
 		return `${stealData[0]}`;
-	case 2:
-		return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
-	case 4:
-		return formatSuits({ hearts: stealData[0], diamonds: stealData[1], spades: stealData[2], clubs: stealData[3] });
+	case 2: {
+		const parts: string[] = [];
+		if (stealData[0] > 0) {
+			parts.push(`🔴 ${stealData[0]}`);
+		}
+		if (stealData[1] > 0) {
+			parts.push(`⚫ ${stealData[1]}`);
+		}
+		return parts.join(' ');
+	}
+	case 4: {
+		const [hearts, diamonds, spades, clubs] = stealData;
+		const parts: string[] = [];
+		if (hearts > 0) {
+			parts.push(`♥️ ${hearts}`);
+		}
+		if (diamonds > 0) {
+			parts.push(`♦️ ${diamonds}`);
+		}
+		if (spades > 0) {
+			parts.push(`♠️ ${spades}`);
+		}
+		if (clubs > 0) {
+			parts.push(`♣️ ${clubs}`);
+		}
+		return parts.join(' ');
+	}
 	default:
 		throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
 	}
 }
 
-function getLogMessage (log: GameLog): string {
+function getLogPrefix (log: GameLog): string {
+	if (log.athanasius) {
+		return '⭐';
+	}
+	if (log.steal) {
+		return '🟩';
+	}
+	return '🟥';
+}
+
+function getLogMessage (log: GameLog, viewerId?: PlayerId): string {
 	const from = ORM.Users.get(log.from);
 	const to = ORM.Users.get(log.to);
+	const isVictim = viewerId !== undefined && log.to === viewerId && log.steal;
+	const prefix = isVictim ? '🟧' : getLogPrefix(log);
+	const toName = isVictim ? 'Ты' : escapeHtml(to.name);
 
-	let msg = `<b>${escapeHtml(from.name)} -> ${escapeHtml(to.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+	let msg = `${prefix} <b>${escapeHtml(from.name)} → ${toName}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
 
 	if (log.stealData?.length) {
-		if (log.steal) {
-			msg += ' | ' + formatStealData(log.stealData);
-		} else {
-			msg += ` | Не ${formatStealData(log.stealData)}`;
+		const formatted = formatStealData(log.stealData);
+		if (formatted) {
+			msg += ` | ${formatted}`;
 		}
+	}
+
+	if (log.athanasius) {
+		msg += ' — Афанасий!';
 	}
 
 	return msg;
@@ -44,7 +82,7 @@ export function getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): s
 		if (log.from === playerId) {
 			break;
 		}
-		result.push(getLogMessage(log));
+		result.push(getLogMessage(log, playerId));
 	}
 
 	return result.reverse().join('\n');

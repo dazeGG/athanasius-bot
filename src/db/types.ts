@@ -25,6 +25,7 @@ export interface GameLog {
 	cardName: CardName;
 	steal: boolean;
 	stealData?: [number] | [number, number] | [number, number, number, number];
+	athanasius?: boolean;
 }
 
 export interface GameUtils {

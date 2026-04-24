@@ -37,10 +37,13 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 	if (initial) {
 		text = txt.firstTurnMessage;
 	} else {
-		text = '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
+		text = txt.turnMessage;
 
 		if (game.activePlayer.settings.updatesView === 'composed') {
-			await sender(game.activePlayer.id, `🟨 Вот что было за последний круг:\n\n${game.getLastRoundLogs()}`);
+			const lastRoundLogs = game.getLastRoundLogs();
+			if (lastRoundLogs) {
+				text = `Вот что было за последний круг:\n\n${lastRoundLogs}\n\n———\n\n${text}`;
+			}
 		}
 	}
 
@@ -53,7 +56,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 	});
 }
 
-export async function notifyNextStage ({ ctx, game, me, turnMeta }: GameServiceOptions) {
+export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptions) {
 	switch (turnMeta.stage) {
 	case TurnStage.player:
 		await ctx.editMessageText(
@@ -125,14 +128,16 @@ export async function notifyWrongSuitsMessage ({ ctx, game, me, turnMeta, sender
 	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongSuitsMe(turnMeta), InfoMessage.wrongSuitsMailing(turnMeta, me));
 }
 
-export async function notifyStealMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits']) {
-	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta));
-	await game.realtimeMailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id], sender);
-}
-
-export async function notifyComposeAthanasiusMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits']) {
-	await ctx.reply(InfoMessage.newAthanasiusMe(turnMeta));
-	await game.realtimeMailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id], sender);
+export async function notifyStealMessage (
+	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits'],
+	composeAthanasius: boolean,
+) {
+	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta, composeAthanasius));
+	const mailingText = composeAthanasius
+		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
+		: InfoMessage.stealCardsMailing(turnMeta, me);
+	await game.realtimeMailing({ text: mailingText }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, InfoMessage.stealVictimMessage(turnMeta, me));
 }
 
 function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {

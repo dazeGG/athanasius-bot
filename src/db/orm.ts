@@ -182,6 +182,10 @@ class Games {
 		return DB.data.games.filter(g => g.players.includes(myId) && !g.ended);
 	}
 
+	public static isInActiveGame (myId: UserId): boolean {
+		return DB.data.games.some(g => g.players.includes(myId) && !g.ended);
+	}
+
 	public static getById (id: GameId): GameSchema {
 		const game = DB.data.games.find(g => g.id === id);
 

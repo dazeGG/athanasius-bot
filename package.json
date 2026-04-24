@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
-    "test": "tsx simulator/index.ts"
+    "test": "tsx tests/index.ts"
   },
   "keywords": [],
   "author": "",

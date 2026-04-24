@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file is a Claude-specific overlay on top of [AGENTS.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/AGENTS.md). Read AGENTS.md first — it is the authoritative reference for game rules, architecture, code style, and agent expectations. This file only adds or overrides where Claude's behavior differs from the general agent contract.
+This file is a Claude-specific overlay on top of [AGENTS.md](./AGENTS.md). Read AGENTS.md first — it is the authoritative reference for game rules, architecture, code style, and agent expectations. This file only adds or overrides where Claude's behavior differs from the general agent contract.
 
 ## Decision Policy
 
@@ -8,8 +8,8 @@ When sources conflict, resolve in this order:
 
 1. The user's current instruction.
 2. This file.
-3. [AGENTS.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/AGENTS.md).
-4. [README.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/README.md).
+3. [AGENTS.md](./AGENTS.md).
+4. [README.md](./README.md).
 5. Current code — only when it does not conflict with documented intended behavior.
 
 If the codebase violates a documented rule, prefer moving the implementation toward the documented rule, not patching the docs to match the code.
@@ -23,6 +23,7 @@ When implementing a change:
 3. Prefer minimal, coherent patches over scattered fixes.
 4. Preserve persisted data compatibility unless the user explicitly asks for a breaking change.
 5. Update docs when user-facing rules or setup instructions change.
+6. Known deferred issues live in [TOFIX.md](./TOFIX.md) — check it when picking up polish work or touching the listed areas.
 
 When making gameplay changes, explicitly sanity-check before calling the task done:
 
@@ -52,4 +53,4 @@ The current deployment story (not covered in AGENTS.md):
 - Local writable `db.json`.
 - Local writable `logs/`.
 
-Documented deployment commands live in [README.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/README.md).
+Documented deployment commands live in [README.md](./README.md).

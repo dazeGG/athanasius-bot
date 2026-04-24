@@ -2,7 +2,7 @@ import { DeckConfig } from '~/entities/deck';
 import type { GameLog, GameUtils, GameUtilsParsed } from '~/db';
 
 function parseGameLog (originalLog: string): GameLog {
-	const [from, to, cardName, steal, stealData] = originalLog.split(':');
+	const [from, to, cardName, steal, stealData, athanasius] = originalLog.split(':');
 	const parsed: Partial<GameLog> = {};
 
 	parsed.from = Number(from);
@@ -40,12 +40,16 @@ function parseGameLog (originalLog: string): GameLog {
 		parsed.stealData = parsedStealData as [number] | [number, number] | [number, number, number, number];
 	}
 
+	if (athanasius === '1') {
+		parsed.athanasius = true;
+	}
+
 	return parsed as GameLog;
 }
 
 function generateGameLog (log: GameLog): string {
-	const { from, to, cardName, steal, stealData } = log;
-	return `${from}:${to}:${cardName}:${steal ? 1 : 0}:${stealData ? stealData.join(',') : ''}`;
+	const { from, to, cardName, steal, stealData, athanasius } = log;
+	return `${from}:${to}:${cardName}:${steal ? 1 : 0}:${stealData ? stealData.join(',') : ''}:${athanasius ? 1 : 0}`;
 }
 
 export function parseGameUtils (gameUtils: GameUtils): GameUtilsParsed {

@@ -1,5 +1,5 @@
 /**
- * game/index.ts — layered simulator coverage for the full staged game flow.
+ * game/index.ts — layered tests coverage for the full staged game flow.
  */
 import type { ModuleTools } from '../../runner';
 
@@ -11,7 +11,7 @@ import { runProgressionLayer } from './layers/progression';
 import { runStartupLayer } from './layers/startup';
 
 /**
- * Runs the staged game flow by delegating execution to its logical test layers.
+ * Runs the staged game flow by delegating execution to its logical tests layers.
  */
 export async function gameFlow (tools: ModuleTools): Promise<void> {
 	await tools.runLayer('Startup', runStartupLayer);

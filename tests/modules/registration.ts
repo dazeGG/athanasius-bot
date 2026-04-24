@@ -130,7 +130,7 @@ const assertInvalidPendingName = async (
 };
 
 /**
- * Runs simulator coverage for the registration command and name validation flow.
+ * Runs tests coverage for the registration command and name validation flow.
  */
 export async function registrationModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('../../src/modules/reg/handlers');

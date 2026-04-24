@@ -50,7 +50,7 @@ const seedRegisteredUsers = async (players: readonly PlayerFixture[]): Promise<v
 };
 
 /**
- * Runs simulator coverage for the `/start` command entrypoints.
+ * Runs tests coverage for the `/start` command entrypoints.
  */
 export async function startModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('../../src/modules/start/handlers');
