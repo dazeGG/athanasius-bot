@@ -41,18 +41,21 @@ export const settingsStartMessageHandler = async (ctx: AppContext) => {
 export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
+	const action = ctx.callbackQuery.data.split(':')[1];
+
+	if (action !== 'exit' && ORM.Games.isInActiveGame(ctx.from.id)) {
+		await ctx.editMessageText('Нельзя менять настройки во время игры :(');
+		return;
+	}
+
 	const me = ORM.Users.get(ctx.from.id);
 
-	switch (ctx.callbackQuery.data.split(':')[1]) {
+	switch (action) {
 	case 'name':
 		await ctx.editMessageText(lib.txt.changeName);
 		ctx.session.flow = { name: 'SETTINGS_CHANGE_NAME' };
 		break;
 	case 'updatesView':
-		if (ORM.Games.isInActiveGame(ctx.from.id)) {
-			await ctx.editMessageText('Нельзя менять настройки во время игры :(');
-			return;
-		}
 		await ORM.Users.update(
 			ctx.from.id,
 			{ updatesView: me.settings.updatesView === 'instant' ? 'composed' : 'instant' },
@@ -66,6 +69,11 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 };
 
 export const settingsChangeNameStateMessageHandler = async (ctx: MessageCtx) => {
+	if (ORM.Games.isInActiveGame(ctx.from!.id)) {
+		await ctx.reply('Нельзя менять настройки во время игры :(');
+		return;
+	}
+
 	const me = ORM.Users.get(ctx.from!.id);
 	const newName = ctx.message.text;
 

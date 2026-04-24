@@ -233,4 +233,50 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertDeleted(log, ALICE.id, 1);
 		assert(log.length === 1, 'Exit callback should only delete the settings message');
 	});
+
+	await runCase('Blocks rename callback during an active game', async () => {
+		await resetSettingsCase();
+		await seedActiveGameFor(ALICE);
+
+		await handlers.settingsCallbackHandler(makeCallbackCtx(ALICE, 'name'));
+
+		const log = getLog();
+		assertSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
+		assertNotSent(log, ALICE.id, 'напиши мне новое имя');
+		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Rename flow must not be set when blocked by an active game');
+	});
+
+	await runCase('Blocks updatesView callback during an active game', async () => {
+		await resetSettingsCase();
+		await seedActiveGameFor(ALICE);
+
+		await handlers.settingsCallbackHandler(makeCallbackCtx(ALICE, 'updatesView'));
+
+		const log = getLog();
+		assertSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
+		assert(getUser(ALICE.id).settings.updatesView === ALICE.updatesView, 'updatesView must not change when blocked by an active game');
+	});
+
+	await runCase('Exit callback still closes settings during an active game', async () => {
+		await resetSettingsCase();
+		await seedActiveGameFor(ALICE);
+
+		await handlers.settingsCallbackHandler(makeCallbackCtx(ALICE, 'exit'));
+
+		const log = getLog();
+		assertDeleted(log, ALICE.id, 1);
+		assertNotSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
+	});
+
+	await runCase('Blocks rename state message during an active game', async () => {
+		await resetSettingsCase();
+		await seedActiveGameFor(ALICE);
+		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
+
+		await handlers.settingsChangeNameStateMessageHandler(makeMessageCtx(ALICE, 'Алевтина'));
+
+		const log = getLog();
+		assertSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
+		assert(getUser(ALICE.id).name === ALICE.name, 'Name must not change when rename message is blocked by an active game');
+	});
 }
