@@ -2,7 +2,7 @@ import { DB } from '~/db';
 import type { ConfirmModeSettings, UserSchema } from '~/db';
 import { BOT, logGameEvent } from '~/core';
 import { Game, processTurn, TurnStage } from '~/entities/game';
-import type { TurnMeta, CardStageMeta, CountStageMeta, ColorsStageMeta, SuitsStageMeta } from '~/entities/game';
+import type { TurnMeta, CountStageMeta, ColorsStageMeta, SuitsStageMeta } from '~/entities/game';
 import { getCallbackMeta } from '~/core/lib';
 import { GameMessage, gkb, buildConfirmKeyboard } from '~/shared/ui/game';
 import type { CallbackCtx } from '~/core';
@@ -24,7 +24,10 @@ const logSlowOperation = (startTime: number): void => {
 };
 
 function isConfirmEnabledForStage (confirmMode: ConfirmModeSettings | undefined, turnMeta: TurnMeta): boolean {
-	if (!confirmMode) return false;
+	if (!confirmMode) {
+		return false;
+	}
+
 	switch (turnMeta.stage) {
 	case TurnStage.card: return confirmMode.card;
 	case TurnStage.count: return confirmMode.count;
@@ -105,7 +108,10 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 
 	try {
 		const resolved = await resolveTurnContext(ctx, callbackMeta);
-		if (!resolved) return;
+		if (!resolved) {
+			return;
+		}
+
 		const { turnMeta, game, me } = resolved;
 
 		if (isConfirmEnabledForStage(me.settings.confirmMode, turnMeta) && isConfirmTrigger(turnMeta)) {
@@ -140,7 +146,10 @@ export const gameTurnConfirmCallbackHandler = async (ctx: CallbackCtx) => {
 
 	try {
 		const resolved = await resolveTurnContext(ctx, callbackMeta);
-		if (!resolved) return;
+		if (!resolved) {
+			return;
+		}
+
 		const { turnMeta, game, me } = resolved;
 
 		await processTurn({ ctx, game, me, turnMeta, sender: BOT.api.sendMessage.bind(BOT.api) });
@@ -186,7 +195,10 @@ export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 		if (prefix === 'p') {
 			const [gameId] = rest;
 			const resolved = await resolveActivePlayerForGame(ctx, gameId);
-			if (!resolved) return;
+			if (!resolved) {
+				return;
+			}
+
 			const { game, me } = resolved;
 
 			await ctx.editMessageText(
@@ -202,7 +214,10 @@ export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 		if (prefix === 'c') {
 			const [gameId, playerIdStr] = rest;
 			const resolved = await resolveActivePlayerForGame(ctx, gameId);
-			if (!resolved) return;
+			if (!resolved) {
+				return;
+			}
+
 			const { game, me } = resolved;
 
 			const turnMeta = lib.parseTurnMeta(`${TurnStage.player}#${gameId}#${playerIdStr}`);
@@ -217,7 +232,10 @@ export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 		}
 
 		const resolved = await resolveTurnContext(ctx, callbackMeta);
-		if (!resolved) return;
+		if (!resolved) {
+			return;
+		}
+
 		const { turnMeta, game } = resolved;
 
 		switch (turnMeta.stage) {
