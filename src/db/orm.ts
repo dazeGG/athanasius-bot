@@ -183,7 +183,7 @@ class Games {
 	}
 
 	public static isInActiveGame (myId: UserId): boolean {
-		return Games.getActiveWithMe(myId).length > 0;
+		return DB.data.games.some(g => g.players.includes(myId) && !g.ended);
 	}
 
 	public static getById (id: GameId): GameSchema {
