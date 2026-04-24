@@ -103,8 +103,6 @@ export interface TurnOptions {
 	options: HandHasOptions;
 }
 
-export interface TurnReturn {
-	success: boolean;
-	composeAthanasius?: boolean;
-	gameEnded?: boolean;
-}
+export type TurnReturn =
+	| { success: false }
+	| { success: true; composeAthanasius: boolean; gameEnded: boolean };

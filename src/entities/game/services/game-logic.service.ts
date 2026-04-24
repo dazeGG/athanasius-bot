@@ -106,17 +106,17 @@ export async function processTurn ({ ctx, game, me, turnMeta, sender }: GameServ
 			await updateSuitsMessage({ ctx, game, turnMeta, newSuits, sender });
 			return;
 		}
-		const { success, composeAthanasius, gameEnded } = await game.turn({
+		const result = await game.turn({
 			me: me.id,
 			turnMeta,
 			options: { cardName: turnMeta.cardName, suits: turnMeta.suits },
 		});
-		if (!success) {
+		if (!result.success) {
 			await notifyWrongSuitsMessage({ ctx, game, me, turnMeta, sender });
 			return;
 		}
-		await notifyStealMessage({ ctx, game, me, turnMeta, sender }, composeAthanasius ?? false);
-		if (gameEnded) {
+		await notifyStealMessage({ ctx, game, me, turnMeta, sender }, result.composeAthanasius);
+		if (result.gameEnded) {
 			await notifyEndGameMessage(game, sender);
 			return;
 		}

@@ -210,7 +210,7 @@ export class Game {
 
 	private async handleSuccessfulTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
 		if (turnMeta.stage !== TurnStage.suits) {
-			return { success: true };
+			return { success: true, composeAthanasius: false, gameEnded: false };
 		}
 
 		const newAthanasiuses = this.hands.moveCards(me, turnMeta.player.id, turnMeta.cardName, this.utils);
