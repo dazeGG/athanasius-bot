@@ -15,7 +15,7 @@ const PLAYERS = [
 ] as const;
 
 const [ALICE, , CAROL] = PLAYERS;
-const SETTINGS_KEYBOARD_LABELS = 'Имя · Вид обновлений · Выход';
+const SETTINGS_KEYBOARD_LABELS = 'Имя · Вид обновлений · Режим подтверждения · Выход';
 
 type PlayerFixture = (typeof PLAYERS)[number];
 

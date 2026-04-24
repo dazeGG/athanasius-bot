@@ -9,5 +9,7 @@ const composer = new Composer<AppContext>();
 const registered = composer.filter(isRegistered);
 
 registered.callbackQuery(/^g:t:/, handlers.gameTurnCallbackHandler);
+registered.callbackQuery(/^g:tc:/, handlers.gameTurnConfirmCallbackHandler);
+registered.callbackQuery(/^g:tb:/, handlers.gameTurnBackCallbackHandler);
 
 export default composer;

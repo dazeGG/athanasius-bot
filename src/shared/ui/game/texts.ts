@@ -26,4 +26,5 @@ export const txt = {
 	blackCountError: 'Количество черных мастей не должно быть больше выбранного',
 	suitsCountError: 'Количество мастей не должно быть больше выбранного количества карт',
 	gameMessageResendSuccess: 'Игровое сообщение успешно отправлено!',
+	confirmQuestion: 'Спрашиваем?',
 } as const;

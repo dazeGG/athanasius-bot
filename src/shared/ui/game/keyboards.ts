@@ -43,6 +43,8 @@ interface SuitsSelectGKBOptions extends BaseStageOptions {
 }
 
 const gameTurnCallback = (meta: string) => stringifyCallbackData({ module: 'g', action: 't', meta });
+const gameTurnConfirmCallback = (meta: string) => stringifyCallbackData({ module: 'g', action: 'tc', meta });
+const gameTurnBackCallback = (meta: string) => stringifyCallbackData({ module: 'g', action: 'tb', meta });
 
 export const gkb = {
 	playersSelect: ({ me, gameId, playerIds }: PlayersSelectGKBOptions): InlineKeyboard => {
@@ -91,6 +93,7 @@ export const gkb = {
 			});
 			keyboard.row();
 		});
+		keyboard.text('Назад', gameTurnBackCallback(`p#${game.gameId}`));
 		return keyboard;
 	},
 
@@ -150,6 +153,17 @@ export const gkb = {
 		return keyboard;
 	},
 } as const;
+
+interface ConfirmSelectGKBOptions {
+	yesMeta: string;
+	noMeta: string;
+}
+
+export function buildConfirmKeyboard ({ yesMeta, noMeta }: ConfirmSelectGKBOptions): InlineKeyboard {
+	return new InlineKeyboard()
+		.text('Да', gameTurnConfirmCallback(yesMeta))
+		.text('Нет', gameTurnBackCallback(noMeta));
+}
 
 function buildSelectKeyboard (baseMeta: string, canDecrement: boolean, canIncrement: boolean): InlineKeyboard {
 	const keyboard = new InlineKeyboard();

@@ -6,8 +6,16 @@ export type UserId = number;
 export type RoomId = ReturnType<typeof nanoid>;
 export type GameId = ReturnType<typeof nanoid>;
 
+export interface ConfirmModeSettings {
+	card: boolean;
+	count: boolean;
+	colors: boolean;
+	suits: boolean;
+}
+
 export interface UserSettings {
 	updatesView: 'instant' | 'composed';
+	confirmMode?: ConfirmModeSettings;
 }
 
 export interface RoomSettings {
