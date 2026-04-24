@@ -18,6 +18,7 @@ export interface GameSchema {
 	hands: Record<UserId, number[]>;
 	athanasiuses: Record<UserId, string[]>;
 	utils: GameUtils;
+	notes?: Record<UserId, Record<string, UserId | null>>;
 }
 
 export interface RoomSchema {

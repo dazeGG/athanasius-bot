@@ -166,14 +166,16 @@ export class Game {
 	}
 
 	public async save (): Promise<void> {
+		const schema = this.toSchema();
 		const index = DB.data.games.findIndex(g => g.id === this.id);
 
 		if (index >= 0) {
-			DB.data.games[index] = this.toSchema();
+			const notes = this.ended ? undefined : DB.data.games[index].notes;
+			DB.data.games[index] = notes ? { ...schema, notes } : schema;
 			await DB.write();
 		} else {
 			await DB.update(({ games }) => {
-				games.push(this.toSchema());
+				games.push(schema);
 				return { games };
 			});
 		}
