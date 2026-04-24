@@ -107,7 +107,8 @@ export const gkb = {
 		return buildSelectKeyboard(baseMeta, redCount > 0, redCount < turnMeta.count);
 	},
 
-	suitsSelect: ({ game, turnMeta, suits }: SuitsSelectGKBOptions): InlineKeyboard => {		const actionButtons: string[] = [];
+	suitsSelect: ({ game, turnMeta, suits }: SuitsSelectGKBOptions): InlineKeyboard => {
+		const actionButtons: string[] = [];
 		const baseMeta = `${TurnStage.suits}#${game.gameId}#${turnMeta.player.id}#${turnMeta.cardName}#${turnMeta.count}#${turnMeta.redCount}#${suits.hearts}!${suits.diamonds}!${suits.spades}!${suits.clubs}!${suits.mode}`;
 
 		if (turnMeta.redCount > 0) {
