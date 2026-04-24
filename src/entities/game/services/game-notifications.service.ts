@@ -37,7 +37,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 	if (initial) {
 		text = txt.firstTurnMessage;
 	} else {
-		text = '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
+		text = txt.turnMessage;
 
 		if (game.activePlayer.settings.updatesView === 'composed') {
 			const lastRoundLogs = game.getLastRoundLogs();
@@ -56,7 +56,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 	});
 }
 
-export async function notifyNextStage ({ ctx, game, me, turnMeta }: GameServiceOptions) {
+export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptions) {
 	switch (turnMeta.stage) {
 	case TurnStage.player:
 		await ctx.editMessageText(

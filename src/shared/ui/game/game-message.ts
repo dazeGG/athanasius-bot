@@ -64,10 +64,6 @@ export class GameMessage {
 		return choiceMessage;
 	}
 
-	public static getFirstMessage (initialMessage: boolean): string {
-		return initialMessage ? txt.firstTurnMessage : '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
-	}
-
 	public static getCardSelectMessage (turnMeta: TurnMeta): string {
 		return this.generateChoiceMessage(turnMeta) + '\n' + txt.turnCardSelect;
 	}
@@ -104,15 +100,15 @@ export class GameMessage {
 
 		if (turnMeta.count && turnMeta.redCount !== undefined && turnMeta.blackCount !== undefined) {
 			if (suits.hearts + suits.diamonds > turnMeta.redCount) {
-				text += `\n\n⚠️<b>${txt.redCountError}</b>`;
+				text += `\n\n⚠️ <b>${txt.redCountError}</b>`;
 			}
 
 			if (suits.spades + suits.clubs > turnMeta.blackCount) {
-				text += `\n\n⚠️<b>${txt.blackCountError}</b>`;
+				text += `\n\n⚠️ <b>${txt.blackCountError}</b>`;
 			}
 
 			if (suits.hearts + suits.diamonds + suits.spades + suits.clubs > turnMeta.count) {
-				text += `\n\n⚠️<b>${txt.suitsCountError}</b>`;
+				text += `\n\n⚠️ <b>${txt.suitsCountError}</b>`;
 			}
 		}
 
