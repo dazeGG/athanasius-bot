@@ -1,5 +1,5 @@
 /**
- * runner.ts — lightweight test runner, no project dependencies.
+ * runner.ts — lightweight tests runner, no project dependencies.
  */
 
 import type { CapturedMsg } from './bootstrap';
@@ -116,7 +116,7 @@ const printFlowCompactDetails = (result: RunResult): void => {
 const getKindTitle = (kind: RunKind): string => kind === 'module' ? 'module' : 'flow';
 
 /**
- * Updates runner behavior for the current simulator invocation.
+ * Updates runner behavior for the current tests invocation.
  */
 export function setRunnerOptions (options: Partial<RunnerOptions>): void {
 	Object.assign(runnerOptions, options);
@@ -285,7 +285,7 @@ export async function run (
 }
 
 /**
- * Prints the aggregated simulator summary and sets the exit code on failures.
+ * Prints the aggregated tests summary and sets the exit code on failures.
  */
 export function printSummary (): void {
 	const modules = results.filter(r => r.kind === 'module');
@@ -344,7 +344,7 @@ export function printSummary (): void {
 }
 
 /**
- * Throws with the provided message when a test condition is not met.
+ * Throws with the provided message when a tests condition is not met.
  */
 export function assert (condition: boolean, message: string): void {
 	if (!condition) {

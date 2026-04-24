@@ -287,7 +287,7 @@ mockedBot.api.sendMessage = async (chatId: number, text: string, options?: Messa
 
 // ─── Log API ──────────────────────────────────────────────────────────────────
 /**
- * Returns the captured simulator transport log for the current test case.
+ * Returns the captured tests transport log for the current tests case.
  */
 export const getLog = (): readonly CapturedMsg[] => _log;
 
@@ -300,7 +300,7 @@ export const resetLog = (): void => {
 
 // ─── DB helpers ───────────────────────────────────────────────────────────────
 /**
- * Resets the test database to an empty persisted snapshot.
+ * Resets the tests database to an empty persisted snapshot.
  */
 export async function clearDB (): Promise<void> {
 	setDBData({ users: [], rooms: [], games: [] });
@@ -321,7 +321,7 @@ export function setDBData (data: { users: unknown[]; rooms: unknown[]; games: un
 }
 
 /**
- * Seeds the simulator database with a full explicit snapshot for one case.
+ * Seeds the tests database with a full explicit snapshot for one case.
  */
 export async function seedDB (data: {
 	users: UserSchema[];
@@ -332,7 +332,7 @@ export async function seedDB (data: {
 	await DB.write();
 }
 
-// ─── Re-exports for simulator modules ─────────────────────────────────────────
+// ─── Re-exports for tests modules ─────────────────────────────────────────
 export {
 	DB,
 };

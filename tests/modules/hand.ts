@@ -212,7 +212,7 @@ const seedTwoActiveGames = async (): Promise<void> => {
 };
 
 /**
- * Runs simulator coverage for hand listing, opening, navigation, and closing.
+ * Runs tests coverage for hand listing, opening, navigation, and closing.
  */
 export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('../../src/modules/hand/handlers');

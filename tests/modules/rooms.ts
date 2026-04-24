@@ -204,7 +204,7 @@ const setupRoomWithPlayers = async (
 };
 
 /**
- * Runs simulator coverage for room management, membership, settings, and start-game entrypoints.
+ * Runs tests coverage for room management, membership, settings, and start-game entrypoints.
  */
 export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 	const handlers = await import('../../src/modules/rooms/handlers');

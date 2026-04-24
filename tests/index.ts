@@ -1,11 +1,11 @@
 /**
- * simulator/index.ts — top-level simulator entrypoint.
+ * tests/index.ts — top-level tests entrypoint.
  *
- * Loads the test environment, runs feature modules first, then executes
+ * Loads the tests environment, runs feature modules first, then executes
  * broader cross-module flows such as the staged game flow.
  *
- * Run all checks: `pnpm test`
- * Show help: `pnpm test --help`
+ * Run all checks: `pnpm tests`
+ * Show help: `pnpm tests --help`
  */
 
 import { config } from 'dotenv';
@@ -31,8 +31,8 @@ Flags:
 	process.exit(0);
 }
 
-// ─── Load test env BEFORE any project code is imported ───────────────────────
-config({ path: '.env.test', override: true });
+// ─── Load tests env BEFORE any project code is imported ───────────────────────
+config({ path: '.env.tests', override: true });
 
 // ─── Project code via dynamic imports (env is now set) ───────────────────────
 await import('./bootstrap');
@@ -51,7 +51,7 @@ const fullLogs = args.includes('--full-logs');
 
 setRunnerOptions({ fullLogs });
 
-console.log('\n🎮  Athanasius simulator\n');
+console.log('\n🎮  Athanasius tests\n');
 console.log('Modules:\n');
 
 await run('Core', coreModule);
@@ -80,7 +80,7 @@ if (dbg) {
 printSummary();
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
-const dbFile = process.env.DB_FILE ?? 'db.test.json';
+const dbFile = process.env.DB_FILE ?? 'db.tests.json';
 const saveDb = args.includes('--save-db');
 
 if (saveDb) {

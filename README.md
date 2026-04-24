@@ -129,7 +129,7 @@ pnpm typecheck
 Симулятор сценариев и регрессий:
 
 ```bash
-pnpm test
+pnpm tests
 ```
 
 ## Особенности рантайма
