@@ -200,7 +200,7 @@ export const notesCycleCallbackHandler = async (ctx: CallbackCtx) => {
 };
 
 export const notesSuitCallbackHandler = async (ctx: CallbackCtx) => {
-	await ctx.answerCallbackQuery();
+	await ctx.answerCallbackQuery({ text: 'Это заголовок масти' });
 };
 
 export const notesExitCallbackHandler = async (ctx: CallbackCtx) => {
