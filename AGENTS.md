@@ -51,7 +51,7 @@ The following room settings exist in the schema but are not active product featu
 
 Active user settings:
 
-- `updatesView`: controls how in-game notifications are delivered. `'instant'` sends each event (steal, fail, Athanasius) as it happens. `'composed'` suppresses real-time events for that player and instead delivers a summary of the last round at the start of their next turn. Players with `composed` view are excluded from broadcast mailings in the notification service — preserve this exclusion whenever adding new game notifications.
+- `updatesView`: controls how in-game notifications are delivered. `'instant'` sends each event (steal, fail, Athanasius) as it happens. `'composed'` suppresses real-time events for that player and instead delivers a summary of the last round at the start of their next turn. Players with `composed` view are excluded from broadcast mailings in the notification service — preserve this exclusion whenever adding new game notifications. Exception: when a player is the direct victim of a steal, they always receive an instant notification about their own card being taken, regardless of `updatesView`. The composed exclusion applies to observer broadcasts, not to the victim's own event.
 
 ## Target Game Rules
 
@@ -175,7 +175,7 @@ type(scope): imperative summary
 Default expectations:
 
 - prefer lowercase commit types such as `refactor`, `fix`, `feat`, `test`, `docs`, `chore`;
-- prefer a scope when the change is localized, for example `core`, `modules`, `game`, `simulator`, `db`, `deps`;
+- prefer a scope when the change is localized, for example `core`, `modules`, `game`, `tests`, `db`, `deps`;
 - keep the summary short, in English, and action-oriented;
 - keep each commit behaviorally coherent — do not mix unrelated refactors and test rewrites in one commit unless they are inseparable;
 - avoid `wip` and vague subjects such as `misc changes` or `fix stuff`.
