@@ -23,6 +23,7 @@ When implementing a change:
 3. Prefer minimal, coherent patches over scattered fixes.
 4. Preserve persisted data compatibility unless the user explicitly asks for a breaking change.
 5. Update docs when user-facing rules or setup instructions change.
+6. Known deferred issues live in [TOFIX.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/TOFIX.md) — check it when picking up polish work or touching the listed areas.
 
 When making gameplay changes, explicitly sanity-check before calling the task done:
 
