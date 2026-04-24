@@ -15,7 +15,7 @@ export class InfoMessage {
 		return trailing ? `${base} | ${trailing}` : base;
 	}
 
-	private static meWrongHeader (turnMeta: { player: { name: string } }): string {
+	private static meWrongHeader (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {
 		return '🟥 <b>К сожалению, ты не угадал</b>\n\n' +
 			`Игрок: ${escapeHtml(turnMeta.player.name)}\n`;
 	}
