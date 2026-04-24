@@ -1,4 +1,5 @@
 import { DB } from '~/db';
+import type { ConfirmModeSettings } from '~/db';
 import { BOT, logGameEvent } from '~/core';
 import { Game, processTurn, TurnStage } from '~/entities/game';
 import type { TurnMeta, CardStageMeta, CountStageMeta, ColorsStageMeta, SuitsStageMeta } from '~/entities/game';
@@ -21,6 +22,17 @@ const logSlowOperation = (startTime: number): void => {
 		});
 	}
 };
+
+function isConfirmEnabledForStage (confirmMode: ConfirmModeSettings | undefined, turnMeta: TurnMeta): boolean {
+	if (!confirmMode) return false;
+	switch (turnMeta.stage) {
+	case TurnStage.card: return confirmMode.card;
+	case TurnStage.count: return confirmMode.count;
+	case TurnStage.colors: return confirmMode.colors;
+	case TurnStage.suits: return confirmMode.suits;
+	default: return false;
+	}
+}
 
 function isConfirmTrigger (turnMeta: TurnMeta): boolean {
 	switch (turnMeta.stage) {
@@ -88,7 +100,7 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 
 		lib.validateTurnMeta({ game, me, turnMeta });
 
-		if (me.settings.confirmMode && isConfirmTrigger(turnMeta)) {
+		if (isConfirmEnabledForStage(me.settings.confirmMode, turnMeta) && isConfirmTrigger(turnMeta)) {
 			await showConfirm(ctx, turnMeta, callbackMeta);
 			return;
 		}
