@@ -55,6 +55,7 @@ interface RoomOptions {
 interface GameOptions {
 	id?: string;
 	roomId?: string;
+	name?: string;
 	players?: readonly number[];
 	hands?: Record<number, number[]>;
 	athanasiuses?: Record<number, string[]>;
@@ -121,6 +122,7 @@ export const makeGameLog = ({ from, to, cardName, steal, stealData, athanasius }
 export const makeGame = ({
 	id = 'game-flow',
 	roomId = 'room-game',
+	name = 'Игровая комната',
 	players = [ALICE.id, BOB.id, CAROL.id],
 	hands,
 	athanasiuses,
@@ -136,6 +138,7 @@ export const makeGame = ({
 	return {
 		id,
 		roomId,
+		name,
 		started,
 		ended,
 		players: gamePlayers,
@@ -192,7 +195,7 @@ export const resetGameFlowCase = async (): Promise<void> => {
 /**
  * Loads a `Game` aggregate from the current tests database.
  */
-export const getGame = (gameId = 'game-flow'): Game => new Game({ id: gameId });
+export const getGame = (gameId = 'game-flow'): InstanceType<typeof Game> => new Game({ id: gameId });
 
 /**
  * Loads the seeded room fixture from the current tests database.

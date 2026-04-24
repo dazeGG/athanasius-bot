@@ -56,6 +56,7 @@ const ROOM_TWO = {
 const makeGame = (id: string, roomId: string, decksCount: number, extra: Record<string, unknown> = {}) => ({
 	id,
 	roomId,
+	name: roomId === ROOM.id ? ROOM.name : ROOM_TWO.name,
 	started: Date.now(),
 	players: [ALICE.id, BOB.id, CAROL.id],
 	hands: { [ALICE.id]: [], [BOB.id]: [], [CAROL.id]: [] },

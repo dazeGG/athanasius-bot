@@ -84,6 +84,7 @@ const seedActiveGame = async (): Promise<void> => {
 			{
 				id: 'game1',
 				roomId: 'room1',
+				name: 'Комната активной игры',
 				started: Date.now(),
 				players: [ALICE.id, 1002, 1003],
 				hands: { [ALICE.id]: [], 1002: [], 1003: [] },

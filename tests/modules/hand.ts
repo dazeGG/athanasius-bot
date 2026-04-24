@@ -137,6 +137,7 @@ const seedOneActiveGame = async (): Promise<void> => {
 			{
 				id: 'game1',
 				roomId: ROOM_ONE.id,
+				name: ROOM_ONE.name,
 				started: Date.now(),
 				players: [ALICE.id, BOB.id],
 				hands: {
@@ -173,6 +174,7 @@ const seedTwoActiveGames = async (): Promise<void> => {
 			{
 				id: 'game1',
 				roomId: ROOM_ONE.id,
+				name: ROOM_ONE.name,
 				started: Date.now(),
 				players: [ALICE.id, BOB.id],
 				hands: {
@@ -191,6 +193,7 @@ const seedTwoActiveGames = async (): Promise<void> => {
 			{
 				id: 'game2',
 				roomId: ROOM_TWO.id,
+				name: ROOM_TWO.name,
 				started: Date.now() + 1,
 				players: [ALICE.id, CAROL.id],
 				hands: {
@@ -227,6 +230,7 @@ const seedEndedGame = async (): Promise<void> => {
 			{
 				id: 'game-ended',
 				roomId: ROOM_ONE.id,
+				name: ROOM_ONE.name,
 				started: Date.now() - 10_000,
 				ended: Date.now(),
 				players: [ALICE.id, BOB.id],
@@ -264,6 +268,7 @@ const seedActiveAndEndedGames = async (): Promise<void> => {
 			{
 				id: 'game-active',
 				roomId: ROOM_ONE.id,
+				name: ROOM_ONE.name,
 				started: Date.now(),
 				players: [ALICE.id, BOB.id],
 				hands: {
@@ -282,6 +287,7 @@ const seedActiveAndEndedGames = async (): Promise<void> => {
 			{
 				id: 'game-ended',
 				roomId: ROOM_TWO.id,
+				name: ROOM_TWO.name,
 				started: Date.now() - 10_000,
 				ended: Date.now(),
 				players: [ALICE.id, CAROL.id],
@@ -319,6 +325,7 @@ const seedGameWithEmptyHand = async (): Promise<void> => {
 			{
 				id: 'game1',
 				roomId: ROOM_ONE.id,
+				name: ROOM_ONE.name,
 				started: Date.now(),
 				players: [ALICE.id, BOB.id],
 				hands: {

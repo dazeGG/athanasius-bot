@@ -58,7 +58,6 @@ export class SettingsHandlers {
 	}
 
 	public static async changeDecksCountMessage (ctx: MessageCtx) {
-		const me = ctx.from!;
 		const { text } = ctx.message;
 		const stateContext = ctx.session.flow.name === 'ROOM_CDC'
 			? { roomId: ctx.session.flow.roomId }

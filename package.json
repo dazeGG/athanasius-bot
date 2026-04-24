@@ -9,7 +9,7 @@
     "start": "tsx src/index.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.eslint.json",
     "test": "tsx tests/index.ts"
   },
   "keywords": [],

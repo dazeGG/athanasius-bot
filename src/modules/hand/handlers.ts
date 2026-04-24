@@ -5,7 +5,7 @@ import { Deck } from '~/entities/deck';
 import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
-import type { CallbackCtx, AppContext, MessageCtx } from '~/core';
+import type { CallbackCtx, AppContext } from '~/core';
 
 import * as ui from './ui';
 
