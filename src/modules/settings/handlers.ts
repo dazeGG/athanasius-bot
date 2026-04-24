@@ -72,7 +72,9 @@ export const settingsStartMessageHandler = async (ctx: AppContext) => {
 export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
-	const action = ctx.callbackQuery.data.split(':')[1];
+	const _rawData = ctx.callbackQuery.data;
+	const _afterModule = _rawData.slice(_rawData.indexOf(':') + 1);
+	const action = _afterModule.slice(0, _afterModule.lastIndexOf(':'));
 
 	if (action !== 'exit' && ORM.Games.isInActiveGame(ctx.from.id)) {
 		await ctx.editMessageText('Нельзя менять настройки во время игры :(');
