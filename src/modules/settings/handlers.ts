@@ -29,7 +29,7 @@ const getBaseSettingsKeyboard = () => {
 export const settingsStartMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
-	if (ORM.Games.getActiveWithMe(ctx.from!.id).length) {
+	if (ORM.Games.isInActiveGame(ctx.from!.id)) {
 		await ctx.reply('Нельзя менять настройки во время игры :(');
 		return;
 	}
@@ -49,7 +49,7 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 		ctx.session.flow = { name: 'SETTINGS_CHANGE_NAME' };
 		break;
 	case 'updatesView':
-		if (ORM.Games.getActiveWithMe(ctx.from.id).length) {
+		if (ORM.Games.isInActiveGame(ctx.from.id)) {
 			await ctx.editMessageText('Нельзя менять настройки во время игры :(');
 			return;
 		}
