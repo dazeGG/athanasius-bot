@@ -211,6 +211,134 @@ const seedTwoActiveGames = async (): Promise<void> => {
 	resetLog();
 };
 
+const seedEndedGame = async (): Promise<void> => {
+	await seedDB({
+		users: PLAYERS.map(player => ({
+			id: player.id,
+			username: player.username,
+			name: player.name,
+			settings: {
+				updatesView: 'instant' as const,
+			},
+			achievements: [],
+		})),
+		rooms: [ROOM_ONE],
+		games: [
+			{
+				id: 'game-ended',
+				roomId: ROOM_ONE.id,
+				started: Date.now() - 10_000,
+				ended: Date.now(),
+				players: [ALICE.id, BOB.id],
+				hands: {
+					[ALICE.id]: ALICE_HAND,
+					[BOB.id]: BOB_HAND,
+				},
+				athanasiuses: {
+					[ALICE.id]: [],
+					[BOB.id]: [],
+				},
+				utils: {
+					cardsToAthanasius: 16,
+					logs: [],
+				},
+			},
+		],
+	});
+	resetLog();
+};
+
+const seedActiveAndEndedGames = async (): Promise<void> => {
+	await seedDB({
+		users: PLAYERS.map(player => ({
+			id: player.id,
+			username: player.username,
+			name: player.name,
+			settings: {
+				updatesView: 'instant' as const,
+			},
+			achievements: [],
+		})),
+		rooms: [ROOM_ONE, ROOM_TWO],
+		games: [
+			{
+				id: 'game-active',
+				roomId: ROOM_ONE.id,
+				started: Date.now(),
+				players: [ALICE.id, BOB.id],
+				hands: {
+					[ALICE.id]: ALICE_HAND,
+					[BOB.id]: BOB_HAND,
+				},
+				athanasiuses: {
+					[ALICE.id]: [],
+					[BOB.id]: [],
+				},
+				utils: {
+					cardsToAthanasius: 16,
+					logs: [],
+				},
+			},
+			{
+				id: 'game-ended',
+				roomId: ROOM_TWO.id,
+				started: Date.now() - 10_000,
+				ended: Date.now(),
+				players: [ALICE.id, CAROL.id],
+				hands: {
+					[ALICE.id]: ALICE_HAND,
+					[CAROL.id]: CAROL_HAND,
+				},
+				athanasiuses: {
+					[ALICE.id]: [],
+					[CAROL.id]: [],
+				},
+				utils: {
+					cardsToAthanasius: 16,
+					logs: [],
+				},
+			},
+		],
+	});
+	resetLog();
+};
+
+const seedGameWithEmptyHand = async (): Promise<void> => {
+	await seedDB({
+		users: PLAYERS.map(player => ({
+			id: player.id,
+			username: player.username,
+			name: player.name,
+			settings: {
+				updatesView: 'instant' as const,
+			},
+			achievements: [],
+		})),
+		rooms: [ROOM_ONE],
+		games: [
+			{
+				id: 'game1',
+				roomId: ROOM_ONE.id,
+				started: Date.now(),
+				players: [ALICE.id, BOB.id],
+				hands: {
+					[ALICE.id]: [],
+					[BOB.id]: BOB_HAND,
+				},
+				athanasiuses: {
+					[ALICE.id]: [],
+					[BOB.id]: [],
+				},
+				utils: {
+					cardsToAthanasius: 16,
+					logs: [],
+				},
+			},
+		],
+	});
+	resetLog();
+};
+
 /**
  * Runs tests coverage for hand listing, opening, navigation, and closing.
  */
@@ -287,5 +415,38 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		const log = getLog();
 		assertDeleted(log, ALICE.id, 1);
 		assert(log.length === 1, 'Close callback should only delete the hand message');
+	});
+
+	await runCase('Ended game is not shown in the hand picker', async () => {
+		await resetHandCase();
+		await seedEndedGame();
+
+		await handlers.handMessageHandler(makeMessageCtx(ALICE, 'Рука'));
+
+		const log = getLog();
+		assertSent(log, ALICE.id, 'У тебя пока нет запущенных игр');
+	});
+
+	await runCase('Mix of active and ended games — only the active game appears', async () => {
+		await resetHandCase();
+		await seedActiveAndEndedGames();
+
+		await handlers.handMessageHandler(makeMessageCtx(ALICE, 'Рука'));
+
+		const log = getLog();
+		assertSent(log, ALICE.id, 'Выбери игру, руку в которой хочешь посмотреть');
+		assertSent(log, ALICE.id, ROOM_ONE.name);
+		const sentTexts = log.filter(m => m.type === 'send' && m.to === ALICE.id).map(m => m.text);
+		assert(!sentTexts.some(t => t.includes(ROOM_TWO.name)), 'Ended game room must not appear in the picker');
+	});
+
+	await runCase('Shows empty-hand message when player has no cards left', async () => {
+		await resetHandCase();
+		await seedGameWithEmptyHand();
+
+		await handlers.handShowCallbackHandler(makeCallbackCtx(ALICE, { module: 'hand', action: 'show', meta: 'game1' }));
+
+		const log = getLog();
+		assertSent(log, ALICE.id, 'У тебя закончились карты');
 	});
 }

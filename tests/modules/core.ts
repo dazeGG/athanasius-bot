@@ -4,7 +4,7 @@
 
 import type { ApiCallFn } from 'grammy';
 
-import { SESSIONS, BOT, clearDB, getLog, resetLog } from '../bootstrap';
+import { SESSIONS, BOT, clearDB, getLog, resetLog, seedDB } from '../bootstrap';
 import { assert, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
@@ -22,10 +22,18 @@ import {
 	STALE_GAME_MESSAGE_TEXT,
 } from '../flow/game/helpers';
 
+const seedUser = async (id: number, name: string) => {
+	await seedDB({
+		users: [{ id, username: undefined, name, settings: { updatesView: 'instant' as const }, achievements: [] }],
+		rooms: [],
+		games: [],
+	});
+};
+
 /**
  * Runs regression checks for shared core behavior.
  */
-export async function coreModule ({ runCase }: ModuleTools): Promise<void> {
+export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<void> {
 	await runCase('Clears both state and context, and drops stale context when state changes', async () => {
 		resetLog();
 		await clearDB();
@@ -116,5 +124,217 @@ export async function coreModule ({ runCase }: ModuleTools): Promise<void> {
 		);
 
 		assertSent(getLog(), BOB.id, STALE_GAME_MESSAGE_TEXT);
+	});
+
+	// ─── validateName ────────────────────────────────────────────────────────────
+
+	await runLayer('validateName — name validation rules', async ({ runCase }) => {
+		const { validateName } = await import('../../src/shared/lib');
+
+		await runCase('Rejects name shorter than 2 characters', async () => {
+			await clearDB();
+			const result = validateName('а');
+			assert(!result.success, 'Single-char name must be rejected');
+			assert(result.message.includes('короче 2'), 'Should mention minimum length');
+		});
+
+		await runCase('Accepts 2-character Cyrillic name (minimum boundary)', async () => {
+			await clearDB();
+			const result = validateName('аб');
+			assert(result.success, '2-char Cyrillic name must be accepted');
+		});
+
+		await runCase('Accepts 16-character Cyrillic name (maximum boundary)', async () => {
+			await clearDB();
+			const result = validateName('АБВГДЕЖЗИЙКЛМНОП');
+			assert(result.success, '16-char Cyrillic name must be accepted');
+		});
+
+		await runCase('Rejects name longer than 16 characters', async () => {
+			await clearDB();
+			const result = validateName('АБВГДЕЖЗИЙКЛМНОПР');
+			assert(!result.success, '17-char name must be rejected');
+			assert(result.message.includes('длиннее 16'), 'Should mention maximum length');
+		});
+
+		await runCase('Rejects name with Latin letters', async () => {
+			await clearDB();
+			const result = validateName('Alice');
+			assert(!result.success, 'Latin-only name must be rejected');
+			assert(result.message.includes('русские буквы'), 'Should explain charset restriction');
+		});
+
+		await runCase('Rejects name with digits', async () => {
+			await clearDB();
+			const result = validateName('Имя123');
+			assert(!result.success, 'Name with digits must be rejected');
+		});
+
+		await runCase('Rejects name containing a space', async () => {
+			await clearDB();
+			const result = validateName('Анна Иванова');
+			assert(!result.success, 'Name with space must be rejected');
+		});
+
+		await runCase('Accepts name with dash', async () => {
+			await clearDB();
+			const result = validateName('Анна-Юг');
+			assert(result.success, 'Name with Cyrillic and dash must be accepted');
+		});
+
+		await runCase('Accepts name with underscore', async () => {
+			await clearDB();
+			const result = validateName('Анна_Юг');
+			assert(result.success, 'Name with Cyrillic and underscore must be accepted');
+		});
+
+		await runCase('Rejects reserved name "имя" (exact case)', async () => {
+			await clearDB();
+			const result = validateName('имя');
+			assert(!result.success, '"имя" must be rejected');
+			assert(result.message.includes('нельзя взять'), 'Should say name is reserved');
+		});
+
+		await runCase('Rejects reserved name "ИМЯ" (uppercase — case-insensitive check)', async () => {
+			await clearDB();
+			const result = validateName('ИМЯ');
+			assert(!result.success, '"ИМЯ" must be rejected as a reserved name regardless of case');
+		});
+
+		await runCase('Rejects reserved name "вовощ"', async () => {
+			await clearDB();
+			const result = validateName('вовощ');
+			assert(!result.success, '"вовощ" must be rejected as reserved');
+		});
+
+		await runCase('Rejects name already taken by another user', async () => {
+			await clearDB();
+			await seedUser(1001, 'Алиса');
+			const result = validateName('Алиса', 9999);
+			assert(!result.success, 'Name taken by another user must be rejected');
+			assert(result.message.includes('уже используется'), 'Should say name is taken');
+		});
+
+		await runCase('Rejects taken name regardless of case (case-insensitive duplicate check)', async () => {
+			await clearDB();
+			await seedUser(1001, 'Алиса');
+			const result = validateName('алиса', 9999);
+			assert(!result.success, 'Lowercase variant of existing name must be rejected');
+		});
+
+		await runCase('Allows user to keep their own name (self-rename exclusion)', async () => {
+			await clearDB();
+			await seedUser(1001, 'Алиса');
+			const result = validateName('Алиса', 1001);
+			assert(result.success, 'User renaming to their own existing name must be allowed');
+		});
+	});
+
+	// ─── shuffleArray ─────────────────────────────────────────────────────────────
+
+	await runLayer('shuffleArray — Fisher-Yates shuffle', async ({ runCase }) => {
+		const { shuffleArray } = await import('../../src/shared/lib');
+
+		await runCase('Empty array returns empty array', () => {
+			const result = shuffleArray([]);
+			assert(result.length === 0, 'Shuffled empty array must be empty');
+		});
+
+		await runCase('Single-element array returns same single element', () => {
+			const result = shuffleArray([42]);
+			assert(result.length === 1, 'Length must be 1');
+			assert(result[0] === 42, 'Single element must be preserved');
+		});
+
+		await runCase('Shuffled array contains exactly the same elements', () => {
+			const input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+			const result = shuffleArray(input);
+			assert(result.length === input.length, 'Length must be preserved');
+			const sortedInput = [...input].sort((a, b) => a - b);
+			const sortedResult = [...result].sort((a, b) => a - b);
+			assert(
+				sortedInput.every((v, i) => v === sortedResult[i]),
+				'All original elements must be present exactly once',
+			);
+		});
+
+		await runCase('Does not mutate the original array', () => {
+			const input = [10, 20, 30, 40, 50];
+			const copy = [...input];
+			shuffleArray(input);
+			assert(
+				input.every((v, i) => v === copy[i]),
+				'Original array must not be modified',
+			);
+		});
+	});
+
+	// ─── stringifyCallbackData / getCallbackMeta ─────────────────────────────────
+
+	await runLayer('stringifyCallbackData / getCallbackMeta — callback encoding', async ({ runCase }) => {
+		const { stringifyCallbackData, getCallbackMeta } = await import('../../src/core/lib');
+
+		await runCase('Basic format: module:action:meta', () => {
+			const data = stringifyCallbackData({ module: 'hand', action: 'show', meta: 'game123' });
+			assert(data === 'hand:show:game123', `Expected "hand:show:game123", got "${data}"`);
+		});
+
+		await runCase('Back action produces module:back:meta', () => {
+			const data = stringifyCallbackData({ module: 'hand', back: true, meta: 'game123' });
+			assert(data === 'hand:back:game123', `Expected "hand:back:game123", got "${data}"`);
+		});
+
+		await runCase('Empty meta produces trailing colon', () => {
+			const data = stringifyCallbackData({ module: 'notes', action: 'exit' });
+			assert(data === 'notes:exit:', `Expected "notes:exit:", got "${data}"`);
+		});
+
+		await runCase('getCallbackMeta extracts meta after second colon', () => {
+			const meta = getCallbackMeta('hand:show:game123');
+			assert(meta === 'game123', `Expected "game123", got "${meta}"`);
+		});
+
+		await runCase('getCallbackMeta preserves colons inside meta', () => {
+			const meta = getCallbackMeta('notes:grid:gameABC:A');
+			assert(meta === 'gameABC:A', `Expected "gameABC:A", got "${meta}"`);
+		});
+
+		await runCase('getCallbackMeta returns undefined for empty meta', () => {
+			const meta = getCallbackMeta('notes:exit:');
+			assert(meta === undefined, `Expected undefined for empty meta, got "${meta}"`);
+		});
+
+		await runCase('Round-trip: stringify then parse gives back the same meta', () => {
+			const original = 'ng1:K:3:2';
+			const data = stringifyCallbackData({ module: 'notes', action: 'cycle', meta: original });
+			const parsed = getCallbackMeta(data);
+			assert(parsed === original, `Round-trip failed: expected "${original}", got "${parsed}"`);
+		});
+	});
+
+	// ─── isRegistered ────────────────────────────────────────────────────────────
+
+	await runLayer('isRegistered — registration guard', async ({ runCase }) => {
+		const { isRegistered } = await import('../../src/shared/lib');
+
+		await runCase('Returns true for a user that exists in DB', async () => {
+			await clearDB();
+			await seedUser(ALICE.id, ALICE.name);
+			const ctx = { from: { id: ALICE.id } } as never;
+			assert(isRegistered(ctx), 'Should return true for registered user');
+		});
+
+		await runCase('Returns false for a user that does not exist in DB', async () => {
+			await clearDB();
+			const ctx = { from: { id: 99999 } } as never;
+			assert(!isRegistered(ctx), 'Should return false for unregistered user');
+		});
+
+		await runCase('Returns false when ctx.from is absent', async () => {
+			await clearDB();
+			await seedUser(ALICE.id, ALICE.name);
+			const ctx = {} as never;
+			assert(!isRegistered(ctx), 'Should return false when from is absent');
+		});
 	});
 }

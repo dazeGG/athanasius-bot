@@ -2,11 +2,11 @@
  * registration.ts — /reg flow coverage split into explicit cases.
  */
 
-import { DB, SESSIONS, resetLog, getLog, clearDB, withMessageMethods } from '../bootstrap';
+import { DB, SESSIONS, resetLog, getLog, clearDB, seedDB, withMessageMethods } from '../bootstrap';
 import { assert, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
-const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Рука';
+const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Заметки · Рука';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
@@ -216,5 +216,35 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		await registerFreshPlayer(UNDERSCORE_NAME_PLAYER, handlers);
 
 		assert(DB.data.users.length === 2, 'DB should contain players with separator-based names');
+	});
+
+	await runCase('Updates name for already-registered user in REGISTRATION flow', async () => {
+		await resetRegistrationCase();
+		const player = PLAYERS[0];
+		await seedDB({
+			users: [{ id: player.id, username: player.username, name: player.name, settings: { updatesView: 'instant' as const }, achievements: [] }],
+			rooms: [],
+			games: [],
+		});
+		SESSIONS.setFlow(player.id, { name: 'REGISTRATION' });
+		resetLog();
+
+		const newName = 'Антонина';
+		await handlers.regNameStateMessageHandler(makeMessageCtx(player.id, newName, player.username));
+
+		const log = getLog();
+		assertSent(log, player.id, 'Поздравляю');
+		assertSent(log, player.id, GLOBAL_KEYBOARD_LABELS);
+		assert(SESSIONS.get(player.id).flow.name === undefined, 'Session should be cleared after rename');
+		const dbUser = DB.data.users.find(u => u.id === player.id);
+		assert(dbUser?.name === newName, `Name should be updated to "${newName}" in DB`);
+		assert(DB.data.users.length === 1, 'No duplicate user should be created on rename');
+	});
+
+	await runCase('Rejects reserved name "вовощ" during registration flow', async () => {
+		await resetRegistrationCase();
+		await startRegistration(RECOVERY_PLAYER, handlers);
+
+		await assertInvalidPendingName(RECOVERY_PLAYER, 'вовощ', 'Это имя нельзя взять', handlers, 0);
 	});
 }

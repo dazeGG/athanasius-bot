@@ -195,6 +195,23 @@ class Games {
 
 		return game;
 	}
+
+	public static getNote (gameId: GameId, userId: UserId): Record<string, UserId | null> {
+		const game = this.getById(gameId);
+		return game.notes?.[userId] ?? {};
+	}
+
+	public static async setNoteCell (gameId: GameId, userId: UserId, key: string, value: UserId | null): Promise<void> {
+		const game = this.getById(gameId);
+		if (!game.notes) {
+			game.notes = {};
+		}
+		if (!game.notes[userId]) {
+			game.notes[userId] = {};
+		}
+		game.notes[userId][key] = value;
+		await DB.write();
+	}
 }
 
 const ORM = {
