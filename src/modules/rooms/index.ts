@@ -44,5 +44,6 @@ registered.callbackQuery(/^rooms:back:/, handlers.backCallbackHandler);
 registered.callbackQuery(/^room:settings:/, SettingsHandlers.start);
 registered.callbackQuery(/^room:cjc:/, SettingsHandlers.changeJoinCode);
 registered.callbackQuery(/^room:cdc:/, SettingsHandlers.changeDecksCount);
+registered.callbackQuery(/^room:cdt:/, SettingsHandlers.changeDeckType);
 
 export default composer;

@@ -1,4 +1,5 @@
 import { ORM } from '~/db';
+import { getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
 import * as utils from './utils';
@@ -92,5 +93,50 @@ export class SettingsHandlers {
 			{ reply_markup: utils.getSettingsInlineKeyboard(room) },
 		);
 		ctx.session.flow = {};
+	}
+
+	public static async changeDeckType (ctx: CallbackCtx) {
+		await ctx.answerCallbackQuery();
+
+		const meta = getCallbackMeta(ctx.callbackQuery.data);
+
+		if (!meta) {
+			throw new Error('Meta required');
+		}
+
+		const [roomId, deckTypeStr] = meta.split(':');
+		const room = ORM.Rooms.getById(roomId);
+
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
+		if (!await utils.ensureRoomOwner(ctx, room)) {
+			return;
+		}
+
+		// If no deckType value, show the selection keyboard
+		if (!deckTypeStr) {
+			await ctx.editMessageText(
+				utils.getSettingsStartText(room) + '\n\nВыбери тип колоды',
+				{ reply_markup: utils.getDeckTypeInlineKeyboard(room) },
+			);
+			return;
+		}
+
+		const deckType = Number(deckTypeStr) as 36 | 52 | 54;
+
+		if (![36, 52, 54].includes(deckType)) {
+			throw new Error('Invalid deck type');
+		}
+
+		await ORM.Rooms.changeSettings(roomId, { deckType });
+
+		// Re-fetch room to get updated settings
+		const updatedRoom = ORM.Rooms.getById(roomId);
+		await ctx.editMessageText(
+			utils.getSettingsStartText(updatedRoom),
+			{ reply_markup: utils.getSettingsInlineKeyboard(updatedRoom) },
+		);
 	}
 }
