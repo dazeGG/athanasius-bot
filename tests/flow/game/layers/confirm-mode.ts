@@ -1,8 +1,8 @@
 /**
  * confirm-mode.ts — confirmMode game turn flow coverage.
  */
-import { getLog } from '../../../bootstrap';
-import { assert, assertSent, assertNotSent } from '../../../runner';
+import { getLog, resetLog } from '../../../bootstrap';
+import { assertSent, assertNotSent } from '../../../runner';
 import type { ModuleTools } from '../../../runner';
 import type { CallbackCtx } from '../../../../src/core';
 
@@ -19,6 +19,7 @@ import {
 	runTurn,
 	seedGameState,
 	turnMeta,
+	STALE_GAME_MESSAGE_TEXT,
 } from '../helpers';
 import type { PlayerFixture } from '../helpers';
 
@@ -230,8 +231,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(afterConfirmLog, ALICE.id, 'Спрашиваем?');
 
 		// Now press Да
-		resetGameFlowCase.toString(); // just a marker — we do resetLog via runConfirm
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		await runConfirm(ALICE, meta);
@@ -248,7 +247,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: true, count: false, colors: false, suits: false });
 
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		// Back meta from card stage is c#<gameId>#<playerId>
@@ -264,7 +262,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: true, colors: false, suits: false });
 
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		// Back meta from count stage: 2#<gameId>#<playerId>#<cardName>#<count>+
@@ -279,7 +276,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: true, suits: false });
 
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		// Back meta from colors stage: 3#<gameId>#<playerId>#<cardName>#<count>#<redCount>+
@@ -294,7 +290,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: false, suits: true });
 
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		// Back meta from suits stage: 4#<gameId>#<playerId>#<cardName>#<count>#<redCount>#h!d!s!c!mode!m
@@ -311,7 +306,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		// Back from card select sends p#<gameId>
@@ -328,7 +322,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: false, suits: false });
 
-		const { resetLog } = await import('../../../bootstrap');
 		resetLog();
 
 		await runBack(ALICE, `p#game-flow`);
@@ -347,5 +340,63 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		const log = getLog();
 		// The card select keyboard should include "Назад"
 		assertSent(log, ALICE.id, 'Назад');
+	});
+
+	// ── Back rejected for non-active player ───────────────────────────────────
+
+	await runCase('g:tb: p# rejected when caller is not the active player', async () => {
+		await resetGameFlowCase();
+		await seedConfirmGame(undefined);
+
+		resetLog();
+
+		// BOB tries to navigate back while ALICE is the active player
+		await runBack(BOB, `p#game-flow`);
+
+		const log = getLog();
+		assertSent(log, BOB.id, 'Игровое сообщение устарело');
+		assertNotSent(log, BOB.id, 'Твой ход');
+	});
+
+	await runCase('g:tb: c# rejected when caller is not the active player', async () => {
+		await resetGameFlowCase();
+		await seedConfirmGame(undefined);
+
+		resetLog();
+
+		// BOB tries to navigate back to card select while ALICE is the active player
+		await runBack(BOB, `c#game-flow#${CAROL.id}`);
+
+		const log = getLog();
+		assertSent(log, BOB.id, 'Игровое сообщение устарело');
+	});
+
+	// ── Stale game during confirm ─────────────────────────────────────────────
+
+	await runCase('Pressing Да when game has already ended returns stale message', async () => {
+		await resetGameFlowCase();
+		await seedGameState({
+			users: createUsers().map(u => {
+				if (u.id !== ALICE.id) return u;
+				return { ...u, settings: { ...u.settings, confirmMode: { card: true, count: false, colors: false, suits: false } } };
+			}),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds')],
+					[BOB.id]: [...cardIds('A', 'Hearts')],
+					[CAROL.id]: [...cardIds('3', 'Clubs')],
+				},
+				ended: Date.now() - 1000,
+			}),
+		});
+
+		const meta = turnMeta.card('game-flow', BOB.id, 'A');
+		resetLog();
+
+		await runConfirm(ALICE, meta);
+
+		const log = getLog();
+		assertSent(log, ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 }
