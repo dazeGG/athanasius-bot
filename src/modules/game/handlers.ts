@@ -1,5 +1,5 @@
 import { DB } from '~/db';
-import type { ConfirmModeSettings } from '~/db';
+import type { ConfirmModeSettings, UserSchema } from '~/db';
 import { BOT, logGameEvent } from '~/core';
 import { Game, processTurn, TurnStage } from '~/entities/game';
 import type { TurnMeta, CardStageMeta, CountStageMeta, ColorsStageMeta, SuitsStageMeta } from '~/entities/game';
@@ -49,9 +49,10 @@ function isConfirmTrigger (turnMeta: TurnMeta): boolean {
 	}
 }
 
-function buildNoMeta (turnMeta: TurnMeta, callbackMeta: string): string {
+function buildNoMeta (turnMeta: TurnMeta): string {
 	switch (turnMeta.stage) {
 	case TurnStage.player:
+		// unreachable: isConfirmTrigger returns false for player stage
 		return `p#${turnMeta.gameId}`;
 	case TurnStage.card:
 		return `c#${turnMeta.gameId}#${turnMeta.player.id}`;
@@ -66,15 +67,28 @@ function buildNoMeta (turnMeta: TurnMeta, callbackMeta: string): string {
 	case TurnStage.suits: {
 		const meta = turnMeta as SuitsStageMeta;
 		const { hearts, diamonds, spades, clubs, mode } = meta.suits;
+		// "!m" is a valid suits action (toggle mode); back-handler ignores the action and just re-renders the keyboard
 		return `${TurnStage.suits}#${meta.gameId}#${meta.player.id}#${meta.cardName}#${meta.count}#${meta.redCount}#${hearts}!${diamonds}!${spades}!${clubs}!${mode}!m`;
 	}
 	}
 }
 
 async function showConfirm (ctx: CallbackCtx, turnMeta: TurnMeta, callbackMeta: string): Promise<void> {
-	const noMeta = buildNoMeta(turnMeta, callbackMeta);
+	const noMeta = buildNoMeta(turnMeta);
 	const keyboard = buildConfirmKeyboard({ yesMeta: callbackMeta, noMeta });
 	await ctx.editMessageText(GameMessage.getConfirmMessage(turnMeta), { reply_markup: keyboard, parse_mode: 'HTML' });
+}
+
+async function resolveTurnContext (ctx: CallbackCtx, callbackMeta: string): Promise<{ turnMeta: TurnMeta; game: Game; me: UserSchema } | null> {
+	const turnMeta = lib.parseTurnMeta(callbackMeta);
+	const game = new Game({ id: turnMeta.gameId });
+	const me = DB.data.users.find(u => u.id === ctx.from.id);
+	if (!me) {
+		await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
+		return null;
+	}
+	lib.validateTurnMeta({ game, me, turnMeta });
+	return { turnMeta, game, me };
 }
 
 export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
@@ -90,15 +104,9 @@ export const gameTurnCallbackHandler = async (ctx: CallbackCtx) => {
 	const startTime = Date.now();
 
 	try {
-		const turnMeta = lib.parseTurnMeta(callbackMeta);
-		const game = new Game({ id: turnMeta.gameId });
-		const me = DB.data.users.find(u => u.id === ctx.from.id);
-
-		if (!me) {
-			return;
-		}
-
-		lib.validateTurnMeta({ game, me, turnMeta });
+		const resolved = await resolveTurnContext(ctx, callbackMeta);
+		if (!resolved) return;
+		const { turnMeta, game, me } = resolved;
 
 		if (isConfirmEnabledForStage(me.settings.confirmMode, turnMeta) && isConfirmTrigger(turnMeta)) {
 			await showConfirm(ctx, turnMeta, callbackMeta);
@@ -131,15 +139,9 @@ export const gameTurnConfirmCallbackHandler = async (ctx: CallbackCtx) => {
 	const startTime = Date.now();
 
 	try {
-		const turnMeta = lib.parseTurnMeta(callbackMeta);
-		const game = new Game({ id: turnMeta.gameId });
-		const me = DB.data.users.find(u => u.id === ctx.from.id);
-
-		if (!me) {
-			return;
-		}
-
-		lib.validateTurnMeta({ game, me, turnMeta });
+		const resolved = await resolveTurnContext(ctx, callbackMeta);
+		if (!resolved) return;
+		const { turnMeta, game, me } = resolved;
 
 		await processTurn({ ctx, game, me, turnMeta, sender: BOT.api.sendMessage.bind(BOT.api) });
 	} catch (error) {
@@ -153,6 +155,20 @@ export const gameTurnConfirmCallbackHandler = async (ctx: CallbackCtx) => {
 		logSlowOperation(startTime);
 	}
 };
+
+async function resolveActivePlayerForGame (ctx: CallbackCtx, gameId: string): Promise<{ game: Game; me: ReturnType<typeof DB.data.users.find> & object } | null> {
+	const game = new Game({ id: gameId });
+	const me = DB.data.users.find(u => u.id === ctx.from.id);
+	if (!me) {
+		await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
+		return null;
+	}
+	if (game.activePlayer.id !== me.id) {
+		await ctx.reply(lib.STALE_GAME_MESSAGE_TEXT);
+		return null;
+	}
+	return { game, me };
+}
 
 export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
@@ -169,9 +185,9 @@ export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 
 		if (prefix === 'p') {
 			const [gameId] = rest;
-			const game = new Game({ id: gameId });
-			const me = DB.data.users.find(u => u.id === ctx.from.id);
-			if (!me) return;
+			const resolved = await resolveActivePlayerForGame(ctx, gameId);
+			if (!resolved) return;
+			const { game, me } = resolved;
 
 			await ctx.editMessageText(
 				'<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту',
@@ -185,9 +201,9 @@ export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 
 		if (prefix === 'c') {
 			const [gameId, playerIdStr] = rest;
-			const game = new Game({ id: gameId });
-			const me = DB.data.users.find(u => u.id === ctx.from.id);
-			if (!me) return;
+			const resolved = await resolveActivePlayerForGame(ctx, gameId);
+			if (!resolved) return;
+			const { game, me } = resolved;
 
 			const turnMeta = lib.parseTurnMeta(`${TurnStage.player}#${gameId}#${playerIdStr}`);
 			await ctx.editMessageText(
@@ -200,10 +216,9 @@ export const gameTurnBackCallbackHandler = async (ctx: CallbackCtx) => {
 			return;
 		}
 
-		const turnMeta = lib.parseTurnMeta(callbackMeta);
-		const game = new Game({ id: turnMeta.gameId });
-		const me = DB.data.users.find(u => u.id === ctx.from.id);
-		if (!me) return;
+		const resolved = await resolveTurnContext(ctx, callbackMeta);
+		if (!resolved) return;
+		const { turnMeta, game } = resolved;
 
 		switch (turnMeta.stage) {
 		case TurnStage.count: {
