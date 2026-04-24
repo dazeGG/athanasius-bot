@@ -89,6 +89,7 @@ const seedActiveGameFor = async (player: PlayerFixture): Promise<void> => {
 			{
 				id: 'game1',
 				roomId: 'room1',
+				name: 'Комната активной игры',
 				started: Date.now(),
 				players: [player.id],
 				hands: { [player.id]: [] },

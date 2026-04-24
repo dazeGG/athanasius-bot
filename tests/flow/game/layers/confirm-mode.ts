@@ -2,7 +2,7 @@
  * confirm-mode.ts — confirmMode game turn flow coverage.
  */
 import { getLog, resetLog } from '../../../bootstrap';
-import { assertSent, assertNotSent } from '../../../runner';
+import { assertKeyboardButton, assertNotSent, assertSent } from '../../../runner';
 import type { ModuleTools } from '../../../runner';
 import type { CallbackCtx } from '../../../../src/core';
 
@@ -78,7 +78,10 @@ import type { ConfirmModeSettings } from '../../../../src/db';
 const seedConfirmGame = async (confirmMode?: ConfirmModeSettings): Promise<void> => {
 	await seedGameState({
 		users: createUsers().map(u => {
-			if (u.id !== ALICE.id) return u;
+			if (u.id !== ALICE.id) {
+				return u;
+			}
+
 			return { ...u, settings: { ...u.settings, ...(confirmMode !== undefined ? { confirmMode } : {}) } };
 		}),
 		game: makeGame({
@@ -166,6 +169,8 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Спрашиваем?');
 		assertSent(log, ALICE.id, 'Да · Нет');
+		assertKeyboardButton(log, ALICE.id, 'Да', 'g:tc:1#game-flow#1002#A');
+		assertKeyboardButton(log, ALICE.id, 'Нет', 'g:tb:c#game-flow#1002');
 		// Should NOT advance to count stage
 		assertNotSent(log, ALICE.id, 'Выбери сколько карт');
 	});
@@ -309,7 +314,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		resetLog();
 
 		// Back from card select sends p#<gameId>
-		await runBack(ALICE, `p#game-flow`);
+		await runBack(ALICE, 'p#game-flow');
 
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Твой ход');
@@ -324,7 +329,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 		resetLog();
 
-		await runBack(ALICE, `p#game-flow`);
+		await runBack(ALICE, 'p#game-flow');
 
 		const log = getLog();
 		assertSent(log, ALICE.id, 'Твой ход');
@@ -351,10 +356,10 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		resetLog();
 
 		// BOB tries to navigate back while ALICE is the active player
-		await runBack(BOB, `p#game-flow`);
+		await runBack(BOB, 'p#game-flow');
 
 		const log = getLog();
-		assertSent(log, BOB.id, 'Игровое сообщение устарело');
+		assertSent(log, BOB.id, STALE_GAME_MESSAGE_TEXT, { exact: true, latest: true });
 		assertNotSent(log, BOB.id, 'Твой ход');
 	});
 
@@ -368,7 +373,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await runBack(BOB, `c#game-flow#${CAROL.id}`);
 
 		const log = getLog();
-		assertSent(log, BOB.id, 'Игровое сообщение устарело');
+		assertSent(log, BOB.id, STALE_GAME_MESSAGE_TEXT, { exact: true, latest: true });
 	});
 
 	// ── Stale game during confirm ─────────────────────────────────────────────
@@ -377,7 +382,10 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await resetGameFlowCase();
 		await seedGameState({
 			users: createUsers().map(u => {
-				if (u.id !== ALICE.id) return u;
+				if (u.id !== ALICE.id) {
+					return u;
+				}
+
 				return { ...u, settings: { ...u.settings, confirmMode: { card: true, count: false, colors: false, suits: false } } };
 			}),
 			game: makeGame({
@@ -397,6 +405,6 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await runConfirm(ALICE, meta);
 
 		const log = getLog();
-		assertSent(log, ALICE.id, STALE_GAME_MESSAGE_TEXT);
+		assertSent(log, ALICE.id, STALE_GAME_MESSAGE_TEXT, { exact: true, latest: true });
 	});
 }

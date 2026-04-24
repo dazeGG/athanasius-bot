@@ -5,7 +5,7 @@
 
 import type { KeyboardButton } from 'grammy/types';
 
-import type { AppFlowState, AppSession } from '../src/core';
+import type { AppContext, AppFlowState, AppSession, CallbackCtx, MessageCtx } from '../src/core';
 import type { UserSchema, GameSchema, RoomSchema } from '../src/db/schemas';
 
 // ─── Project code (env must already be set by the time this module evaluates) ──
@@ -18,9 +18,19 @@ export interface CapturedMsg {
 	type: 'send' | 'edit' | 'delete';
 	to: number;
 	toName: string;
+	body: string;
 	text: string;
 	messageId?: number;
+	parseMode?: string;
+	keyboard?: CapturedKeyboard;
 }
+
+export interface CapturedKeyboardButton {
+	text: string;
+	callbackData?: string;
+}
+
+export type CapturedKeyboard = CapturedKeyboardButton[][];
 
 let _log: CapturedMsg[] = [];
 let _sessions = new Map<number, AppSession>();
@@ -66,16 +76,29 @@ const capture = (
 	to: number,
 	text: string,
 	messageId?: number,
+	options: {
+		keyboard?: CapturedKeyboard;
+		parseMode?: string;
+	} = {},
 ): void => {
-	_log.push({ type, to, toName: nameOf(to), text, messageId });
+	_log.push({
+		type,
+		to,
+		toName: nameOf(to),
+		body: text,
+		text: appendKeyboardLabels(text, options.keyboard),
+		messageId,
+		parseMode: options.parseMode,
+		keyboard: options.keyboard,
+	});
 };
 
-const appendKeyboardLabels = (text: string, keyboard?: RawReplyKeyboard): string => {
+const appendKeyboardLabels = (text: string, keyboard?: CapturedKeyboard): string => {
 	if (!keyboard || !Array.isArray(keyboard)) {
 		return text;
 	}
 
-	const labels = keyboard.flat().map(button => typeof button === 'string' ? button : button.text);
+	const labels = keyboard.flat().map(button => button.text);
 	return text + '\n\n' + labels.join(' · ');
 };
 
@@ -121,6 +144,7 @@ type RawReplyKeyboard = Array<Array<KeyboardButton | { text: string; callback_da
 type MessageOptions = {
 	keyboard?: RawReplyKeyboard;
 	options?: {
+		parse_mode?: string;
 		reply_markup?: {
 			keyboard?: RawReplyKeyboard;
 			inline_keyboard?: RawReplyKeyboard;
@@ -130,6 +154,33 @@ type MessageOptions = {
 
 const getKeyboard = ({ keyboard, options }: MessageOptions): RawReplyKeyboard | undefined => {
 	return keyboard ?? options?.reply_markup?.keyboard ?? options?.reply_markup?.inline_keyboard;
+};
+
+const getParseMode = ({ options }: MessageOptions): string | undefined => {
+	return options?.parse_mode;
+};
+
+const normalizeKeyboard = (keyboard?: RawReplyKeyboard): CapturedKeyboard | undefined => {
+	if (!keyboard || !Array.isArray(keyboard)) {
+		return undefined;
+	}
+
+	return keyboard.map(row => {
+		return row.map(button => {
+			if (typeof button === 'string') {
+				return { text: button };
+			}
+
+			const callbackData = 'callback_data' in button && typeof button.callback_data === 'string'
+				? button.callback_data
+				: undefined;
+
+			return {
+				text: button.text,
+				...(callbackData ? { callbackData } : {}),
+			};
+		});
+	});
 };
 
 const getDeletedMessageId = (ctx: {
@@ -155,12 +206,18 @@ const BOT_ME = {
 
 const reply = async (ctx: ReplyLikeContext, text: string, options?: MessageOptions['options']) => {
 	assertHtmlCompatibleText(text);
-	capture('send', ctx.chat.id, appendKeyboardLabels(text, getKeyboard({ options })));
+	capture('send', ctx.chat.id, text, undefined, {
+		keyboard: normalizeKeyboard(getKeyboard({ options })),
+		parseMode: getParseMode({ options }),
+	});
 };
 
 const editMessageText = async (ctx: ReplyLikeContext, text: string, options?: MessageOptions['options']) => {
 	assertHtmlCompatibleText(text);
-	capture('edit', ctx.chat.id, appendKeyboardLabels(text, getKeyboard({ options })));
+	capture('edit', ctx.chat.id, text, undefined, {
+		keyboard: normalizeKeyboard(getKeyboard({ options })),
+		parseMode: getParseMode({ options }),
+	});
 };
 
 const deleteMessage = async (ctx: ReplyLikeContext) => {
@@ -168,7 +225,7 @@ const deleteMessage = async (ctx: ReplyLikeContext) => {
 	capture('delete', ctx.chat.id, messageId === undefined ? 'message' : `message#${messageId}`, messageId);
 };
 
-export const withMessageMethods = <ContextT extends ReplyLikeContext> (ctx: ContextT) => {
+export const withMessageMethods = <ContextT extends ReplyLikeContext> (ctx: ContextT): MessageCtx & ContextT => {
 	return Object.assign(ctx, {
 		api: BOT.api,
 		me: BOT_ME,
@@ -178,10 +235,10 @@ export const withMessageMethods = <ContextT extends ReplyLikeContext> (ctx: Cont
 		},
 		reply: (text: string, options?: MessageOptions['options']) => reply(ctx, text, options),
 		deleteMessage: () => deleteMessage(ctx),
-	});
+	}) as unknown as MessageCtx & ContextT;
 };
 
-export const withCallbackMethods = <ContextT extends ReplyLikeContext> (ctx: ContextT) => {
+export const withCallbackMethods = <ContextT extends ReplyLikeContext> (ctx: ContextT): CallbackCtx & ContextT => {
 	return Object.assign(ctx, {
 		api: BOT.api,
 		me: BOT_ME,
@@ -193,7 +250,7 @@ export const withCallbackMethods = <ContextT extends ReplyLikeContext> (ctx: Con
 		editMessageText: (text: string, options?: MessageOptions['options']) => editMessageText(ctx, text, options),
 		deleteMessage: () => deleteMessage(ctx),
 		answerCallbackQuery: async () => {},
-	});
+	}) as unknown as CallbackCtx & ContextT;
 };
 
 // ─── Mock BOT methods ─────────────────────────────────────────────────────────
@@ -238,7 +295,10 @@ mockedBot.sendMessageByChatId = async ({
 	options?: MessageOptions['options'];
 }) => {
 	assertHtmlCompatibleText(text);
-	capture('send', chatId, appendKeyboardLabels(text, getKeyboard({ keyboard, options })));
+	capture('send', chatId, text, undefined, {
+		keyboard: normalizeKeyboard(getKeyboard({ keyboard, options })),
+		parseMode: getParseMode({ options }),
+	});
 };
 
 mockedBot.sendMessage = async ({
@@ -253,7 +313,10 @@ mockedBot.sendMessage = async ({
 	options?: MessageOptions['options'];
 }) => {
 	assertHtmlCompatibleText(text);
-	capture('send', ctx.chat?.id ?? 0, appendKeyboardLabels(text, getKeyboard({ keyboard, options })));
+	capture('send', ctx.chat?.id ?? 0, text, undefined, {
+		keyboard: normalizeKeyboard(getKeyboard({ keyboard, options })),
+		parseMode: getParseMode({ options }),
+	});
 };
 
 mockedBot.editMessage = async ({
@@ -268,7 +331,10 @@ mockedBot.editMessage = async ({
 	options?: MessageOptions['options'];
 }) => {
 	assertHtmlCompatibleText(text);
-	capture('edit', ctx.chat?.id ?? 0, appendKeyboardLabels(text, getKeyboard({ keyboard, options })));
+	capture('edit', ctx.chat?.id ?? 0, text, undefined, {
+		keyboard: normalizeKeyboard(getKeyboard({ keyboard, options })),
+		parseMode: getParseMode({ options }),
+	});
 };
 
 mockedBot.deleteMessage = async (ctx: {
@@ -280,10 +346,13 @@ mockedBot.deleteMessage = async (ctx: {
 	capture('delete', ctx.chat?.id ?? 0, messageId === undefined ? 'message' : `message#${messageId}`, messageId);
 };
 
-mockedBot.api.sendMessage = async (chatId: number, text: string, options?: MessageOptions['options']) => {
+mockedBot.api.sendMessage = (async (chatId: number, text: string, options?: MessageOptions['options']) => {
 	assertHtmlCompatibleText(text);
-	capture('send', chatId, appendKeyboardLabels(text, getKeyboard({ options })));
-};
+	capture('send', chatId, text, undefined, {
+		keyboard: normalizeKeyboard(getKeyboard({ options })),
+		parseMode: getParseMode({ options }),
+	});
+}) as never;
 
 // ─── Log API ──────────────────────────────────────────────────────────────────
 /**
@@ -338,6 +407,11 @@ export {
 };
 export {
 	BOT,
+};
+export type {
+	AppContext,
+	CallbackCtx,
+	MessageCtx,
 };
 export const {
 	Game,

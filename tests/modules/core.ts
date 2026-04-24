@@ -40,8 +40,9 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 
 		SESSIONS.setFlow(ALICE.id, { name: 'ROOM_CDC', roomId: 'room-1' });
 		assert(SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC', 'Alice state should be stored');
+		const roomFlow = SESSIONS.get(ALICE.id).flow;
 		assert(
-			SESSIONS.get(ALICE.id).flow.name === 'ROOM_CDC' && SESSIONS.get(ALICE.id).flow.roomId === 'room-1',
+			roomFlow.name === 'ROOM_CDC' && roomFlow.roomId === 'room-1',
 			'Alice context should be stored',
 		);
 

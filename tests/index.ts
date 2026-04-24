@@ -33,6 +33,12 @@ Flags:
 
 // ─── Load tests env BEFORE any project code is imported ───────────────────────
 config({ path: '.env.test', override: true });
+process.env.BOT_TOKEN ??= '__simulate__';
+process.env.DB_FILE ??= 'db.test.json';
+
+if (process.env.DB_FILE === 'db.json') {
+	throw new Error('Refusing to run tests against db.json. Set DB_FILE to a dedicated test database.');
+}
 
 // ─── Project code via dynamic imports (env is now set) ───────────────────────
 await import('./bootstrap');

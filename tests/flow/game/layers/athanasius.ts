@@ -114,7 +114,7 @@ export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<voi
 		}));
 
 		const endMessages = [ALICE.id, BOB.id, CAROL.id, DAVE.id]
-			.map(playerId => getLog().findLast(entry => entry.to === playerId && entry.text.includes('Игра закончилась!'))?.text)
+			.map(playerId => [...getLog()].reverse().find(entry => entry.to === playerId && entry.text.includes('Игра закончилась!'))?.text)
 			.filter(Boolean);
 
 		assert(endMessages.length === 4, 'Every player should receive the end-game summary');
