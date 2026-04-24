@@ -43,7 +43,6 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 		await runTurn(ALICE, turnMeta.card('game-flow', BOB.id, 'K'));
 
 		assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
-
 		assertSent(getLog(), BOB.id, 'Твой ход!');
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after a wrong rank');
 	});

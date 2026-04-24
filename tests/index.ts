@@ -4,8 +4,8 @@
  * Loads the tests environment, runs feature modules first, then executes
  * broader cross-module flows such as the staged game flow.
  *
- * Run all checks: `pnpm tests`
- * Show help: `pnpm tests --help`
+ * Run all checks: `pnpm test`
+ * Show help: `pnpm test --help`
  */
 
 import { config } from 'dotenv';
@@ -32,7 +32,7 @@ Flags:
 }
 
 // ─── Load tests env BEFORE any project code is imported ───────────────────────
-config({ path: '.env.tests', override: true });
+config({ path: '.env.test', override: true });
 
 // ─── Project code via dynamic imports (env is now set) ───────────────────────
 await import('./bootstrap');
@@ -80,7 +80,7 @@ if (dbg) {
 printSummary();
 
 // ─── Cleanup ─────────────────────────────────────────────────────────────────
-const dbFile = process.env.DB_FILE ?? 'db.tests.json';
+const dbFile = process.env.DB_FILE ?? 'db.test.json';
 const saveDb = args.includes('--save-db');
 
 if (saveDb) {
