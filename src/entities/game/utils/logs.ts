@@ -54,7 +54,7 @@ function getLogPrefix (log: GameLog): string {
 function getLogMessage (log: GameLog, viewerId?: PlayerId): string {
 	const from = ORM.Users.get(log.from);
 	const to = ORM.Users.get(log.to);
-	const isVictim = viewerId !== undefined && log.to === viewerId && !log.athanasius;
+	const isVictim = viewerId !== undefined && log.to === viewerId && log.steal;
 	const prefix = isVictim ? '🟧' : getLogPrefix(log);
 	const toName = isVictim ? 'Ты' : escapeHtml(to.name);
 
