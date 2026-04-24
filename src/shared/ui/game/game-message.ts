@@ -124,7 +124,7 @@ export class GameMessage {
 			this.getSuitsNowSelected(turnMeta, suits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count);
 	}
 
-	public static getCardsStealMessage (turnMeta: SuitsStageMeta, composeAthanasius: boolean = false): string {
+	public static getCardsStealMessage (turnMeta: SuitsStageMeta, composeAthanasius: boolean): string {
 		let msg = '🟩 <b>Ты успешно украл карты</b>\n' +
 			'\n' +
 			`Игрок: ${escapeHtml(turnMeta.player.name)}\n` +
