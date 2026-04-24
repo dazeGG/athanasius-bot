@@ -52,7 +52,11 @@ const { confirmModeSettingsModule } = await import('./modules/confirm-mode-setti
 const { handModule }          = await import('./modules/hand');
 const { notesModule }         = await import('./modules/notes');
 const { startModule }         = await import('./modules/start');
+const { deckModule }          = await import('./modules/deck');
+const { deckTypeSettingsModule } = await import('./modules/deck-type-settings');
 const { gameFlow }            = await import('./flow/game');
+const { deck36Flow }          = await import('./flow/game/36-deck');
+const { deck54Flow }          = await import('./flow/game/54-deck');
 
 // ─── Run all modules ──────────────────────────────────────────────────────────
 const fullLogs = args.includes('--full-logs');
@@ -70,8 +74,12 @@ await run('Confirm Mode Settings', confirmModeSettingsModule);
 await run('Hand', handModule);
 await run('Notes', notesModule);
 await run('Start', startModule);
+await run('Deck', deckModule);
+await run('Deck Type Settings', deckTypeSettingsModule);
 console.log('\nFlows:\n');
 await run('Game Flow', gameFlow, { kind: 'flow' });
+await run('36-Card Deck Flow', deck36Flow, { kind: 'flow' });
+await run('54-Card Deck Flow (Jokers)', deck54Flow, { kind: 'flow' });
 
 const dbg = args.includes('--debug');
 if (dbg) {

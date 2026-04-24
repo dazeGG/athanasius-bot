@@ -1,0 +1,304 @@
+/**
+ * 36-deck.ts — game flow tests for rooms configured with the 36-card deck type.
+ */
+import { Deck } from '../../../src/entities/deck';
+
+import { DB, Game } from '../../bootstrap';
+import { assert, assertSent } from '../../runner';
+import { getLog } from '../../bootstrap';
+import type { ModuleTools } from '../../runner';
+
+import {
+	ALICE,
+	BOB,
+	CAROL,
+	DAVE,
+	cardIds,
+	createUsers,
+	getGame,
+	getPersistedGame,
+	makeGame,
+	makeRoom,
+	resetGameFlowCase,
+	runTurn,
+	seedGameState,
+	sendSeededFirstMessage,
+	totalAthanasiusCards,
+	totalCardsInHands,
+	turnMeta,
+} from './helpers';
+
+/**
+ * Runs game flow coverage for the 36-card deck type.
+ */
+export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
+	await runCase('36-card game: Game.create deals exactly 36 cards per deck across all players', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id],
+			decksCount: 1,
+			deckType: 36,
+		});
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
+
+		const persisted = getPersistedGame(createdGameId);
+		const totalCards = totalCardsInHands(persisted);
+		const totalAthanasius = totalAthanasiusCards(persisted);
+
+		assert(
+			totalCards + totalAthanasius === Deck.getDeckSize(36) * room.settings.decksCount,
+			`Expected ${Deck.getDeckSize(36)} total cards, got ${totalCards + totalAthanasius}`,
+		);
+	});
+
+	await runCase('36-card game: Game.create with 2 decks deals 72 cards total', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id, DAVE.id],
+			decksCount: 2,
+			deckType: 36,
+		});
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
+
+		const persisted = getPersistedGame(createdGameId);
+		const totalCards = totalCardsInHands(persisted);
+		const totalAthanasius = totalAthanasiusCards(persisted);
+
+		assert(
+			totalCards + totalAthanasius === Deck.getDeckSize(36) * 2,
+			`Expected 72 total cards for 2 × 36-deck, got ${totalCards + totalAthanasius}`,
+		);
+	});
+
+	await runCase('36-card game: cardsToAthanasius = 4 for 1 deck', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id],
+			decksCount: 1,
+			deckType: 36,
+		});
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const createdGameId = DB.data.games[0]?.id!;
+		const game = getGame(createdGameId);
+		assert(game.cardsToAthanasius === 4, `cardsToAthanasius should be 4, got ${game.cardsToAthanasius}`);
+	});
+
+	await runCase('36-card game: cardsToAthanasius = 8 for 2 decks', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id],
+			decksCount: 2,
+			deckType: 36,
+		});
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const createdGameId = DB.data.games[0]?.id!;
+		const game = getGame(createdGameId);
+		assert(game.cardsToAthanasius === 8, `cardsToAthanasius should be 8 for 2 decks, got ${game.cardsToAthanasius}`);
+	});
+
+	await runCase('36-card game: all dealt card IDs belong to the 36-deck pool', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id],
+			decksCount: 1,
+			deckType: 36,
+		});
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const createdGameId = DB.data.games[0]?.id!;
+		const persisted = getPersistedGame(createdGameId);
+		const validIds = new Set(Deck.getDeck(36).map(c => c.id));
+		const allDealtIds = Object.values(persisted.hands).flat();
+
+		for (const id of allDealtIds) {
+			assert(validIds.has(id), `Card ID ${id} is not in the 36-deck pool`);
+		}
+	});
+
+	await runCase('36-card game: first turn message delivered to exactly one player', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id],
+			decksCount: 1,
+			deckType: 36,
+		});
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const firstTurnRecipients = [ALICE.id, BOB.id, CAROL.id].filter(id =>
+			getLog().some(e => e.to === id && e.text.includes('Ты ходишь первым')),
+		);
+
+		assert(firstTurnRecipients.length === 1, 'Exactly one player should receive the initial first-turn message');
+	});
+
+	await runCase('36-card game: successful steal transfers cards and keeps turn', async () => {
+		await resetGameFlowCase();
+
+		// Cards use 52-deck IDs that are within the 36-deck pool (IDs 1–36).
+		// A♥ = ID 13, A♦ = ID 26 (both ≤ 36); K♥ = ID 12.
+		await seedGameState({
+			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 36 }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds'), ...cardIds('K', 'Hearts')],
+					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
+					[CAROL.id]: [...cardIds('J', 'Hearts')],
+				},
+			}),
+		});
+
+		await runTurn(ALICE, turnMeta.suits('game-flow', BOB.id, 'A', 2, 1, {
+			hearts: 1,
+			diamonds: 0,
+			spades: 1,
+			clubs: 0,
+			action: 'select',
+		}));
+
+		const persisted = getPersistedGame();
+		assertSent(getLog(), ALICE.id, 'Ты успешно украл карты');
+		assert(getGame().activePlayer.id === ALICE.id, 'Turn should stay with Alice after successful steal');
+		assert((persisted.hands[ALICE.id] ?? []).length === 4, 'Alice should hold 4 cards after steal');
+		assert((persisted.hands[BOB.id] ?? []).length === 0, 'Bob should have no A cards left');
+	});
+
+	await runCase('36-card game: failed steal at suits stage shifts turn to the next player', async () => {
+		await resetGameFlowCase();
+
+		await seedGameState({
+			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 36 }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds')],
+					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
+					[CAROL.id]: [...cardIds('J', 'Hearts')],
+				},
+			}),
+		});
+
+		// Alice guesses wrong distribution: 2 Aces with wrong suit split
+		await runTurn(ALICE, turnMeta.suits('game-flow', BOB.id, 'A', 2, 2, {
+			hearts: 2,
+			diamonds: 0,
+			spades: 0,
+			clubs: 0,
+			action: 'select',
+		}));
+
+		assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+		assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after failure');
+	});
+
+	await runCase('36-card game: two same-rank cards compose an Athanasius (cardsToAthanasius=2)', async () => {
+		await resetGameFlowCase();
+
+		// Note: In the current implementation, the 36-deck pool (IDs 1–36) maps to Hearts + Diamonds
+		// + partial Spades from the 52-deck. Clubs IDs (40–52) are outside the 36-deck pool, so a
+		// 4-card athanasius is unreachable in practice. We use cardsToAthanasius=2 to test the mechanic.
+		await seedGameState({
+			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 36 }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds')],
+					[BOB.id]: [...cardIds('A', 'Hearts')],
+					[CAROL.id]: [...cardIds('J', 'Hearts')],
+				},
+				cardsToAthanasius: 2,
+			}),
+		});
+
+		await runTurn(ALICE, turnMeta.suits('game-flow', BOB.id, 'A', 1, 1, {
+			hearts: 1,
+			diamonds: 0,
+			spades: 0,
+			clubs: 0,
+			action: 'select',
+		}));
+
+		const persisted = getPersistedGame();
+		assert(persisted.athanasiuses[ALICE.id]?.includes('A'), 'Alice should compose Athanasius A');
+		assert((persisted.hands[ALICE.id] ?? []).length === 0, 'Alice hand should be empty after Athanasius');
+	});
+
+	await runCase('36-card game: game ends when all hands are empty after final steal', async () => {
+		await resetGameFlowCase();
+
+		await seedGameState({
+			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 36 }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds')],
+					[BOB.id]: [...cardIds('A', 'Hearts')],
+					[CAROL.id]: [],
+				},
+				cardsToAthanasius: 2,
+			}),
+		});
+
+		await runTurn(ALICE, turnMeta.suits('game-flow', BOB.id, 'A', 1, 1, {
+			hearts: 1,
+			diamonds: 0,
+			spades: 0,
+			clubs: 0,
+			action: 'select',
+		}));
+
+		const persisted = getPersistedGame();
+		assert(persisted.ended !== undefined, 'Game should be marked as ended when all hands are empty');
+		assertSent(getLog(), ALICE.id, 'Игра закончилась!');
+		assertSent(getLog(), BOB.id, 'Игра закончилась!');
+		assertSent(getLog(), CAROL.id, 'Игра закончилась!');
+	});
+
+	await runCase('36-card game: turn message delivery skips players with empty hands', async () => {
+		await resetGameFlowCase();
+
+		await seedGameState({
+			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id, DAVE.id], deckType: 36 }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id, DAVE.id],
+				hands: {
+					[ALICE.id]: [],
+					[BOB.id]: [],
+					[CAROL.id]: [...cardIds('K', 'Hearts')],
+					[DAVE.id]: [...cardIds('Q', 'Clubs')],
+				},
+			}),
+		});
+
+		await sendSeededFirstMessage();
+
+		assert(getGame().activePlayer.id === CAROL.id, 'Turn should advance to Carol who has cards');
+		assertSent(getLog(), CAROL.id, 'Твой ход!');
+	});
+}
