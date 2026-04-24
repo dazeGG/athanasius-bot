@@ -40,7 +40,7 @@ export function formatColors (red: number, black: number): string {
 }
 
 export class GameMessage {
-	private static generateChoiceMessage (turnMeta: TurnMeta): string {
+	public static generateChoiceMessage (turnMeta: TurnMeta): string {
 		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n\n';
 
 		choiceMessage += '• ' + txt.player + ': ' + '<b>' + escapeHtml(turnMeta.player.name) + '</b>\n';
@@ -62,6 +62,10 @@ export class GameMessage {
 		}
 
 		return choiceMessage;
+	}
+
+	public static getConfirmMessage (turnMeta: TurnMeta): string {
+		return this.generateChoiceMessage(turnMeta) + '\n' + txt.confirmQuestion;
 	}
 
 	public static getCardSelectMessage (turnMeta: TurnMeta): string {
