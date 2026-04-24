@@ -43,6 +43,7 @@ export const regNameStateMessageHandler = async (ctx: MessageCtx) => {
 			name,
 			settings: {
 				updatesView: 'instant',
+				confirmMode: false,
 			},
 			achievements: [],
 		});

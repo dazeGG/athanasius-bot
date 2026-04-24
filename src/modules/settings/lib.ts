@@ -7,6 +7,7 @@ export const txt = {
 	yourSettings: 'Твои настройки',
 	name: 'Имя',
 	updatesView: 'Вид обновлений',
+	confirmMode: 'Режим подтверждения',
 	chooseWhatToChange: 'Выбери что ты хочешь изменить',
 	changeName: 'Отлично, напиши мне новое имя в следующем сообщении\n' +
 		'\n' +

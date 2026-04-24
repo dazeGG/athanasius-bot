@@ -8,6 +8,7 @@ export type GameId = ReturnType<typeof nanoid>;
 
 export interface UserSettings {
 	updatesView: 'instant' | 'composed';
+	confirmMode?: boolean;
 }
 
 export interface RoomSettings {

@@ -13,7 +13,7 @@ const getBaseSettingsText = (me: UserSchema) => {
 		'\n' +
 		'• ' + lib.txt.name + ': ' + escapeHtml(me.name) + '\n' +
 		'• ' + lib.txt.updatesView + ': ' + me.settings.updatesView + '\n' +
-		'\n' +
+		'• ' + lib.txt.confirmMode + ': ' + (me.settings.confirmMode ? 'вкл' : 'выкл') + '\n' +		'\n' +
 		lib.txt.chooseWhatToChange;
 };
 
@@ -22,6 +22,8 @@ const getBaseSettingsKeyboard = () => {
 		.text('Имя', stringifyCallbackData({ module: 'settings', action: 'name' }))
 		.row()
 		.text('Вид обновлений', stringifyCallbackData({ module: 'settings', action: 'updatesView' }))
+		.row()
+		.text('Режим подтверждения', stringifyCallbackData({ module: 'settings', action: 'confirmMode' }))
 		.row()
 		.text('Выход', stringifyCallbackData({ module: 'settings', action: 'exit' }));
 };
@@ -58,9 +60,16 @@ export const settingsCallbackHandler = async (ctx: CallbackCtx) => {
 	case 'updatesView':
 		await ORM.Users.update(
 			ctx.from.id,
-			{ updatesView: me.settings.updatesView === 'instant' ? 'composed' : 'instant' },
+			{ ...me.settings, updatesView: me.settings.updatesView === 'instant' ? 'composed' : 'instant' },
 		);
-		await ctx.editMessageText(getBaseSettingsText(me), { reply_markup: getBaseSettingsKeyboard() });
+		await ctx.editMessageText(getBaseSettingsText(ORM.Users.get(ctx.from.id)), { reply_markup: getBaseSettingsKeyboard() });
+		break;
+	case 'confirmMode':
+		await ORM.Users.update(
+			ctx.from.id,
+			{ ...me.settings, confirmMode: !me.settings.confirmMode },
+		);
+		await ctx.editMessageText(getBaseSettingsText(ORM.Users.get(ctx.from.id)), { reply_markup: getBaseSettingsKeyboard() });
 		break;
 	case 'exit':
 		await ctx.deleteMessage();
