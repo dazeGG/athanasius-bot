@@ -13,7 +13,7 @@ import {
 	BOB,
 	CAROL,
 	DAVE,
-	cardIds,
+	cardIds36,
 	createUsers,
 	getGame,
 	getPersistedGame,
@@ -94,7 +94,8 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 		await seedGameState({ users: createUsers(), room });
 		await Game.create(room);
 
-		const createdGameId = DB.data.games[0]?.id!;
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
 		const game = getGame(createdGameId);
 		assert(game.cardsToAthanasius === 4, `cardsToAthanasius should be 4, got ${game.cardsToAthanasius}`);
 	});
@@ -111,7 +112,8 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 		await seedGameState({ users: createUsers(), room });
 		await Game.create(room);
 
-		const createdGameId = DB.data.games[0]?.id!;
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
 		const game = getGame(createdGameId);
 		assert(game.cardsToAthanasius === 8, `cardsToAthanasius should be 8 for 2 decks, got ${game.cardsToAthanasius}`);
 	});
@@ -128,7 +130,8 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 		await seedGameState({ users: createUsers(), room });
 		await Game.create(room);
 
-		const createdGameId = DB.data.games[0]?.id!;
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
 		const persisted = getPersistedGame(createdGameId);
 		const validIds = new Set(Deck.getDeck(36).map(c => c.id));
 		const allDealtIds = Object.values(persisted.hands).flat();
@@ -160,16 +163,14 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('36-card game: successful steal transfers cards and keeps turn', async () => {
 		await resetGameFlowCase();
 
-		// Cards use 52-deck IDs that are within the 36-deck pool (IDs 1–36).
-		// A♥ = ID 13, A♦ = ID 26 (both ≤ 36); K♥ = ID 12.
 		await seedGameState({
 			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 36 }),
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
 				hands: {
-					[ALICE.id]: [...cardIds('A', 'Diamonds'), ...cardIds('K', 'Hearts')],
-					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
-					[CAROL.id]: [...cardIds('J', 'Hearts')],
+					[ALICE.id]: [...cardIds36('A', 'Diamonds'), ...cardIds36('K', 'Hearts')],
+					[BOB.id]: [...cardIds36('A', 'Hearts'), ...cardIds36('A', 'Spades')],
+					[CAROL.id]: [...cardIds36('J', 'Hearts')],
 				},
 			}),
 		});
@@ -197,9 +198,9 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
 				hands: {
-					[ALICE.id]: [...cardIds('A', 'Diamonds')],
-					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
-					[CAROL.id]: [...cardIds('J', 'Hearts')],
+					[ALICE.id]: [...cardIds36('A', 'Diamonds')],
+					[BOB.id]: [...cardIds36('A', 'Hearts'), ...cardIds36('A', 'Spades')],
+					[CAROL.id]: [...cardIds36('J', 'Hearts')],
 				},
 			}),
 		});
@@ -217,22 +218,22 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 		assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after failure');
 	});
 
-	await runCase('36-card game: two same-rank cards compose an Athanasius (cardsToAthanasius=2)', async () => {
+	await runCase('36-card game: four same-rank cards compose an Athanasius', async () => {
 		await resetGameFlowCase();
 
-		// Note: In the current implementation, the 36-deck pool (IDs 1–36) maps to Hearts + Diamonds
-		// + partial Spades from the 52-deck. Clubs IDs (40–52) are outside the 36-deck pool, so a
-		// 4-card athanasius is unreachable in practice. We use cardsToAthanasius=2 to test the mechanic.
 		await seedGameState({
 			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 36 }),
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
 				hands: {
-					[ALICE.id]: [...cardIds('A', 'Diamonds')],
-					[BOB.id]: [...cardIds('A', 'Hearts')],
-					[CAROL.id]: [...cardIds('J', 'Hearts')],
+					[ALICE.id]: [
+						...cardIds36('A', 'Diamonds'),
+						...cardIds36('A', 'Spades'),
+						...cardIds36('A', 'Clubs'),
+					],
+					[BOB.id]: [...cardIds36('A', 'Hearts')],
+					[CAROL.id]: [...cardIds36('J', 'Hearts')],
 				},
-				cardsToAthanasius: 2,
 			}),
 		});
 
@@ -257,11 +258,14 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
 				hands: {
-					[ALICE.id]: [...cardIds('A', 'Diamonds')],
-					[BOB.id]: [...cardIds('A', 'Hearts')],
+					[ALICE.id]: [
+						...cardIds36('A', 'Diamonds'),
+						...cardIds36('A', 'Spades'),
+						...cardIds36('A', 'Clubs'),
+					],
+					[BOB.id]: [...cardIds36('A', 'Hearts')],
 					[CAROL.id]: [],
 				},
-				cardsToAthanasius: 2,
 			}),
 		});
 
@@ -290,8 +294,8 @@ export async function deck36Flow ({ runCase }: ModuleTools): Promise<void> {
 				hands: {
 					[ALICE.id]: [],
 					[BOB.id]: [],
-					[CAROL.id]: [...cardIds('K', 'Hearts')],
-					[DAVE.id]: [...cardIds('Q', 'Clubs')],
+					[CAROL.id]: [...cardIds36('K', 'Hearts')],
+					[DAVE.id]: [...cardIds36('Q', 'Clubs')],
 				},
 			}),
 		});

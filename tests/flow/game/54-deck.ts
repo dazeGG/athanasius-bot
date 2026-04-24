@@ -72,7 +72,8 @@ export async function deck54Flow ({ runCase }: ModuleTools): Promise<void> {
 		await seedGameState({ users: createUsers(), room });
 		await Game.create(room);
 
-		const createdGameId = DB.data.games[0]?.id!;
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
 		const persisted = getPersistedGame(createdGameId);
 		assert(persisted.utils.jokerCardsToAthanasius === 2, 'jokerCardsToAthanasius should be 2 for 1 deck');
 	});
@@ -89,7 +90,8 @@ export async function deck54Flow ({ runCase }: ModuleTools): Promise<void> {
 		await seedGameState({ users: createUsers(), room });
 		await Game.create(room);
 
-		const createdGameId = DB.data.games[0]?.id!;
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
 		const persisted = getPersistedGame(createdGameId);
 		assert(persisted.utils.jokerCardsToAthanasius === 4, 'jokerCardsToAthanasius should be 4 for 2 decks');
 	});
@@ -296,31 +298,30 @@ export async function deck54Flow ({ runCase }: ModuleTools): Promise<void> {
 		);
 	});
 
-	await runCase('Joker steal: failure at count stage when wrong number of jokers', async () => {
+	await runCase('Joker steal: failure at count stage when target has fewer jokers than selected', async () => {
 		await resetGameFlowCase();
 
-		// Bob has 1 joker; Alice asks for count=2 (but Bob has only 1) → failure at count stage
-		// count=2 is invalid for jokerCardsToAthanasius=2 since maxCount = 2-1 = 1
-		// so the validation will throw and the turn fails before reaching colors
-		// We test that Alice is blocked by validation (count must be < jokerCardsToAthanasius)
 		await seedGameState({
-			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], deckType: 54 }),
+			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id], decksCount: 2, deckType: 54 }),
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
-				jokerCardsToAthanasius: 2,
+				jokerCardsToAthanasius: 4,
 				hands: {
-					[ALICE.id]: [...cardIds('K', 'Clubs'), ...cardIds('K', 'Spades')],
+					[ALICE.id]: [jokerCardId('red')],
 					[BOB.id]: [jokerCardId('black')],
 					[CAROL.id]: [...cardIds('3', 'Clubs')],
 				},
 			}),
 		});
 
-		// Alice has no jokers in hand → card stage check will fail
-		await runTurn(ALICE, turnMeta.count('game-flow', BOB.id, 'Joker', 1, 'select'));
+		await runTurn(ALICE, turnMeta.count('game-flow', BOB.id, 'Joker', 2, 'select'));
 
-		// Alice should receive a stale game message since she doesn't have a Joker
-		assertSent(getLog(), ALICE.id, 'устарело');
+		assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+		assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after wrong joker count');
+		assert(
+			getPersistedGame().hands[BOB.id]?.includes(jokerCardId('black')),
+			'Bob should keep his joker after Alice guesses the wrong joker count',
+		);
 	});
 
 	/* ─── Joker Athanasius ────────────────────────────────────────────────────── */

@@ -315,7 +315,13 @@ export const totalCardsInHands = (game: GameSchema): number => {
  * Counts how many physical cards are represented by all persisted Athanasiuses.
  */
 export const totalAthanasiusCards = (game: GameSchema): number => {
-	return Object.values(game.athanasiuses).reduce((sum, cardNames) => sum + cardNames.length * game.utils.cardsToAthanasius, 0);
+	return Object.values(game.athanasiuses).reduce((sum, cardNames) => {
+		const cardsCount = cardNames.reduce((rankSum, cardName) => {
+			return rankSum + (cardName === 'Joker' ? game.utils.jokerCardsToAthanasius : game.utils.cardsToAthanasius);
+		}, 0);
+
+		return sum + cardsCount;
+	}, 0);
 };
 
 /**

@@ -4,7 +4,7 @@
 import { ORM } from '../../src/db';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods } from '../bootstrap';
-import { assert, assertSent, assertNotSent } from '../runner';
+import { assert, assertSent, assertNotSent, assertKeyboardButton } from '../runner';
 import type { ModuleTools } from '../runner';
 import type { CallbackData } from '../../src/core';
 
@@ -91,6 +91,9 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertSent(log, OWNER.id, '52 карты');
 		assertSent(log, OWNER.id, '54 карты (с джокерами)');
 		assertSent(log, OWNER.id, 'Выбери тип колоды');
+		assertKeyboardButton(log, OWNER.id, '36 карт', 'room:cdt:room-dt:36');
+		assertKeyboardButton(log, OWNER.id, '✅ 52 карты', 'room:cdt:room-dt:52');
+		assertKeyboardButton(log, OWNER.id, '54 карты (с джокерами)', 'room:cdt:room-dt:54');
 	});
 
 	await runCase('Currently selected deck type shows a checkmark in the selection keyboard', async () => {
@@ -102,6 +105,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertSent(log, OWNER.id, '✅ 52 карты');
 		assertNotSent(log, OWNER.id, '✅ 36 карт');
 		assertNotSent(log, OWNER.id, '✅ 54 карты');
+		assertKeyboardButton(log, OWNER.id, '✅ 52 карты', 'room:cdt:room-dt:52');
 	});
 
 	await runCase('Changing deck type to 36 persists the new setting', async () => {
@@ -239,5 +243,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		const log = getLog();
 		assertSent(log, OWNER.id, '✅ 36 карт');
 		assertNotSent(log, OWNER.id, '✅ 52 карты');
+		assertKeyboardButton(log, OWNER.id, '✅ 36 карт', 'room:cdt:room-dt:36');
+		assertKeyboardButton(log, OWNER.id, '52 карты', 'room:cdt:room-dt:52');
 	});
 }

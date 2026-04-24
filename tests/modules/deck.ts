@@ -68,6 +68,16 @@ export async function deckModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ids.size === 36, 'All IDs in 36-deck must be unique');
 	});
 
+	await runCase('getDeck(36) uses globally resolvable standard card IDs', () => {
+		const deck = Deck.getDeck(36);
+		for (const card of deck) {
+			const resolved = Deck.getCardById(card.id);
+			assert(resolved !== undefined, `Card ID ${card.id} must resolve globally`);
+			assert(resolved.name === card.name, `Card ID ${card.id} should resolve to ${card.name}, got ${resolved.name}`);
+			assert(resolved.suit === card.suit, `Card ID ${card.id} should resolve to ${card.suit}, got ${resolved.suit}`);
+		}
+	});
+
 	await runCase('getDeck(54) returns 54 cards including exactly 2 jokers', () => {
 		const deck = Deck.getDeck(54);
 		assert(deck.length === 54, `Expected 54 cards, got ${deck.length}`);
@@ -83,16 +93,16 @@ export async function deckModule ({ runCase }: ModuleTools): Promise<void> {
 	});
 
 	await runCase('getDeckSize returns 36, 52, and 54 for each deck type', () => {
-		assert(Deck.getDeckSize(36) === 36, `getDeckSize(36) should be 36`);
-		assert(Deck.getDeckSize(52) === 52, `getDeckSize(52) should be 52`);
-		assert(Deck.getDeckSize(54) === 54, `getDeckSize(54) should be 54`);
+		assert(Deck.getDeckSize(36) === 36, 'getDeckSize(36) should be 36');
+		assert(Deck.getDeckSize(52) === 52, 'getDeckSize(52) should be 52');
+		assert(Deck.getDeckSize(54) === 54, 'getDeckSize(54) should be 54');
 	});
 
 	await runCase('getDeck returns a fresh clone each call (not a shared reference)', () => {
 		const d1 = Deck.getDeck(52);
 		const d2 = Deck.getDeck(52);
-		d1[0].name = 'X' as never;
-		assert(d2[0].name !== 'X', 'getDeck must return a deep clone, not a shared reference');
+		d1[0].name = 'A';
+		assert(d2[0].name === '2', 'getDeck must return a deep clone, not a shared reference');
 	});
 
 	/* ─── Joker card properties ───────────────────────────────────────────────── */

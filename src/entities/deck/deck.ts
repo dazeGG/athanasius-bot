@@ -27,25 +27,8 @@ const generateDeck52 = (): Card[] => {
 };
 
 const generateDeck36 = (): Card[] => {
-	const deck: Card[] = [];
-	let id = 1;
-
-	for (const suit of DeckConfig.SUITS) {
-		const color = DeckConfig.RED_SUITS.some(s => s === suit.name) ? 'red' : 'black';
-		for (const rank of DeckConfig.RANKS_36) {
-			deck.push({
-				id: id++,
-				name: rank.name,
-				suit: suit.name,
-				symbol: suit.symbol,
-				value: rank.value,
-				color,
-				displayName: `${rank.name}${suit.symbol}`,
-			});
-		}
-	}
-
-	return deck;
+	const ranks36 = new Set<Card['name']>(DeckConfig.RANKS_36.map(rank => rank.name));
+	return generateDeck52().filter(card => ranks36.has(card.name));
 };
 
 const generateDeck54 = (): Card[] => {
