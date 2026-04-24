@@ -123,4 +123,54 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assert(bobMessages.some(message => message.includes('Твой ход!')), 'Bob should still receive the regular turn prompt');
 		assert(!bobMessages.some(message => message.includes('Нет карт K')), 'Bob should not receive the real-time failure mailing while on composed updates');
 	});
+
+	await runCase('Composed steal victim still receives an instant notification about their lost cards', async () => {
+		await resetGameFlowCase();
+		await seedGameState({
+			users: createUsers({ [BOB.id]: 'composed' }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds')],
+					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
+					[CAROL.id]: [...cardIds('3', 'Clubs')],
+				},
+			}),
+		});
+
+		await runTurn(ALICE, turnMeta.suits('game-flow', BOB.id, 'A', 2, 1, {
+			hearts: 1,
+			diamonds: 0,
+			spades: 1,
+			clubs: 0,
+			action: 'select',
+		}));
+
+		assertSent(getLog(), BOB.id, '🟧 <b>Алиса → Ты</b> | A');
+	});
+
+	await runCase('Composed observers are excluded from real-time steal broadcasts', async () => {
+		await resetGameFlowCase();
+		await seedGameState({
+			users: createUsers({ [CAROL.id]: 'composed' }),
+			game: makeGame({
+				players: [ALICE.id, BOB.id, CAROL.id],
+				hands: {
+					[ALICE.id]: [...cardIds('A', 'Diamonds')],
+					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
+					[CAROL.id]: [...cardIds('3', 'Clubs')],
+				},
+			}),
+		});
+
+		await runTurn(ALICE, turnMeta.suits('game-flow', BOB.id, 'A', 2, 1, {
+			hearts: 1,
+			diamonds: 0,
+			spades: 1,
+			clubs: 0,
+			action: 'select',
+		}));
+
+		assertNotSent(getLog(), CAROL.id, '<b>Алиса → Борис</b> | A');
+	});
 }
