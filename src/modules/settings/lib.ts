@@ -8,6 +8,13 @@ export const txt = {
 	name: 'Имя',
 	updatesView: 'Вид обновлений',
 	confirmMode: 'Режим подтверждения',
+	confirmModeMenu: '<b>Режим подтверждения</b>\n\nВыбери на каких стадиях хода запрашивать подтверждение:',
+	confirmStages: {
+		card: 'Карта',
+		count: 'Количество',
+		colors: 'Цвета',
+		suits: 'Масти',
+	},
 	chooseWhatToChange: 'Выбери что ты хочешь изменить',
 	changeName: 'Отлично, напиши мне новое имя в следующем сообщении\n' +
 		'\n' +
