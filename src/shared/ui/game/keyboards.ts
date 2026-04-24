@@ -136,7 +136,7 @@ export const gkb = {
 		});
 		keyboard.row();
 
-		keyboard.text('mode: ' + suits.mode, gameTurnCallback(baseMeta + '!m'));
+		keyboard.text(suits.mode === '+' ? '➕ Добавить' : '➖ Убрать', gameTurnCallback(baseMeta + '!m'));
 		keyboard.row();
 
 		if (
