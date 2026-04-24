@@ -21,7 +21,7 @@ import {
 } from '../../bootstrap';
 
 /**
- * Stable simulator users reused across the layered game flow suites.
+ * Stable tests users reused across the layered game flow suites.
  */
 export const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
@@ -41,6 +41,7 @@ interface GameLogInput {
 	cardName: CardName;
 	steal: boolean;
 	stealData?: number[];
+	athanasius?: boolean;
 }
 
 interface RoomOptions {
@@ -110,8 +111,8 @@ export const makeRoom = ({
 /**
  * Builds one serialized game log entry matching the persisted lowdb format.
  */
-export const makeGameLog = ({ from, to, cardName, steal, stealData }: GameLogInput): string => {
-	return `${from}:${to}:${cardName}:${steal ? 1 : 0}:${stealData ? stealData.join(',') : ''}`;
+export const makeGameLog = ({ from, to, cardName, steal, stealData, athanasius }: GameLogInput): string => {
+	return `${from}:${to}:${cardName}:${steal ? 1 : 0}:${stealData ? stealData.join(',') : ''}:${athanasius ? 1 : 0}`;
 };
 
 /**
@@ -189,12 +190,12 @@ export const resetGameFlowCase = async (): Promise<void> => {
 };
 
 /**
- * Loads a `Game` aggregate from the current test database.
+ * Loads a `Game` aggregate from the current tests database.
  */
 export const getGame = (gameId = 'game-flow'): Game => new Game({ id: gameId });
 
 /**
- * Loads the seeded room fixture from the current test database.
+ * Loads the seeded room fixture from the current tests database.
  */
 export const getRoom = (roomId = 'room-game'): RoomSchema => ORM.Rooms.getById(roomId);
 
@@ -263,7 +264,7 @@ export const turnMeta = {
 };
 
 /**
- * Executes the real game callback handler with a staged simulator payload.
+ * Executes the real game callback handler with a staged tests payload.
  */
 export const runTurn = async (player: PlayerFixture, meta?: string, messageId = 1): Promise<void> => {
 	const handlers = await import('../../../src/modules/game/handlers');
@@ -351,6 +352,6 @@ export const sendSeededFirstMessage = async (gameId = 'game-flow', initial = fal
 };
 
 /**
- * Returns the visible label used for a card rank in simulator assertions.
+ * Returns the visible label used for a card rank in tests assertions.
  */
 export const cardLabel = (cardName: CardName): string => DeckConfig.CARDS_VIEW_MAP[cardName];

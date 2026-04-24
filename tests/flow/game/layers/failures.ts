@@ -43,6 +43,7 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 		await runTurn(ALICE, turnMeta.card('game-flow', BOB.id, 'K'));
 
 		assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+
 		assertSent(getLog(), BOB.id, 'Твой ход!');
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after a wrong rank');
 	});
@@ -53,7 +54,8 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 
 		await runTurn(ALICE, turnMeta.count('game-flow', BOB.id, 'A', 1, 'select'));
 
-		assertSent(getLog(), ALICE.id, 'Количество не 1');
+		assertSent(getLog(), ALICE.id, 'Количество: 1 ❌');
+		assertSent(getLog(), CAROL.id, '🟥 <b>Алиса → Борис</b> | A | 1');
 		assertSent(getLog(), BOB.id, 'Твой ход!');
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after a wrong count');
 	});
@@ -64,7 +66,8 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 
 		await runTurn(ALICE, turnMeta.colors('game-flow', BOB.id, 'A', 2, 2, 'select'));
 
-		assertSent(getLog(), ALICE.id, 'Цвета не 🔴: 2 ⚫: 0');
+		assertSent(getLog(), ALICE.id, 'Цвета: 🔴 2 ❌');
+		assertSent(getLog(), CAROL.id, '🟥 <b>Алиса → Борис</b> | A | 🔴 2');
 		assertSent(getLog(), BOB.id, 'Твой ход!');
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after wrong colors');
 	});
@@ -81,7 +84,8 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 			action: 'select',
 		}));
 
-		assertSent(getLog(), ALICE.id, 'Не ♥️: 0 ♦️: 1 ♠️: 1 ♣️: 0');
+		assertSent(getLog(), ALICE.id, 'Масти: ♦️ 1 ♠️ 1 ❌');
+		assertSent(getLog(), CAROL.id, '🟥 <b>Алиса → Борис</b> | A | ♦️ 1 ♠️ 1');
 		assertSent(getLog(), BOB.id, 'Твой ход!');
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after wrong suits');
 	});

@@ -107,7 +107,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 
 		assert(latestMessage !== undefined, 'Alice should receive a suits selection message');
 		assert(latestMessage.includes('Выбери количество мастей, которые ты хочешь спросить'), 'Flow should move to suits selection');
-		assert(latestMessage.includes('mode: +'), 'Suits stage should start in increment mode');
+		assert(latestMessage.includes('➕ Добавить'), 'Suits stage should start in increment mode');
 	});
 
 	await runCase('Suits stage shows the select button only after an exact distribution is built', async () => {

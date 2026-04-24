@@ -53,8 +53,9 @@ export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<voi
 		assert(persisted.athanasiuses[ALICE.id]?.includes('A'), 'Alice should record the newly composed Athanasius');
 		assert((persisted.hands[ALICE.id] ?? []).length === 0, 'Alice’s hand should be empty after the full set is removed');
 		assert(getGame().activePlayer.id === CAROL.id, 'Turn should skip empty players and move to Carol');
-		assertSent(getLog(), ALICE.id, 'У тебя новый Афанасий <b>A</b>!');
-		assertSent(getLog(), BOB.id, 'новый Афанасий A');
+		assertSent(getLog(), ALICE.id, 'Ты успешно украл карты');
+		assertSent(getLog(), BOB.id, '🟧 <b>Алиса → Ты</b> | A');
+		assertSent(getLog(), CAROL.id, '⭐ <b>Алиса → Борис</b> | A');
 	});
 
 	await runCase('Initial Athanasius notifications award achievements and mail other players', async () => {
