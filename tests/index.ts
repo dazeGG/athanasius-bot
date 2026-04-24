@@ -43,6 +43,7 @@ const { registrationModule }  = await import('./modules/registration');
 const { roomsModule }         = await import('./modules/rooms');
 const { settingsModule }      = await import('./modules/settings');
 const { handModule }          = await import('./modules/hand');
+const { notesModule }         = await import('./modules/notes');
 const { startModule }         = await import('./modules/start');
 const { gameFlow }            = await import('./flow/game');
 
@@ -59,6 +60,7 @@ await run('Registration', registrationModule);
 await run('Rooms', roomsModule);
 await run('Settings', settingsModule);
 await run('Hand', handModule);
+await run('Notes', notesModule);
 await run('Start', startModule);
 console.log('\nFlows:\n');
 await run('Game Flow', gameFlow, { kind: 'flow' });

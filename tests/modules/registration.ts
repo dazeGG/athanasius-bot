@@ -6,7 +6,7 @@ import { DB, SESSIONS, resetLog, getLog, clearDB, withMessageMethods } from '../
 import { assert, assertSent } from '../runner';
 import type { ModuleTools } from '../runner';
 
-const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Рука';
+const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Заметки · Рука';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
