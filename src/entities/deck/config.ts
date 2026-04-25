@@ -65,8 +65,7 @@ export class DeckConfig {
 		{ name: 'A', value: 14 },
 	] as const;
 
-	/** Ranks for 36-card deck (6–A). */
-	public static RANKS_36 = DeckConfig.RANKS.slice(4); // index 4 = '6'
+	public static RANKS_36 = DeckConfig.RANKS.filter(r => r.value >= 6);
 
 	public static RANKS_MAP: Record<string, number> = {
 		'2': 2,

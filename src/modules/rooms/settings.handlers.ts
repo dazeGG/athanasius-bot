@@ -96,8 +96,6 @@ export class SettingsHandlers {
 	}
 
 	public static async changeDeckType (ctx: CallbackCtx) {
-		await ctx.answerCallbackQuery();
-
 		const meta = getCallbackMeta(ctx.callbackQuery.data);
 
 		if (!meta) {
@@ -114,6 +112,13 @@ export class SettingsHandlers {
 		if (!await utils.ensureRoomOwner(ctx, room)) {
 			return;
 		}
+
+		if (ORM.Games.getActive(room.id)) {
+			await ctx.answerCallbackQuery('Нельзя менять тип колоды во время активной игры');
+			return;
+		}
+
+		await ctx.answerCallbackQuery();
 
 		// If no deckType value, show the selection keyboard
 		if (!deckTypeStr) {

@@ -77,11 +77,6 @@ export class Deck {
 		return cardCache54.get(id);
 	}
 
-	public static getCardsByIds (ids: CardId[], deckType: DeckType = 54): Card[] {
-		const cache = cacheMap[deckType];
-		return ids.map(id => cache.get(id)).filter(Boolean) as Card[];
-	}
-
 	public static sortByValue (cards: Card[], sortType: 'asc' | 'desc' = 'asc'): Card[] {
 		return _.cloneDeep(cards).sort((a, b) => {
 			if (a.value !== b.value) {

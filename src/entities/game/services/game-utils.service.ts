@@ -55,7 +55,7 @@ function generateGameLog (log: GameLog): string {
 export function parseGameUtils (gameUtils: GameUtils): GameUtilsParsed {
 	return {
 		cardsToAthanasius: gameUtils.cardsToAthanasius,
-		jokerCardsToAthanasius: gameUtils.jokerCardsToAthanasius ?? 2,
+		jokerCardsToAthanasius: gameUtils.jokerCardsToAthanasius ?? gameUtils.cardsToAthanasius / 2,
 		logs: gameUtils.logs.map(log => parseGameLog(log)),
 	};
 }
