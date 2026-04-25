@@ -270,7 +270,8 @@ export const gameSendMessageTextHandler = async (ctx: MessageCtx) => {
 	const roomId = ctx.session.flow.name === 'GAME_MAILING' ? ctx.session.flow.roomId : undefined;
 
 	if (!roomId) {
-		throw new Error('Room id required');
+		ctx.session.flow = {};
+		return;
 	}
 
 	const text = ctx.message.text.trim();
