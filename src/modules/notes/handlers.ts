@@ -1,15 +1,16 @@
 import { InlineKeyboard } from 'grammy';
 
 import { ORM } from '~/db';
-import type { UserId, GameSchema } from '~/db';
-import { DeckConfig } from '~/entities/deck';
+import type { UserId, GameSchema, RoomSchema } from '~/db';
+import { Deck, DeckConfig } from '~/entities/deck';
+import type { CardName, DeckType } from '~/entities/deck';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx, AppContext } from '~/core';
 
 import * as ui from './ui';
 
 const SUITS = ['♥️', '♦️', '♠️', '♣️'] as const;
-const RANKS = DeckConfig.CARD_NAMES;
+const JOKER_COLUMNS = ['🔴', '⚫'] as const;
 const RANKS_PER_ROW = 5;
 
 function cellKey (rank: string, deckIdx: number, suitIdx: number): string {
@@ -50,10 +51,27 @@ function getGameListKeyboard (games: GameSchema[]): InlineKeyboard {
 	return kb;
 }
 
-function getRankKeyboard (gameId: string, showBack: boolean): InlineKeyboard {
+function getRoomDeckType (room: RoomSchema): DeckType {
+	return room.settings.deckType ?? 52;
+}
+
+function getRankLabel (rank: CardName): string {
+	return DeckConfig.CARDS_VIEW_MAP[rank];
+}
+
+function getRanksForDeckType (deckType: DeckType): CardName[] {
+	const ranks = Array.from(new Set(Deck.getDeck(deckType).map(card => card.name)));
+	return ranks.sort((a, b) => DeckConfig.RANKS_MAP[a] - DeckConfig.RANKS_MAP[b]);
+}
+
+function getColumnLabels (rank: string): readonly string[] {
+	return rank === 'Joker' ? JOKER_COLUMNS : SUITS;
+}
+
+function getRankKeyboard (gameId: string, deckType: DeckType, showBack: boolean): InlineKeyboard {
 	const kb = new InlineKeyboard();
-	RANKS.forEach((rank, i) => {
-		kb.text(rank, stringifyCallbackData({ module: 'notes', action: 'grid', meta: `${gameId}:${rank}` }));
+	getRanksForDeckType(deckType).forEach((rank, i) => {
+		kb.text(getRankLabel(rank), stringifyCallbackData({ module: 'notes', action: 'grid', meta: `${gameId}:${rank}` }));
 		if ((i + 1) % RANKS_PER_ROW === 0) {
 			kb.row();
 		}
@@ -74,14 +92,15 @@ function getGridKeyboard (
 	selfId: UserId,
 ): InlineKeyboard {
 	const kb = new InlineKeyboard();
+	const columns = getColumnLabels(rank);
 
-	SUITS.forEach(suit => {
-		kb.text(suit, stringifyCallbackData({ module: 'notes', action: 'suit' }));
+	columns.forEach(column => {
+		kb.text(column, stringifyCallbackData({ module: 'notes', action: 'suit' }));
 	});
 	kb.row();
 
 	for (let di = 0; di < decksCount; di++) {
-		for (let si = 0; si < 4; si++) {
+		for (let si = 0; si < columns.length; si++) {
 			const key = cellKey(rank, di, si);
 			const val = Object.prototype.hasOwnProperty.call(noteMap, key) ? noteMap[key] : undefined;
 			const display = getCellDisplay(val, selfId);
@@ -98,7 +117,9 @@ function getGridKeyboard (
 async function renderGrid (ctx: CallbackCtx, gameId: string, rank: string): Promise<void> {
 	const game = ORM.Games.getById(gameId);
 	const room = ORM.Rooms.getById(game.roomId);
-	const decksCount = game.utils.cardsToAthanasius / 4;
+	const decksCount = rank === 'Joker'
+		? (game.utils.jokerCardsToAthanasius || room.settings.decksCount * 2) / 2
+		: game.utils.cardsToAthanasius / 4;
 	const selfId = ctx.from.id;
 	const noteMap = ORM.Games.getNote(gameId, selfId);
 
@@ -121,7 +142,7 @@ export const notesMessageHandler = async (ctx: AppContext) => {
 		const game = gamesWithMe[0];
 		const room = ORM.Rooms.getById(game.roomId);
 		await ctx.reply(ui.txt.chooseRank(room.name), {
-			reply_markup: getRankKeyboard(game.id, false),
+			reply_markup: getRankKeyboard(game.id, getRoomDeckType(room), false),
 			parse_mode: 'HTML',
 		});
 		return;
@@ -155,7 +176,7 @@ export const notesRankCallbackHandler = async (ctx: CallbackCtx) => {
 	const showBack = gamesWithMe.length > 1;
 
 	await ctx.editMessageText(ui.txt.chooseRank(room.name), {
-		reply_markup: getRankKeyboard(gameId, showBack),
+		reply_markup: getRankKeyboard(gameId, getRoomDeckType(room), showBack),
 		parse_mode: 'HTML',
 	});
 };

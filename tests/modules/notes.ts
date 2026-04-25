@@ -103,6 +103,19 @@ const seedOneGame = async (extra: Record<string, unknown> = {}) => {
 	resetLog();
 };
 
+const seedOneGameWithDeckType = async (deckType: 36 | 52 | 54) => {
+	const room = {
+		...ROOM,
+		settings: {
+			...ROOM.settings,
+			deckType,
+		},
+	};
+
+	await seedDB({ users: USERS, rooms: [room], games: [makeGame('ng1', ROOM.id, room.settings.decksCount)] });
+	resetLog();
+};
+
 const seedTwoGames = async () => {
 	await seedDB({
 		users: USERS,
@@ -338,6 +351,28 @@ export async function notesModule ({ runLayer }: ModuleTools): Promise<void> {
 			}
 		});
 
+		await runCase('36-card game → rank keyboard excludes ranks 2–5', async () => {
+			await reset();
+			await seedOneGameWithDeckType(36);
+			await handlers.notesRankCallbackHandler(makeCallbackCtx(ALICE, 'notes:rank:ng1'));
+			const log = getLog();
+
+			for (const rank of ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']) {
+				assertSent(log, ALICE.id, rank);
+			}
+
+			for (const rank of ['2', '3', '4', '5']) {
+				assertNotSent(log, ALICE.id, rank);
+			}
+		});
+
+		await runCase('54-card game → rank keyboard includes Joker', async () => {
+			await reset();
+			await seedOneGameWithDeckType(54);
+			await handlers.notesRankCallbackHandler(makeCallbackCtx(ALICE, 'notes:rank:ng1'));
+			assertSent(getLog(), ALICE.id, '🃏');
+		});
+
 		await runCase('With 1 game → no "Назад" button', async () => {
 			await reset();
 			await seedOneGame();
@@ -448,6 +483,20 @@ export async function notesModule ({ runLayer }: ModuleTools): Promise<void> {
 			await handlers.notesGridCallbackHandler(makeCallbackCtx(ALICE, 'notes:grid:ng2:5'));
 			assertSent(getLog(), ALICE.id, ROOM_TWO.name);
 		});
+
+		await runCase('Joker grid uses red and black columns instead of suits', async () => {
+			await reset();
+			await seedOneGameWithDeckType(54);
+			await handlers.notesGridCallbackHandler(makeCallbackCtx(ALICE, 'notes:grid:ng1:Joker'));
+			const log = getLog();
+
+			assertSent(log, ALICE.id, '🔴');
+			assertSent(log, ALICE.id, '⚫');
+			assertNotSent(log, ALICE.id, '♥️');
+			assertNotSent(log, ALICE.id, '♦️');
+			assertNotSent(log, ALICE.id, '♠️');
+			assertNotSent(log, ALICE.id, '♣️');
+		});
 	});
 
 	// ─── notesCycleCallbackHandler ───────────────────────────────────────────────
@@ -545,6 +594,18 @@ export async function notesModule ({ runLayer }: ModuleTools): Promise<void> {
 			const notes = ORM.Games.getNote('ng1', ALICE.id);
 			assert(notes['J_0_0'] === CAROL.id, 'Deck 0 should advance to CAROL');
 			assert(notes['J_2_0'] === CAROL.id, 'Deck 2 must be unaffected');
+		});
+
+		await runCase('Joker color cells can be cycled independently', async () => {
+			await reset();
+			await seedOneGameWithDeckType(54);
+			await handlers.notesCycleCallbackHandler(makeCallbackCtx(ALICE, 'notes:cycle:ng1:Joker:0:0'));
+			await handlers.notesCycleCallbackHandler(makeCallbackCtx(ALICE, 'notes:cycle:ng1:Joker:0:1'));
+			await handlers.notesCycleCallbackHandler(makeCallbackCtx(ALICE, 'notes:cycle:ng1:Joker:0:1'));
+
+			const notes = ORM.Games.getNote('ng1', ALICE.id);
+			assert(notes['Joker_0_0'] === ALICE.id, 'Red joker cell should be at self');
+			assert(notes['Joker_0_1'] === BOB.id, 'Black joker cell should advance independently');
 		});
 
 		await runCase('Grid is re-rendered after cycle (edit captured)', async () => {
