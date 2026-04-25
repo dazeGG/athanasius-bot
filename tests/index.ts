@@ -69,16 +69,22 @@ console.log('Modules:\n');
 await run('Core', coreModule);
 await run('Registration', registrationModule);
 await run('Rooms', roomsModule);
-await run('Settings', settingsModule);
-await run('Confirm Mode Settings', confirmModeSettingsModule);
+await run('Settings', async tools => {
+	await settingsModule(tools);
+	await confirmModeSettingsModule(tools);
+});
 await run('Hand', handModule);
 await run('Notes', notesModule);
 await run('Start', startModule);
-await run('Deck', deckModule);
-await run('Deck Type Settings', deckTypeSettingsModule);
+await run('Deck', async tools => {
+	await deckModule(tools);
+	await deckTypeSettingsModule(tools);
+});
 console.log('\nFlows:\n');
 await run('Game Flow', gameFlow, { kind: 'flow' });
+console.log('');
 await run('36-Card Deck Flow', deck36Flow, { kind: 'flow' });
+console.log('');
 await run('54-Card Deck Flow (Jokers)', deck54Flow, { kind: 'flow' });
 
 const dbg = args.includes('--debug');
