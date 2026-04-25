@@ -58,6 +58,7 @@ const colorize = (text: string, color: string): string => {
 
 const PASSED_LABEL = `${colorize('✅', ANSI.green)} ${colorize('Passed', ANSI.green)}`;
 const ERROR_LABEL = `${colorize('❌', ANSI.red)} ${colorize('Error', ANSI.red)}`;
+const ITEM_MARKER = '·';
 
 const formatError = (error: string): string => {
 	return error
@@ -80,13 +81,12 @@ const getPassedCasesCount = (result: RunResult): number => {
 
 const printFailedCaseDetails = (cases: CaseResult[], indent: string): void => {
 	const failedCases = cases
-		.map((caseResult, caseIndex) => ({ caseResult, caseIndex }))
-		.filter(item => !item.caseResult.passed);
+		.filter(caseResult => !caseResult.passed);
 
 	if (failedCases.length > 0) {
 		console.log(`${indent}Failed cases:`);
-		failedCases.forEach(({ caseResult, caseIndex }) => {
-			console.log(`${indent}- ${caseIndex + 1}) ${caseResult.name}`);
+		failedCases.forEach(caseResult => {
+			console.log(`${indent}${ITEM_MARKER} ${caseResult.name}`);
 			if (caseResult.error) {
 				console.log(formatError(caseResult.error));
 			}
@@ -96,9 +96,9 @@ const printFailedCaseDetails = (cases: CaseResult[], indent: string): void => {
 
 const printFlowCompactDetails = (result: RunResult): void => {
 	console.log('   Layers:');
-	result.layers.forEach((layerResult, layerIndex) => {
+	result.layers.forEach(layerResult => {
 		const layerPassedCases = layerResult.cases.filter(item => item.passed).length;
-		console.log(`   ${layerIndex + 1}) ${layerResult.name} - ${layerResult.passed ? PASSED_LABEL : ERROR_LABEL} ${getCasesSummary(layerPassedCases, layerResult.cases.length)}`);
+		console.log(`   ${ITEM_MARKER} ${layerResult.name} - ${layerResult.passed ? PASSED_LABEL : ERROR_LABEL} ${getCasesSummary(layerPassedCases, layerResult.cases.length)}`);
 		if (!layerResult.passed) {
 			printFailedCaseDetails(layerResult.cases, '      ');
 			if (layerResult.error) {
@@ -143,19 +143,16 @@ export async function run (
 
 	results.push(result);
 
-	const kindNumber = results.filter(item => item.kind === kind).length;
-	let caseIndex = 0;
 	let usedCaseRunner = false;
 	let currentLayer: LayerResult | undefined;
 
 	if (runnerOptions.fullLogs) {
-		console.log(`${kindNumber}) ${name}`);
+		console.log(`${ITEM_MARKER} ${name}`);
 		console.log(kind === 'flow' ? '   Layers:' : '   Cases:');
 	}
 
 	const runCase = async (caseName: string, caseFn: () => Promise<void> | void): Promise<void> => {
 		usedCaseRunner = true;
-		caseIndex += 1;
 		const target = currentLayer ?? result;
 		const casePrefix = runnerOptions.fullLogs
 			? currentLayer ? '      ' : '   '
@@ -165,7 +162,7 @@ export async function run (
 			await caseFn();
 			target.cases.push({ name: caseName, passed: true });
 			if (runnerOptions.fullLogs) {
-				console.log(`${casePrefix}${caseIndex}) ${caseName} - ${PASSED_LABEL}`);
+				console.log(`${casePrefix}${ITEM_MARKER} ${caseName} - ${PASSED_LABEL}`);
 			}
 		} catch (e) {
 			const error = e instanceof Error ? e.message : String(e);
@@ -173,7 +170,7 @@ export async function run (
 			result.passed = false;
 			target.cases.push({ name: caseName, passed: false, error });
 			if (runnerOptions.fullLogs) {
-				console.log(`${casePrefix}${caseIndex}) ${caseName} - ${ERROR_LABEL}`);
+				console.log(`${casePrefix}${ITEM_MARKER} ${caseName} - ${ERROR_LABEL}`);
 				console.log(formatError(error));
 			}
 		}
@@ -188,14 +185,12 @@ export async function run (
 
 		result.layers.push(layerResult);
 		const previousLayer = currentLayer;
-		const previousCaseIndex = caseIndex;
 		const previousUsedCaseRunner = usedCaseRunner;
 		currentLayer = layerResult;
-		caseIndex = 0;
 		usedCaseRunner = false;
 
 		if (runnerOptions.fullLogs) {
-			console.log(`   ${result.layers.length}) ${layerName}`);
+			console.log(`   ${ITEM_MARKER} ${layerName}`);
 			console.log('      Cases:');
 		}
 
@@ -210,7 +205,7 @@ export async function run (
 			if (!usedCaseRunner) {
 				layerResult.cases.push({ name: 'Layer body', passed: false, error });
 				if (runnerOptions.fullLogs) {
-					console.log(`      1) Layer body - ${ERROR_LABEL}`);
+					console.log(`      ${ITEM_MARKER} Layer body - ${ERROR_LABEL}`);
 					console.log(formatError(error));
 				}
 			} else if (runnerOptions.fullLogs) {
@@ -222,7 +217,7 @@ export async function run (
 		if (!usedCaseRunner && !layerResult.error) {
 			layerResult.cases.push({ name: 'Layer body', passed: true });
 			if (runnerOptions.fullLogs) {
-				console.log(`      1) Layer body - ${PASSED_LABEL}`);
+				console.log(`      ${ITEM_MARKER} Layer body - ${PASSED_LABEL}`);
 			}
 		}
 
@@ -234,7 +229,6 @@ export async function run (
 		}
 
 		currentLayer = previousLayer;
-		caseIndex = previousCaseIndex;
 		usedCaseRunner = previousUsedCaseRunner || usedCaseRunner;
 	};
 
@@ -248,7 +242,7 @@ export async function run (
 		if (!usedCaseRunner) {
 			result.cases.push({ name: 'Module body', passed: false, error });
 			if (runnerOptions.fullLogs) {
-				console.log(`   1) ${getKindTitle(kind) === 'module' ? 'Module' : 'Flow'} body - ${ERROR_LABEL}`);
+				console.log(`   ${ITEM_MARKER} ${getKindTitle(kind) === 'module' ? 'Module' : 'Flow'} body - ${ERROR_LABEL}`);
 				console.log(formatError(error));
 			}
 		} else if (runnerOptions.fullLogs) {
@@ -260,7 +254,7 @@ export async function run (
 	if (!usedCaseRunner && result.layers.length === 0 && !result.error) {
 		result.cases.push({ name: `${getKindTitle(kind) === 'module' ? 'Module' : 'Flow'} body`, passed: true });
 		if (runnerOptions.fullLogs) {
-			console.log(`   1) ${getKindTitle(kind) === 'module' ? 'Module' : 'Flow'} body - ${PASSED_LABEL}`);
+			console.log(`   ${ITEM_MARKER} ${getKindTitle(kind) === 'module' ? 'Module' : 'Flow'} body - ${PASSED_LABEL}`);
 		}
 	}
 
@@ -271,7 +265,7 @@ export async function run (
 	if (runnerOptions.fullLogs) {
 		console.log(`   Result: ${result.passed ? PASSED_LABEL : ERROR_LABEL} ${casesSummary}\n`);
 	} else {
-		console.log(`${kindNumber}) ${name} - ${result.passed ? PASSED_LABEL : ERROR_LABEL} ${casesSummary}`);
+		console.log(`${ITEM_MARKER} ${name} - ${result.passed ? PASSED_LABEL : ERROR_LABEL} ${casesSummary}`);
 		if (kind === 'flow') {
 			printFlowCompactDetails(result);
 		} else if (!result.passed) {
@@ -315,8 +309,7 @@ export function printSummary (): void {
 			console.log('\n  Failed modules:');
 			failedModules.forEach(moduleResult => {
 				const modulePassedCases = getPassedCasesCount(moduleResult);
-				const moduleIndex = modules.indexOf(moduleResult) + 1;
-				console.log(`    ${moduleIndex}) ${moduleResult.name} ${getCasesSummary(modulePassedCases, getAllCases(moduleResult).length)}`);
+				console.log(`    ${ITEM_MARKER} ${moduleResult.name} ${getCasesSummary(modulePassedCases, getAllCases(moduleResult).length)}`);
 			});
 		}
 
@@ -324,15 +317,14 @@ export function printSummary (): void {
 			console.log('\n  Failed flows:');
 			failedFlows.forEach(flowResult => {
 				const flowPassedCases = getPassedCasesCount(flowResult);
-				const flowIndex = flows.indexOf(flowResult) + 1;
-				console.log(`    ${flowIndex}) ${flowResult.name} ${getCasesSummary(flowPassedCases, getAllCases(flowResult).length)}`);
-				flowResult.layers.forEach((layerResult, layerIndex) => {
+				console.log(`    ${ITEM_MARKER} ${flowResult.name} ${getCasesSummary(flowPassedCases, getAllCases(flowResult).length)}`);
+				flowResult.layers.forEach(layerResult => {
 					if (layerResult.passed) {
 						return;
 					}
 
 					const layerPassedCases = layerResult.cases.filter(item => item.passed).length;
-					console.log(`      ${layerIndex + 1}) ${layerResult.name} ${getCasesSummary(layerPassedCases, layerResult.cases.length)}`);
+					console.log(`      ${ITEM_MARKER} ${layerResult.name} ${getCasesSummary(layerPassedCases, layerResult.cases.length)}`);
 				});
 			});
 		}
