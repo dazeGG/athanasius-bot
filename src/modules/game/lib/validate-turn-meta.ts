@@ -65,7 +65,7 @@ export const validateTurnMeta = ({
 		throwInvalidGameFlow();
 	}
 
-	const maxCount = game.cardsToAthanasius - 1;
+	const maxCount = game.getCardsToAthanasiusForRank(turnMeta.cardName) - 1;
 
 	switch (turnMeta.stage) {
 	case TurnStage.card:

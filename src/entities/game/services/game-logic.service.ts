@@ -14,6 +14,7 @@ import {
 	notifyWrongColorsMessage,
 	notifyWrongSuitsMessage,
 	notifyStealMessage,
+	notifyJokerStealMessage,
 	notifyEndGameMessage,
 } from './game-notifications.service';
 import type { GameServiceOptions } from './types';
@@ -87,13 +88,23 @@ export async function processTurn ({ ctx, game, me, turnMeta, sender }: GameServ
 			await updateColorsMessage({ ctx, game, turnMeta, newRedCount, sender });
 			return;
 		}
-		const { success } = await game.turn({
+		const colorsResult = await game.turn({
 			me: me.id,
 			turnMeta,
 			options: { cardName: turnMeta.cardName, colors: { red: turnMeta.redCount, black: turnMeta.blackCount } },
 		});
-		if (!success) {
+		if (!colorsResult.success) {
 			await notifyWrongColorsMessage({ ctx, game, me, turnMeta, sender });
+			return;
+		}
+		// For Joker, colors is the final stage — commit steal immediately.
+		if (turnMeta.cardName === 'Joker') {
+			await notifyJokerStealMessage({ ctx, game, me, turnMeta, sender }, colorsResult.composeAthanasius);
+			if (colorsResult.gameEnded) {
+				await notifyEndGameMessage(game, sender);
+				return;
+			}
+			await sendFirstMessage(game, sender);
 			return;
 		}
 		await notifyNextStage({ ctx, game, me, turnMeta, sender });

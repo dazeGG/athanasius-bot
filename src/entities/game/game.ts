@@ -15,6 +15,7 @@ import { getLastRoundLogs, mailing as gameMailing } from './utils';
 import { TurnStage } from './types';
 import type { Hand } from './model/hand';
 import type { MailingOptions, PlayerId, Sender, TurnOptions, TurnReturn } from './types';
+import type { CardName } from '~/entities/deck';
 
 interface ConstructorOptionsById {
 	id: string;
@@ -59,9 +60,13 @@ export class Game {
 			this.name = room.name;
 			this.started = dayjs();
 			this.queue = new Queue(players, true);
-			this.hands = new Hands({ players, decksCount: settings.decksCount, queue: this.queue });
+			this.hands = new Hands({ players, decksCount: settings.decksCount, deckType: settings.deckType ?? 52, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
-			this.utils = { cardsToAthanasius: settings.decksCount * 4, logs: [] };
+			this.utils = {
+				cardsToAthanasius: settings.decksCount * 4,
+				jokerCardsToAthanasius: settings.decksCount * 2,
+				logs: [],
+			};
 
 			const initialAthanasiuses = this.hands.collectInitialAthanasiuses(this.utils);
 			Object.entries(initialAthanasiuses).forEach(([playerIdStr, cardNames]) => {
@@ -120,6 +125,10 @@ export class Game {
 
 	public get cardsToAthanasius (): number {
 		return this.utils.cardsToAthanasius;
+	}
+
+	public getCardsToAthanasiusForRank (cardName: CardName): number {
+		return cardName === 'Joker' ? this.utils.jokerCardsToAthanasius : this.utils.cardsToAthanasius;
 	}
 
 	public getAthanasiuses (): GameSchema['athanasiuses'] {
@@ -211,7 +220,13 @@ export class Game {
 	}
 
 	private async handleSuccessfulTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
-		if (turnMeta.stage !== TurnStage.suits) {
+		// A Joker turn ends at the colors stage (no suits stage).
+		// A regular turn ends at the suits stage.
+		const isFinalStage = turnMeta.cardName === 'Joker'
+			? turnMeta.stage === TurnStage.colors
+			: turnMeta.stage === TurnStage.suits;
+
+		if (!isFinalStage) {
 			return { success: true, composeAthanasius: false, gameEnded: false };
 		}
 
@@ -232,7 +247,9 @@ export class Game {
 
 		const cardsMoved = turnMeta.stage === TurnStage.suits
 			? turnMeta.suits.hearts + turnMeta.suits.diamonds + turnMeta.suits.spades + turnMeta.suits.clubs
-			: 0;
+			: turnMeta.stage === TurnStage.colors
+				? turnMeta.redCount + turnMeta.blackCount
+				: 0;
 
 		logGameEvent({
 			type: 'TURN_SUCCESS',

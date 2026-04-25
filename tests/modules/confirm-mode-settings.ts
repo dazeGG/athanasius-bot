@@ -89,7 +89,7 @@ const seedActiveGame = async (): Promise<void> => {
 				players: [ALICE.id, 1002, 1003],
 				hands: { [ALICE.id]: [], 1002: [], 1003: [] },
 				athanasiuses: { [ALICE.id]: [], 1002: [], 1003: [] },
-				utils: { cardsToAthanasius: 4, logs: [] },
+				utils: { cardsToAthanasius: 4, jokerCardsToAthanasius: 2, logs: [] },
 			},
 		],
 	});

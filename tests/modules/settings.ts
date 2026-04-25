@@ -96,6 +96,7 @@ const seedActiveGameFor = async (player: PlayerFixture): Promise<void> => {
 				athanasiuses: { [player.id]: [] },
 				utils: {
 					cardsToAthanasius: 4,
+					jokerCardsToAthanasius: 2,
 					logs: [],
 				},
 			},

@@ -50,6 +50,7 @@ interface RoomOptions {
 	owner?: number;
 	players?: readonly number[];
 	decksCount?: number;
+	deckType?: 36 | 52 | 54;
 }
 
 interface GameOptions {
@@ -60,6 +61,7 @@ interface GameOptions {
 	hands?: Record<number, number[]>;
 	athanasiuses?: Record<number, string[]>;
 	cardsToAthanasius?: number;
+	jokerCardsToAthanasius?: number;
 	logs?: string[];
 	started?: number;
 	ended?: number;
@@ -94,6 +96,7 @@ export const makeRoom = ({
 	owner = ALICE.id,
 	players = [ALICE.id, BOB.id, CAROL.id],
 	decksCount = 1,
+	deckType = 52,
 }: RoomOptions = {}): RoomSchema => ({
 	id,
 	name,
@@ -101,7 +104,7 @@ export const makeRoom = ({
 	players: [...players],
 	settings: {
 		joinCode: 'GAME-FLOW',
-		deckType: 52,
+		deckType,
 		decksCount,
 		towHands: false,
 		allowMailing: false,
@@ -127,6 +130,7 @@ export const makeGame = ({
 	hands,
 	athanasiuses,
 	cardsToAthanasius = 4,
+	jokerCardsToAthanasius = 2,
 	logs = [],
 	started = Date.now(),
 	ended,
@@ -146,6 +150,7 @@ export const makeGame = ({
 		athanasiuses: { ...defaultAthanasiuses, ...(athanasiuses ?? {}) },
 		utils: {
 			cardsToAthanasius,
+			jokerCardsToAthanasius,
 			logs,
 		},
 	};
@@ -310,7 +315,13 @@ export const totalCardsInHands = (game: GameSchema): number => {
  * Counts how many physical cards are represented by all persisted Athanasiuses.
  */
 export const totalAthanasiusCards = (game: GameSchema): number => {
-	return Object.values(game.athanasiuses).reduce((sum, cardNames) => sum + cardNames.length * game.utils.cardsToAthanasius, 0);
+	return Object.values(game.athanasiuses).reduce((sum, cardNames) => {
+		const cardsCount = cardNames.reduce((rankSum, cardName) => {
+			return rankSum + (cardName === 'Joker' ? game.utils.jokerCardsToAthanasius : game.utils.cardsToAthanasius);
+		}, 0);
+
+		return sum + cardsCount;
+	}, 0);
 };
 
 /**
@@ -358,3 +369,43 @@ export const sendSeededFirstMessage = async (gameId = 'game-flow', initial = fal
  * Returns the visible label used for a card rank in tests assertions.
  */
 export const cardLabel = (cardName: CardName): string => DeckConfig.CARDS_VIEW_MAP[cardName];
+
+/**
+ * Resolves one or more repeated card ids from the 36-card deck for a specific rank and suit.
+ */
+export const cardIds36 = (cardName: CardName, suit: SuitName, count = 1): number[] => {
+	const card = Deck.getDeck(36).find(item => item.name === cardName && item.suit === suit);
+
+	if (!card) {
+		throw new Error(`Card ${cardName} ${suit} not found in 36-deck`);
+	}
+
+	return Array.from({ length: count }, () => card.id);
+};
+
+/**
+ * Resolves one or more repeated card ids from the 54-card deck for a specific rank and suit.
+ * Use this for regular cards in 54-deck game tests (jokers have dedicated helpers).
+ */
+export const cardIds54 = (cardName: CardName, suit: SuitName, count = 1): number[] => {
+	const card = Deck.getDeck(54).find(item => item.name === cardName && item.suit === suit);
+
+	if (!card) {
+		throw new Error(`Card ${cardName} ${suit} not found in 54-deck`);
+	}
+
+	return Array.from({ length: count }, () => card.id);
+};
+
+/**
+ * Returns the card ID of the joker of the given color from the 54-card deck.
+ */
+export const jokerCardId = (color: 'red' | 'black'): number => {
+	const card = Deck.getDeck(54).find(c => c.name === 'Joker' && c.color === color);
+
+	if (!card) {
+		throw new Error(`Joker (${color}) not found in 54-deck`);
+	}
+
+	return card.id;
+};

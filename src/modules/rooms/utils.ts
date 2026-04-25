@@ -6,10 +6,12 @@ import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
 import { txt, MIN_PLAYERS_TO_START } from '~/shared/ui/game';
+import { DeckConfig } from '~/entities/deck';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
 import type { AppContext, CallbackCtx } from '~/core';
 import type { RoomSchema, RoomId } from '~/db';
 import type { PlayerId } from '~/entities/game';
+import type { DeckType } from '~/entities/deck';
 
 import * as ui from './ui';
 
@@ -40,7 +42,8 @@ class RoomTexts {
 
 	private settings (): string {
 		return 'Настройки игры:\n' +
-			`Количество колод: ${this.room.settings.decksCount}`;
+			`Количество колод: ${this.room.settings.decksCount}\n` +
+			`Тип колоды: ${DeckConfig.getDeckTypeLabel(this.room.settings.deckType)}`;
 	}
 
 	public roomBaseText (): string {
@@ -124,6 +127,22 @@ export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 	return keyboard;
 };
 
+export const getDeckTypeInlineKeyboard = (room: RoomSchema) => {
+	const keyboard = new InlineKeyboard();
+	const options: { label: string; value: DeckType }[] = [
+		{ label: '36 карт', value: 36 },
+		{ label: '52 карты', value: 52 },
+		{ label: '54 карты (с джокерами)', value: 54 },
+	];
+	options.forEach(({ label, value }) => {
+		const isCurrent = room.settings.deckType === value;
+		keyboard.text((isCurrent ? '✅ ' : '') + label, stringifyCallbackData({ module: 'room', action: 'cdt', meta: `${room.id}:${value}` }));
+		keyboard.row();
+	});
+	keyboard.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${room.id}` }));
+	return keyboard;
+};
+
 export const getRoomIdFromMeta = (ctx: CallbackCtx): RoomId => {
 	const roomId = getCallbackMeta(ctx.callbackQuery.data);
 
@@ -159,6 +178,8 @@ export const getSettingsInlineKeyboard = (room: RoomSchema) => {
 	keyboard.text('Код подключения', stringifyCallbackData({ module: 'room', action: 'cjc', meta: room.id }));
 	keyboard.row();
 	keyboard.text('Количество колод', stringifyCallbackData({ module: 'room', action: 'cdc', meta: room.id }));
+	keyboard.row();
+	keyboard.text('Тип колоды', stringifyCallbackData({ module: 'room', action: 'cdt', meta: room.id }));
 	keyboard.row();
 	keyboard.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${room.id}` }));
 	return keyboard;
