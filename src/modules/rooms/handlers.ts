@@ -248,6 +248,10 @@ export const gameSendMessageCallbackHandler = async (ctx: CallbackCtx) => {
 		return;
 	}
 
+	if (!room.settings.allowMailing) {
+		return;
+	}
+
 	const game = utils.getGameFromMeta(ctx);
 
 	if (game.activePlayer.id !== ctx.from.id) {
@@ -285,6 +289,12 @@ export const gameSendMessageTextHandler = async (ctx: MessageCtx) => {
 	}
 
 	const game = new Game({ id: activeGameSchema.id });
+
+	if (!room.settings.allowMailing || game.activePlayer.id !== ctx.from.id || game.hasMailedThisTurn(ctx.from.id)) {
+		ctx.session.flow = {};
+		return;
+	}
+
 	const sender = ORM.Users.get(ctx.from.id);
 	const header = `Игра ${escapeHtml(room.name)} | Игрок ${escapeHtml(sender.name)}`;
 
