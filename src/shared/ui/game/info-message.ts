@@ -22,7 +22,6 @@ export class InfoMessage {
 
 	/* GAME LIFECYCLE */
 	public static gameStartedMailing (room: RoomSchema): string {
-		const deckTypeLabel = room.settings.deckType === 54 ? '54 карты' : room.settings.deckType === 36 ? '36 карт' : '52 карты';
 		return `Комната ${escapeHtml(room.name)} | ${txt.gameStarted}\n` +
 			'\n' +
 			txt.players + ':\n' +
@@ -30,7 +29,7 @@ export class InfoMessage {
 			'\n' +
 			txt.gameSettings + ':\n' +
 			'• ' + txt.decksCount + ': ' + room.settings.decksCount + '\n' +
-			'• Тип колоды: ' + deckTypeLabel;
+			'• Тип колоды: ' + DeckConfig.getDeckTypeLabel(room.settings.deckType);
 	}
 
 	private static formatPlayerResult (name: string, count: number): string {

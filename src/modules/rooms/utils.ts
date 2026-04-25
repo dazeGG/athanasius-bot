@@ -6,6 +6,7 @@ import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
 import { txt, MIN_PLAYERS_TO_START } from '~/shared/ui/game';
+import { DeckConfig } from '~/entities/deck';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
 import type { AppContext, CallbackCtx } from '~/core';
 import type { RoomSchema, RoomId } from '~/db';
@@ -40,10 +41,9 @@ class RoomTexts {
 	}
 
 	private settings (): string {
-		const deckTypeLabel = this.room.settings.deckType === 54 ? '54 карты' : this.room.settings.deckType === 36 ? '36 карт' : '52 карты';
 		return 'Настройки игры:\n' +
 			`Количество колод: ${this.room.settings.decksCount}\n` +
-			`Тип колоды: ${deckTypeLabel}`;
+			`Тип колоды: ${DeckConfig.getDeckTypeLabel(this.room.settings.deckType)}`;
 	}
 
 	public roomBaseText (): string {

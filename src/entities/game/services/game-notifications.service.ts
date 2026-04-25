@@ -77,7 +77,7 @@ export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptio
 		);
 		break;
 	case TurnStage.colors:
-		// Only show suits stage if the rank is NOT a Joker
+		// Defensive guard for direct service calls; processTurn handles Joker colors as the final stage.
 		if (turnMeta.cardName !== 'Joker') {
 			await ctx.editMessageText(
 				GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),

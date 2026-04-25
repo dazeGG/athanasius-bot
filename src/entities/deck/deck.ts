@@ -69,23 +69,17 @@ const deckMap: Record<DeckType, Card[]> = { 52: deck52, 36: deck36, 54: deck54 }
 const cacheMap: Record<DeckType, Map<CardId, Card>> = { 52: cardCache52, 36: cardCache36, 54: cardCache54 };
 
 export class Deck {
-	/** Default deck (52) cache – used for card lookups in game where deckType is not always available */
-	private static readonly defaultCache: Map<CardId, Card> = cardCache54;
-
 	public static getDeck (deckType: DeckType = 52): Card[] {
 		return _.cloneDeep(deckMap[deckType]);
 	}
 
 	public static getCardById (id: CardId): Card | undefined {
-		// Search all caches; IDs 53/54 only exist in 54-cache; 1-36 for 36-deck; 1-52 in 52-deck.
-		// The 54-cache is a superset of 52-deck IDs + joker IDs; 36-deck uses IDs 1-36 (different cards).
-		// During a game, the correct cache is picked via getCardsByIds with the game-specific cache.
-		// For backward compat, we use the merged lookup across all caches.
-		return cardCache54.get(id) ?? cardCache52.get(id) ?? cardCache36.get(id);
+		return cardCache54.get(id);
 	}
 
-	public static getCardsByIds (ids: CardId[]): Card[] {
-		return ids.map(id => Deck.getCardById(id)).filter(Boolean) as Card[];
+	public static getCardsByIds (ids: CardId[], deckType: DeckType = 54): Card[] {
+		const cache = cacheMap[deckType];
+		return ids.map(id => cache.get(id)).filter(Boolean) as Card[];
 	}
 
 	public static sortByValue (cards: Card[], sortType: 'asc' | 'desc' = 'asc'): Card[] {
@@ -182,8 +176,8 @@ export class Deck {
 		return Deck.sortByValue(Deck.getDeck(deckType), sortType);
 	}
 
-	public static isValidCardId (id: number): boolean {
-		return Deck.defaultCache.has(id);
+	public static isValidCardId (id: number, deckType: DeckType = 54): boolean {
+		return cacheMap[deckType].has(id);
 	}
 
 	public static get deckSize (): number {

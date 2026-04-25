@@ -1,14 +1,28 @@
 import type { CardName } from './types';
 
 export type DeckType = 52 | 36 | 54;
+type RegularCardName = Exclude<CardName, 'Joker'>;
 
 export class DeckConfig {
-	public static CARD_NAMES: CardName[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+	public static REGULAR_CARD_NAMES: RegularCardName[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 
 	public static JOKER_NAME: CardName = 'Joker';
 
+	public static CARD_NAMES: CardName[] = [...DeckConfig.REGULAR_CARD_NAMES, DeckConfig.JOKER_NAME];
+
 	public static isCardName (value: string): value is CardName {
-		return this.CARD_NAMES.includes(value as CardName) || value === this.JOKER_NAME;
+		return this.CARD_NAMES.includes(value as CardName);
+	}
+
+	public static getDeckTypeLabel (deckType: DeckType = 52): string {
+		switch (deckType) {
+		case 36:
+			return '36 карт';
+		case 54:
+			return '54 карты';
+		case 52:
+			return '52 карты';
+		}
 	}
 
 	public static SUITS = [

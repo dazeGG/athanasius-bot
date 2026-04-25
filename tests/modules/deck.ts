@@ -18,6 +18,12 @@ export async function deckModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(!DeckConfig.isCardName('joker'), 'lowercase "joker" should not match');
 	});
 
+	await runCase('DeckConfig separates regular card names from all card names', () => {
+		assert(DeckConfig.REGULAR_CARD_NAMES.length === 13, 'Regular card names should contain 13 ranks');
+		assert(!DeckConfig.REGULAR_CARD_NAMES.includes('Joker' as never), 'Regular card names must not include Joker');
+		assert(DeckConfig.CARD_NAMES.includes('Joker'), 'All card names should include Joker');
+	});
+
 	await runCase('DeckConfig.BLACK_SUITS contains Spades and Clubs only', () => {
 		const bs = DeckConfig.BLACK_SUITS;
 		assert(bs.includes('Spades'), 'BLACK_SUITS should include Spades');
@@ -148,6 +154,14 @@ export async function deckModule ({ runCase }: ModuleTools): Promise<void> {
 	await runCase('getCardById returns undefined for a non-existent ID', () => {
 		assert(Deck.getCardById(9999) === undefined, 'ID 9999 must return undefined');
 		assert(Deck.getCardById(0) === undefined, 'ID 0 must return undefined');
+	});
+
+	await runCase('isValidCardId respects deck type', () => {
+		assert(Deck.isValidCardId(13, 36), 'Ace of hearts should be valid in 36-deck');
+		assert(!Deck.isValidCardId(1, 36), 'Rank 2 should not be valid in 36-deck');
+		assert(!Deck.isValidCardId(53, 36), 'Joker should not be valid in 36-deck');
+		assert(!Deck.isValidCardId(53, 52), 'Joker should not be valid in 52-deck');
+		assert(Deck.isValidCardId(53, 54), 'Joker should be valid in 54-deck');
 	});
 
 	/* ─── getCacheForDeckType ─────────────────────────────────────────────────── */
