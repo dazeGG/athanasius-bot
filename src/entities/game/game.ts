@@ -60,7 +60,7 @@ export class Game {
 			this.name = room.name;
 			this.started = dayjs();
 			this.queue = new Queue(players, true);
-			this.hands = new Hands({ players, decksCount: settings.decksCount, deckType: settings.deckType, queue: this.queue });
+			this.hands = new Hands({ players, decksCount: settings.decksCount, deckType: settings.deckType ?? 52, queue: this.queue });
 			this.athanasiuses = Object.fromEntries(players.map(p => [p, []]));
 			this.utils = {
 				cardsToAthanasius: settings.decksCount * 4,

@@ -66,6 +66,28 @@ export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> 
 		assert(firstTurnRecipients.length === 1, 'Exactly one player should receive the initial first-turn message');
 	});
 
+	await runCase('Creates a 52-card game for rooms saved before deckType existed', async () => {
+		await resetGameFlowCase();
+
+		const room = makeRoom({
+			players: [ALICE.id, BOB.id, CAROL.id],
+			decksCount: 1,
+		});
+		delete (room.settings as Partial<typeof room.settings>).deckType;
+
+		await seedGameState({ users: createUsers(), room });
+		await Game.create(room);
+
+		const createdGameId = DB.data.games[0]?.id;
+		assert(createdGameId !== undefined, 'Game.create should persist a game');
+
+		const persistedGame = getPersistedGame(createdGameId);
+		const totalCards = totalCardsInHands(persistedGame);
+		const totalAthanasius = totalAthanasiusCards(persistedGame);
+
+		assert(totalCards + totalAthanasius === Deck.deckSize, 'Old rooms without deckType should start with a 52-card deck');
+	});
+
 	await runCase('Skips empty players when sending the next turn message', async () => {
 		await resetGameFlowCase();
 
