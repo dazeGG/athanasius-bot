@@ -101,7 +101,6 @@ class Rooms {
 					decksCount: 4,
 					towHands: false,
 					allowMailing: false,
-					allowMailingAtTurn: false,
 				},
 			});
 

@@ -108,7 +108,6 @@ export const makeRoom = ({
 		decksCount,
 		towHands: false,
 		allowMailing: false,
-		allowMailingAtTurn: false,
 	},
 });
 

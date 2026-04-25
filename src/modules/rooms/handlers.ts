@@ -1,7 +1,6 @@
 import { BOT, logGameEvent } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
-import { sendFirstMessage } from '~/entities/game/services';
 import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import { getCallbackMeta } from '~/core/lib';
@@ -240,7 +239,7 @@ export const gameWhoseTurnCallbackHandler = async (ctx: CallbackCtx) => {
 	);
 };
 
-export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
+export const gameSendMessageCallbackHandler = async (ctx: CallbackCtx) => {
 	await ctx.answerCallbackQuery();
 
 	const room = utils.getRoomFromMeta(ctx);
@@ -249,17 +248,51 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 		return;
 	}
 
-	if (!await utils.ensureRoomOwner(ctx, room)) {
+	const game = utils.getGameFromMeta(ctx);
+
+	if (game.activePlayer.id !== ctx.from.id) {
 		return;
 	}
 
-	const game = utils.getGameFromMeta(ctx);
+	if (game.hasMailedThisTurn(ctx.from.id)) {
+		return;
+	}
 
-	await sendFirstMessage(game, BOT.api.sendMessage.bind(BOT.api));
-	await ctx.editMessageText(
-		utils.getRoomBaseText(room, true) + `\n\n🟩 ${gameTxt.gameMessageResendSuccess}`,
-		{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
-	);
+	ctx.session.flow = { name: 'GAME_MAILING', roomId: room.id };
+	await ctx.editMessageText(ui.txt.sendMessagePrompt);
+};
+
+export const gameSendMessageTextHandler = async (ctx: MessageCtx) => {
+	const roomId = ctx.session.flow.name === 'GAME_MAILING' ? ctx.session.flow.roomId : undefined;
+
+	if (!roomId) {
+		throw new Error('Room id required');
+	}
+
+	const text = ctx.message.text.trim();
+
+	if (text.length < 1 || text.length > 300) {
+		await ctx.reply(ui.txt.sendMessagePrompt);
+		return;
+	}
+
+	const room = ORM.Rooms.getById(roomId);
+	const activeGameSchema = ORM.Games.getActive(roomId);
+
+	if (!activeGameSchema) {
+		ctx.session.flow = {};
+		return;
+	}
+
+	const game = new Game({ id: activeGameSchema.id });
+	const sender = ORM.Users.get(ctx.from.id);
+	const header = `Игра ${escapeHtml(room.name)} | Игрок ${escapeHtml(sender.name)}`;
+
+	await game.mailing({ text: `${header}\n\n${escapeHtml(text)}` }, [ctx.from.id]);
+	await game.markMailedThisTurn(ctx.from.id);
+
+	ctx.session.flow = {};
+	await ctx.reply(ui.txt.sendMessageSuccess);
 };
 
 export const deleteRoomCallbackHandler = async (ctx: CallbackCtx) => {
