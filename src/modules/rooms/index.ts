@@ -28,6 +28,11 @@ registered.on('message:text').filter(
 	SettingsHandlers.changeDecksCountMessage,
 );
 
+registered.on('message:text').filter(
+	ctx => ctx.session.flow.name === 'GAME_MAILING',
+	handlers.gameSendMessageTextHandler,
+);
+
 // ── Callback handlers ─────────────────────────────────────────────────────────
 
 registered.callbackQuery(/^rooms:join:/, handlers.joinRoomCallbackHandler);
@@ -39,11 +44,12 @@ registered.callbackQuery(/^room:start:/, handlers.gameStartCallbackHandler);
 registered.callbackQuery(/^room:delete:/, handlers.deleteRoomCallbackHandler);
 registered.callbackQuery(/^room:getath:/, handlers.gameGetAthanasiusesCallbackHandler);
 registered.callbackQuery(/^room:whoseturn:/, handlers.gameWhoseTurnCallbackHandler);
-registered.callbackQuery(/^room:sendturnmsg:/, handlers.gameSendTurnMessageCallbackHandler);
+registered.callbackQuery(/^room:sendmsg:/, handlers.gameSendMessageCallbackHandler);
 registered.callbackQuery(/^rooms:back:/, handlers.backCallbackHandler);
 registered.callbackQuery(/^room:settings:/, SettingsHandlers.start);
 registered.callbackQuery(/^room:cjc:/, SettingsHandlers.changeJoinCode);
 registered.callbackQuery(/^room:cdc:/, SettingsHandlers.changeDecksCount);
 registered.callbackQuery(/^room:cdt:/, SettingsHandlers.changeDeckType);
+registered.callbackQuery(/^room:cam:/, SettingsHandlers.toggleAllowMailing);
 
 export default composer;

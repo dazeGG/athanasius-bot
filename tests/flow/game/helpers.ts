@@ -63,6 +63,7 @@ interface GameOptions {
 	cardsToAthanasius?: number;
 	jokerCardsToAthanasius?: number;
 	logs?: string[];
+	mailedThisTurn?: number;
 	started?: number;
 	ended?: number;
 }
@@ -108,7 +109,6 @@ export const makeRoom = ({
 		decksCount,
 		towHands: false,
 		allowMailing: false,
-		allowMailingAtTurn: false,
 	},
 });
 
@@ -132,6 +132,7 @@ export const makeGame = ({
 	cardsToAthanasius = 4,
 	jokerCardsToAthanasius = 2,
 	logs = [],
+	mailedThisTurn,
 	started = Date.now(),
 	ended,
 }: GameOptions = {}): GameSchema => {
@@ -152,6 +153,7 @@ export const makeGame = ({
 			cardsToAthanasius,
 			jokerCardsToAthanasius,
 			logs,
+			mailedThisTurn,
 		},
 	};
 };

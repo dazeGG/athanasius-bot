@@ -5,7 +5,8 @@ import type { RoomId } from '~/db';
 export type AppFlowState =
 	| { name?: undefined }
 	| { name: 'REGISTRATION' | 'ROOMS_JOIN' | 'ROOMS_CREATE' | 'SETTINGS_CHANGE_NAME' }
-	| { name: 'ROOM_CDC'; roomId: RoomId };
+	| { name: 'ROOM_CDC'; roomId: RoomId }
+	| { name: 'GAME_MAILING'; roomId: RoomId };
 
 export interface AppSession {
 	flow: AppFlowState;

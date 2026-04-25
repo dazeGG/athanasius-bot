@@ -3,11 +3,26 @@ import { getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx, MessageCtx } from '~/core';
 
 import * as utils from './utils';
+import * as ui from './ui';
+
+async function guardGameNotStarted (ctx: CallbackCtx, roomId: string): Promise<boolean> {
+	if (ORM.Games.getActive(roomId)) {
+		await ctx.answerCallbackQuery(ui.txt.gameAlreadyStarted);
+		await ctx.deleteMessage();
+		return false;
+	}
+	return true;
+}
 
 export class SettingsHandlers {
 	public static async start (ctx: CallbackCtx) {
-		await ctx.answerCallbackQuery();
 		const room = utils.getRoomFromMeta(ctx);
+
+		if (!await guardGameNotStarted(ctx, room.id)) {
+			return;
+		}
+
+		await ctx.answerCallbackQuery();
 
 		if (!await utils.ensureRoomMember(ctx, room)) {
 			return;
@@ -24,8 +39,13 @@ export class SettingsHandlers {
 	}
 
 	public static async changeJoinCode (ctx: CallbackCtx) {
-		await ctx.answerCallbackQuery();
 		const room = utils.getRoomFromMeta(ctx);
+
+		if (!await guardGameNotStarted(ctx, room.id)) {
+			return;
+		}
+
+		await ctx.answerCallbackQuery();
 
 		if (!await utils.ensureRoomMember(ctx, room)) {
 			return;
@@ -43,8 +63,13 @@ export class SettingsHandlers {
 	}
 
 	public static async changeDecksCount (ctx: CallbackCtx) {
-		await ctx.answerCallbackQuery();
 		const room = utils.getRoomFromMeta(ctx);
+
+		if (!await guardGameNotStarted(ctx, room.id)) {
+			return;
+		}
+
+		await ctx.answerCallbackQuery();
 
 		if (!await utils.ensureRoomMember(ctx, room)) {
 			return;
@@ -113,8 +138,7 @@ export class SettingsHandlers {
 			return;
 		}
 
-		if (ORM.Games.getActive(room.id)) {
-			await ctx.answerCallbackQuery('Нельзя менять тип колоды во время активной игры');
+		if (!await guardGameNotStarted(ctx, room.id)) {
 			return;
 		}
 
@@ -139,6 +163,32 @@ export class SettingsHandlers {
 
 		// Re-fetch room to get updated settings
 		const updatedRoom = ORM.Rooms.getById(roomId);
+		await ctx.editMessageText(
+			utils.getSettingsStartText(updatedRoom),
+			{ reply_markup: utils.getSettingsInlineKeyboard(updatedRoom) },
+		);
+	}
+
+	public static async toggleAllowMailing (ctx: CallbackCtx) {
+		const room = utils.getRoomFromMeta(ctx);
+
+		if (!await guardGameNotStarted(ctx, room.id)) {
+			return;
+		}
+
+		await ctx.answerCallbackQuery();
+
+		if (!await utils.ensureRoomMember(ctx, room)) {
+			return;
+		}
+
+		if (!await utils.ensureRoomOwner(ctx, room)) {
+			return;
+		}
+
+		await ORM.Rooms.changeSettings(room.id, { allowMailing: !room.settings.allowMailing });
+
+		const updatedRoom = ORM.Rooms.getById(room.id);
 		await ctx.editMessageText(
 			utils.getSettingsStartText(updatedRoom),
 			{ reply_markup: utils.getSettingsInlineKeyboard(updatedRoom) },

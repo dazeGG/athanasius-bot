@@ -43,7 +43,8 @@ class RoomTexts {
 	private settings (): string {
 		return 'Настройки игры:\n' +
 			`Количество колод: ${this.room.settings.decksCount}\n` +
-			`Тип колоды: ${DeckConfig.getDeckTypeLabel(this.room.settings.deckType)}`;
+			`Тип колоды: ${DeckConfig.getDeckTypeLabel(this.room.settings.deckType)}\n` +
+			`Сообщения в ход: ${this.room.settings.allowMailing ? 'вкл' : 'выкл'}`;
 	}
 
 	public roomBaseText (): string {
@@ -87,17 +88,20 @@ export const getRoomBaseText = (room: RoomSchema, gameStarted?: boolean): string
 
 export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 	const keyboard = new InlineKeyboard();
-	const gameStarted = !!ORM.Games.getActive(room.id);
+	const activeGameSchema = ORM.Games.getActive(room.id);
 
-	if (gameStarted) {
+	if (activeGameSchema) {
 		keyboard.text('Афанасии', stringifyCallbackData({ module: 'room', action: 'getath', meta: room.id }));
 		keyboard.row();
 		keyboard.text('Чей ход', stringifyCallbackData({ module: 'room', action: 'whoseturn', meta: room.id }));
 		keyboard.row();
 
-		if (room.owner === meId) {
-			keyboard.text('Отправить сообщение хода', stringifyCallbackData({ module: 'room', action: 'sendturnmsg', meta: room.id }));
-			keyboard.row();
+		if (room.settings.allowMailing) {
+			const game = new Game({ id: activeGameSchema.id });
+			if (game.activePlayer.id === meId && !game.hasMailedThisTurn(meId)) {
+				keyboard.text('Отправить сообщение', stringifyCallbackData({ module: 'room', action: 'sendmsg', meta: room.id }));
+				keyboard.row();
+			}
 		}
 	} else {
 		if (room.owner === meId) {
@@ -180,6 +184,11 @@ export const getSettingsInlineKeyboard = (room: RoomSchema) => {
 	keyboard.text('Количество колод', stringifyCallbackData({ module: 'room', action: 'cdc', meta: room.id }));
 	keyboard.row();
 	keyboard.text('Тип колоды', stringifyCallbackData({ module: 'room', action: 'cdt', meta: room.id }));
+	keyboard.row();
+	keyboard.text(
+		`Сообщения в ход: ${room.settings.allowMailing ? '✅' : '❌'}`,
+		stringifyCallbackData({ module: 'room', action: 'cam', meta: room.id }),
+	);
 	keyboard.row();
 	keyboard.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${room.id}` }));
 	return keyboard;

@@ -6,6 +6,7 @@ import type { ModuleTools } from '../../runner';
 import { runAthanasiusLayer } from './layers/athanasius';
 import { runFailuresLayer } from './layers/failures';
 import { runGuardsLayer } from './layers/guards';
+import { runMailingModeLayer } from './layers/mailing-mode';
 import { runNotificationsLayer } from './layers/notifications';
 import { runConfirmModeLayer } from './layers/confirm-mode';
 import { runProgressionLayer } from './layers/progression';
@@ -21,5 +22,6 @@ export async function gameFlow (tools: ModuleTools): Promise<void> {
 	await tools.runLayer('Failures', runFailuresLayer);
 	await tools.runLayer('Athanasius', runAthanasiusLayer);
 	await tools.runLayer('Notifications', runNotificationsLayer);
+	await tools.runLayer('Mailing Mode', runMailingModeLayer);
 	await tools.runLayer('Confirm Mode', runConfirmModeLayer);
 }

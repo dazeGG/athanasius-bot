@@ -24,7 +24,6 @@ export interface RoomSettings {
 	decksCount: number;
 	towHands: boolean;
 	allowMailing: boolean;
-	allowMailingAtTurn: boolean;
 }
 
 export interface GameLog {
@@ -40,10 +39,12 @@ export interface GameUtils {
 	cardsToAthanasius: number;
 	jokerCardsToAthanasius: number;
 	logs: string[];
+	mailedThisTurn?: UserId;
 }
 
 export interface GameUtilsParsed {
 	cardsToAthanasius: number;
 	jokerCardsToAthanasius: number;
 	logs: GameLog[];
+	mailedThisTurn?: UserId;
 }

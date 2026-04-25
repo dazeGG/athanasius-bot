@@ -191,6 +191,15 @@ export class Game {
 	}
 
 	/* MAILING */
+	public hasMailedThisTurn (playerId: PlayerId): boolean {
+		return this.utils.mailedThisTurn === playerId;
+	}
+
+	public async markMailedThisTurn (playerId: PlayerId): Promise<void> {
+		this.utils.mailedThisTurn = playerId;
+		await this.save();
+	}
+
 	public async mailing (options: MailingOptions, exclude: PlayerId[] = [], sender: Sender = BOT.api.sendMessage.bind(BOT.api)): Promise<void> {
 		await gameMailing(options, this.allPlayers, exclude, sender);
 	}
@@ -217,6 +226,7 @@ export class Game {
 		do {
 			this.queue.next();
 		} while (this.hands.hand(this.queue.activePlayer).cardsInHand.length === 0);
+		this.utils.mailedThisTurn = undefined;
 	}
 
 	private async handleSuccessfulTurn ({ me, turnMeta }: Omit<TurnOptions, 'options'>): Promise<TurnReturn> {
