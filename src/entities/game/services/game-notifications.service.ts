@@ -1,5 +1,5 @@
 import { ORM } from '~/db';
-import { Achievements } from '~/shared/lib';
+import { Achievements, escapeHtml } from '~/shared/lib';
 import { TurnStage } from '~/entities/game';
 import { txt, gkb, InfoMessage, GameMessage } from '~/shared/ui/game';
 import type { GameSchema } from '~/db';
@@ -42,7 +42,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 		if (game.activePlayer.settings.updatesView === 'composed') {
 			const lastRoundLogs = game.getLastRoundLogs();
 			if (lastRoundLogs) {
-				await sender(game.activePlayer.id, `Вот что было за последний круг:\n\n${lastRoundLogs}`);
+				await sender(game.activePlayer.id, `Игра ${escapeHtml(game.gameName)} | Вот что было за последний круг:\n\n${lastRoundLogs}`);
 			}
 		}
 	}
@@ -109,9 +109,13 @@ export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: Upd
 	);
 }
 
+function withGameName (game: Game, text: string): string {
+	return `Игра ${escapeHtml(game.gameName)} | ${text}`;
+}
+
 async function notifyWrongTurn ({ ctx, game, me, sender }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me' | 'sender'>, meText: string, mailingText: string): Promise<void> {
 	await ctx.editMessageText(meText);
-	await game.realtimeMailing({ text: mailingText }, [me.id], sender);
+	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id], sender);
 	await sendFirstMessage(game, sender);
 }
 
@@ -139,8 +143,8 @@ export async function notifyStealMessage (
 	const mailingText = composeAthanasius
 		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.stealCardsMailing(turnMeta, me);
-	await game.realtimeMailing({ text: mailingText }, [me.id, turnMeta.player.id], sender);
-	await sender(turnMeta.player.id, InfoMessage.stealVictimMessage(turnMeta, me));
+	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, withGameName(game, InfoMessage.stealVictimMessage(turnMeta, me)));
 }
 
 export async function notifyJokerStealMessage (
@@ -151,8 +155,8 @@ export async function notifyJokerStealMessage (
 	const mailingText = composeAthanasius
 		? InfoMessage.jokerStealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.jokerStealMailing(turnMeta, me);
-	await game.realtimeMailing({ text: mailingText }, [me.id, turnMeta.player.id], sender);
-	await sender(turnMeta.player.id, InfoMessage.jokerStealVictimMessage(turnMeta, me));
+	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, withGameName(game, InfoMessage.jokerStealVictimMessage(turnMeta, me)));
 }
 
 function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {

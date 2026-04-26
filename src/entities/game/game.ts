@@ -106,6 +106,10 @@ export class Game {
 		return ORM.Users.get(this.queue.activePlayer);
 	}
 
+	public get gameName (): string {
+		return this.name;
+	}
+
 	public get isEnded (): boolean {
 		return this.ended !== undefined;
 	}
