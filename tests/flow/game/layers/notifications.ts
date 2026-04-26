@@ -110,7 +110,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 
 		assert(!logs.includes('<b>Борис → Каролина</b> | K'), 'Logs before Alice’s previous turn should be excluded');
 		assert(logs.includes('🟥 <b>Каролина → Борис</b> | 3 | 1'), 'Logs after Alice’s previous turn should be included');
-		assert(logs.includes('🟧 <b>Борис → Ты</b> | K | 1'), 'Newest logs should be included in order');
+		assert(logs.includes('🟧 <b>Борис → Алиса</b> | K | 1'), 'Newest logs should be included in order');
 	});
 
 	await runCase('Composed next players receive a summary when a failed turn hands control to them', async () => {
@@ -148,7 +148,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 			action: 'select',
 		}));
 
-		assertSent(getLog(), BOB.id, '🟧 <b>Алиса → Ты</b> | A');
+		assertSent(getLog(), BOB.id, '🟧 <b>Алиса → Борис</b> | A');
 	});
 
 	await runCase('Composed observers are excluded from real-time steal broadcasts', async () => {

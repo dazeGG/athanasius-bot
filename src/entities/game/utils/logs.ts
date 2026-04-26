@@ -56,7 +56,7 @@ function getLogMessage (log: GameLog, viewerId?: PlayerId): string {
 	const to = ORM.Users.get(log.to);
 	const isVictim = viewerId !== undefined && log.to === viewerId && log.steal;
 	const prefix = isVictim ? '🟧' : getLogPrefix(log);
-	const toName = isVictim ? 'Ты' : escapeHtml(to.name);
+	const toName = escapeHtml(to.name);
 
 	let msg = `${prefix} <b>${escapeHtml(from.name)} → ${toName}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
 

@@ -122,7 +122,7 @@ export class InfoMessage {
 	}
 
 	public static stealVictimMessage (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		const base = `🟧 <b>${escapeHtml(me.name)} → Ты</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const base = `🟧 <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
 		const suits = formatSuits(turnMeta.suits);
 		return suits ? `${base} | ${suits}` : base;
 	}
@@ -136,7 +136,7 @@ export class InfoMessage {
 	}
 
 	public static jokerStealVictimMessage (turnMeta: ColorsStageMeta, me: UserSchema): string {
-		const base = `🟧 <b>${escapeHtml(me.name)} → Ты</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const base = `🟧 <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
 		const colors = formatColors(turnMeta.redCount, turnMeta.blackCount);
 		return colors ? `${base} | ${colors}` : base;
 	}
