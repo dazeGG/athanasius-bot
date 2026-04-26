@@ -34,15 +34,17 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 
 	let text: string;
 
+	const gamePrefix = `Игра ${escapeHtml(game.gameName)}\n\n`;
+
 	if (initial) {
-		text = txt.firstTurnMessage;
+		text = gamePrefix + txt.firstTurnMessage;
 	} else {
-		text = txt.turnMessage;
+		text = gamePrefix + txt.turnMessage;
 
 		if (game.activePlayer.settings.updatesView === 'composed') {
 			const lastRoundLogs = game.getLastRoundLogs();
 			if (lastRoundLogs) {
-				await sender(game.activePlayer.id, `Игра ${escapeHtml(game.gameName)}\n\nВот что было за последний круг:\n\n${lastRoundLogs}`);
+				await sender(game.activePlayer.id, `${gamePrefix}Вот что было за последний круг:\n\n${lastRoundLogs}`);
 			}
 		}
 	}
@@ -114,7 +116,7 @@ function withGameName (game: Game, text: string): string {
 }
 
 async function notifyWrongTurn ({ ctx, game, me, sender }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me' | 'sender'>, meText: string, mailingText: string): Promise<void> {
-	await ctx.editMessageText(meText);
+	await ctx.editMessageText(withGameName(game, meText));
 	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id], sender);
 	await sendFirstMessage(game, sender);
 }
