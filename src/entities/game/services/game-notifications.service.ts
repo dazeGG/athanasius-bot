@@ -62,19 +62,19 @@ export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptio
 	switch (turnMeta.stage) {
 	case TurnStage.player:
 		await ctx.editMessageText(
-			GameMessage.getCardSelectMessage(turnMeta),
+			withGameName(game, GameMessage.getCardSelectMessage(turnMeta)),
 			{ reply_markup: gkb.cardSelect({ me: ctx.from.id, game, playerId: turnMeta.player.id }) },
 		);
 		break;
 	case TurnStage.card:
 		await ctx.editMessageText(
-			GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT),
+			withGameName(game, GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT)),
 			{ reply_markup: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }) },
 		);
 		break;
 	case TurnStage.count:
 		await ctx.editMessageText(
-			GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT),
+			withGameName(game, GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT)),
 			{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }) },
 		);
 		break;
@@ -82,7 +82,7 @@ export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptio
 		// Defensive guard for direct service calls; processTurn handles Joker colors as the final stage.
 		if (turnMeta.cardName !== 'Joker') {
 			await ctx.editMessageText(
-				GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
+				withGameName(game, GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS)),
 				{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }) },
 			);
 		}
@@ -92,21 +92,21 @@ export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptio
 
 export async function updateCountMessage ({ ctx, game, turnMeta, newCount }: UpdateMessageOptionsStage['Count']) {
 	await ctx.editMessageText(
-		GameMessage.getCountSelectMessage(turnMeta, newCount),
+		withGameName(game, GameMessage.getCountSelectMessage(turnMeta, newCount)),
 		{ reply_markup: gkb.countSelect({ game, turnMeta, count: newCount }) },
 	);
 }
 
 export async function updateColorsMessage ({ ctx, game, turnMeta, newRedCount }: UpdateMessageOptionsStage['Colors']) {
 	await ctx.editMessageText(
-		GameMessage.getColorsSelectMessage(turnMeta, newRedCount),
+		withGameName(game, GameMessage.getColorsSelectMessage(turnMeta, newRedCount)),
 		{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: newRedCount }) },
 	);
 }
 
 export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: UpdateMessageOptionsStage['Suits']) {
 	await ctx.editMessageText(
-		GameMessage.getSuitsSelectMessage(turnMeta, newSuits),
+		withGameName(game, GameMessage.getSuitsSelectMessage(turnMeta, newSuits)),
 		{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: newSuits }) },
 	);
 }
@@ -141,7 +141,7 @@ export async function notifyStealMessage (
 	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits'],
 	composeAthanasius: boolean,
 ) {
-	await ctx.editMessageText(GameMessage.getCardsStealMessage(turnMeta, composeAthanasius));
+	await ctx.editMessageText(withGameName(game, GameMessage.getCardsStealMessage(turnMeta, composeAthanasius)));
 	const mailingText = composeAthanasius
 		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.stealCardsMailing(turnMeta, me);
@@ -153,7 +153,7 @@ export async function notifyJokerStealMessage (
 	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Colors'],
 	composeAthanasius: boolean,
 ) {
-	await ctx.editMessageText(GameMessage.getJokerStealMessage(turnMeta, composeAthanasius));
+	await ctx.editMessageText(withGameName(game, GameMessage.getJokerStealMessage(turnMeta, composeAthanasius)));
 	const mailingText = composeAthanasius
 		? InfoMessage.jokerStealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.jokerStealMailing(turnMeta, me);
