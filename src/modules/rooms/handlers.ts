@@ -297,7 +297,7 @@ export const gameSendMessageTextHandler = async (ctx: MessageCtx) => {
 	}
 
 	const sender = ORM.Users.get(ctx.from.id);
-	const header = `Игра ${escapeHtml(room.name)} | Игрок ${escapeHtml(sender.name)}`;
+	const header = `${escapeHtml(room.name)} | ${escapeHtml(sender.name)}`;
 
 	await game.mailing({ text: `${header}\n\n${escapeHtml(text)}` }, [ctx.from.id]);
 	await game.markMailedThisTurn(ctx.from.id);

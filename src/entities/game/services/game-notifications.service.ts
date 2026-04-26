@@ -34,7 +34,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 
 	let text: string;
 
-	const gamePrefix = `Игра ${escapeHtml(game.gameName)}\n\n`;
+	const gamePrefix = `${escapeHtml(game.gameName)}\n\n`;
 
 	if (initial) {
 		text = gamePrefix + txt.firstTurnMessage;
@@ -112,7 +112,7 @@ export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: Upd
 }
 
 function withGameName (game: Game, text: string): string {
-	return `Игра ${escapeHtml(game.gameName)}\n\n${text}`;
+	return `${escapeHtml(game.gameName)}\n\n${text}`;
 }
 
 async function notifyWrongTurn ({ ctx, game, me, sender }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me' | 'sender'>, meText: string, mailingText: string): Promise<void> {

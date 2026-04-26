@@ -810,7 +810,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		await handlers.gameSendMessageTextHandler(makeMessageCtx(ALICE, '  Всем <b>привет</b> & ходим!  '));
 		const log = getLog();
 
-		assertSent(log, BOB.id, 'Игра &lt;b&gt;Зал &amp; ход&lt;/b&gt; | Игрок Алиса');
+		assertSent(log, BOB.id, '&lt;b&gt;Зал &amp; ход&lt;/b&gt; | Алиса');
 		assertSent(log, BOB.id, 'Всем &lt;b&gt;привет&lt;/b&gt; &amp; ходим!');
 		assertSent(log, CAROL.id, 'Всем &lt;b&gt;привет&lt;/b&gt; &amp; ходим!');
 		assertNotSent(log, ALICE.id, 'Всем &lt;b&gt;привет&lt;/b&gt; &amp; ходим!');
