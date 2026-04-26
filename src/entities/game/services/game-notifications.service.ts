@@ -42,7 +42,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 		if (game.activePlayer.settings.updatesView === 'composed') {
 			const lastRoundLogs = game.getLastRoundLogs();
 			if (lastRoundLogs) {
-				await sender(game.activePlayer.id, `Игра ${escapeHtml(game.gameName)} | Вот что было за последний круг:\n\n${lastRoundLogs}`);
+				await sender(game.activePlayer.id, `Игра ${escapeHtml(game.gameName)}\n\nВот что было за последний круг:\n\n${lastRoundLogs}`);
 			}
 		}
 	}
@@ -110,7 +110,7 @@ export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: Upd
 }
 
 function withGameName (game: Game, text: string): string {
-	return `Игра ${escapeHtml(game.gameName)} | ${text}`;
+	return `Игра ${escapeHtml(game.gameName)}\n\n${text}`;
 }
 
 async function notifyWrongTurn ({ ctx, game, me, sender }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me' | 'sender'>, meText: string, mailingText: string): Promise<void> {
