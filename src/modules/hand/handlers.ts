@@ -20,7 +20,9 @@ const getHandInlineKeyboard = (games: { id: string; roomId: string }[]) => {
 };
 
 const getHandShowInlineKeyboard = (gameId: string) => {
-	return new InlineKeyboard().text('Закрыть', stringifyCallbackData({ module: 'hand', action: 'close', meta: gameId }));
+	return new InlineKeyboard()
+		.text('Обновить', stringifyCallbackData({ module: 'hand', action: 'show', meta: gameId }))
+		.text('Закрыть', stringifyCallbackData({ module: 'hand', action: 'close', meta: gameId }));
 };
 
 const getHandShowText = (ctx: CallbackCtx) => {
