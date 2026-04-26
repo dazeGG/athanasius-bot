@@ -39,7 +39,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 		await getGame().markMailedThisTurn(ALICE.id);
 
-		assert(getPersistedGame().utils.mailedThisTurn === ALICE.id, 'Persisted game utils should store Alice as mailed this turn');
+		assert(getPersistedGame().utils.mailedThisTurn?.includes(ALICE.id) === true, 'Persisted game utils should store Alice as mailed this turn');
 		assert(getGame().hasMailedThisTurn(ALICE.id), 'Reloaded game should know Alice has already mailed this turn');
 		assert(!getGame().hasMailedThisTurn(BOB.id), 'Other players should not be treated as mailed this turn');
 	});
@@ -49,7 +49,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await seedGameState({
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
-				mailedThisTurn: ALICE.id,
+				mailedThisTurn: [ALICE.id],
 				hands: {
 					[ALICE.id]: [...cardIds('A', 'Diamonds'), ...cardIds('K', 'Clubs')],
 					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
@@ -69,7 +69,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await seedGameState({
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
-				mailedThisTurn: ALICE.id,
+				mailedThisTurn: [ALICE.id],
 				hands: {
 					[ALICE.id]: [...cardIds('A', 'Diamonds'), ...cardIds('K', 'Clubs')],
 					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
@@ -87,7 +87,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		}));
 
 		assert(getGame().activePlayer.id === ALICE.id, 'Alice should keep the turn after a successful steal with cards left');
-		assert(getPersistedGame().utils.mailedThisTurn === ALICE.id, 'Mailing marker should remain while the same turn continues');
+		assert(getPersistedGame().utils.mailedThisTurn?.includes(ALICE.id) === true, 'Mailing marker should remain while the same turn continues');
 	});
 
 	await runCase('Successful steals that empty the active hand clear the marker after skipping empty players', async () => {
@@ -95,7 +95,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await seedGameState({
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
-				mailedThisTurn: ALICE.id,
+				mailedThisTurn: [ALICE.id],
 				hands: {
 					[ALICE.id]: [...cardIds('A', 'Diamonds'), ...cardIds('A', 'Clubs')],
 					[BOB.id]: [...cardIds('A', 'Hearts'), ...cardIds('A', 'Spades')],
@@ -121,7 +121,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		await seedGameState({
 			game: makeGame({
 				players: [ALICE.id, BOB.id, CAROL.id],
-				mailedThisTurn: ALICE.id,
+				mailedThisTurn: [ALICE.id],
 				hands: {
 					[ALICE.id]: [],
 					[BOB.id]: [...cardIds('K', 'Clubs')],

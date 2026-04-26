@@ -63,7 +63,7 @@ interface GameOptions {
 	cardsToAthanasius?: number;
 	jokerCardsToAthanasius?: number;
 	logs?: string[];
-	mailedThisTurn?: number;
+	mailedThisTurn?: number[];
 	started?: number;
 	ended?: number;
 }

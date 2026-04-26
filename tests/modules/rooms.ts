@@ -76,7 +76,7 @@ type RoomsHandlersModule = {
 
 interface ActiveRoomOptions {
 	allowMailing?: boolean;
-	mailedThisTurn?: number;
+	mailedThisTurn?: number[];
 	players?: readonly PlayerFixture[];
 	roomName?: string;
 }
@@ -736,7 +736,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, CAROL.id, 'Обновить · Назад');
 	});
 
-	await runCase('Active room keyboard shows the mailing action only to the current player when enabled', async () => {
+	await runCase('Active room keyboard shows the mailing action to all game participants when enabled', async () => {
 		const room = await seedActiveRoom({ allowMailing: true });
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
@@ -747,8 +747,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'rooms', action: 'open', meta: room.id }));
 		log = getLog();
-		assertSent(log, BOB.id, 'Афанасии · Чей ход · Назад');
-		assertNotSent(log, BOB.id, 'Отправить сообщение');
+		assertKeyboardButton(log, BOB.id, 'Отправить сообщение', `room:sendmsg:${room.id}`);
 	});
 
 	await runCase('Active room keyboard hides the mailing action when the room setting is disabled', async () => {
@@ -762,7 +761,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 	});
 
 	await runCase('Active room keyboard hides the mailing action after the current player has already mailed', async () => {
-		const room = await seedActiveRoom({ allowMailing: true, mailedThisTurn: ALICE.id });
+		const room = await seedActiveRoom({ allowMailing: true, mailedThisTurn: [ALICE.id] });
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
 		const log = getLog();
@@ -771,7 +770,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, 'Отправить сообщение');
 	});
 
-	await runCase('Mailing callback opens a text prompt for the active player only when enabled', async () => {
+	await runCase('Mailing callback opens a text prompt for any game participant when enabled', async () => {
 		const room = await seedActiveRoom({ allowMailing: true });
 
 		await handlers.gameSendMessageCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'sendmsg', meta: room.id }));
@@ -782,8 +781,8 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 
 		await handlers.gameSendMessageCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'sendmsg', meta: room.id }));
 		log = getLog();
-		assertNotSent(log, BOB.id, roomTxt.sendMessagePrompt);
-		assert(SESSIONS.get(BOB.id).flow.name === undefined, 'Non-active player should not enter GAME_MAILING flow');
+		assertSent(log, BOB.id, roomTxt.sendMessagePrompt);
+		assert(SESSIONS.get(BOB.id).flow.name === 'GAME_MAILING', 'Non-active player should also enter GAME_MAILING flow');
 	});
 
 	await runCase('Mailing callback rejects direct calls when the setting is disabled or the player already mailed', async () => {
@@ -795,7 +794,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Disabled setting should not open GAME_MAILING flow');
 		resetLog();
 
-		room = await seedActiveRoom({ allowMailing: true, mailedThisTurn: ALICE.id });
+		room = await seedActiveRoom({ allowMailing: true, mailedThisTurn: [ALICE.id] });
 		await handlers.gameSendMessageCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'sendmsg', meta: room.id }));
 		log = getLog();
 		assertNotSent(log, ALICE.id, roomTxt.sendMessagePrompt);
@@ -817,7 +816,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, 'Всем &lt;b&gt;привет&lt;/b&gt; &amp; ходим!');
 		assertSent(log, ALICE.id, roomTxt.sendMessageSuccess);
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Mailing flow should clear after a valid message');
-		assert(DB.data.games[0]!.utils.mailedThisTurn === ALICE.id, 'Game should remember that Alice already mailed this turn');
+		assert(DB.data.games[0]!.utils.mailedThisTurn?.includes(ALICE.id) === true, 'Game should remember that Alice already mailed this turn');
 	});
 
 	await runCase('Mailing text validates blank and overlong messages without leaving the flow', async () => {
@@ -841,22 +840,15 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'xxx');
 	});
 
-	await runCase('Mailing text is dropped if the active game or active turn eligibility is gone', async () => {
-		let room = await seedActiveRoom({ allowMailing: true });
+	await runCase('Mailing text is dropped if the active game is gone', async () => {
+		const room = await seedActiveRoom({ allowMailing: true });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: room.id });
 		DB.data.games = [];
 
 		await handlers.gameSendMessageTextHandler(makeMessageCtx(ALICE, 'Поздно'));
-		let log = getLog();
+		const log = getLog();
 		assert(log.length === 0, 'No messages should be sent when the game has already ended or disappeared');
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Stale mailing flow should clear when no active game exists');
-
-		room = await seedActiveRoom({ allowMailing: true, players: [BOB, ALICE, CAROL] });
-		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: room.id });
-		await handlers.gameSendMessageTextHandler(makeMessageCtx(ALICE, 'Я уже не хожу'));
-		log = getLog();
-		assert(log.length === 0, 'Old active player should not send if the turn moved before their text');
-		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Turn-ineligible mailing flow should clear');
 	});
 
 	await runCase('Shows delete button for owner when no active game', async () => {

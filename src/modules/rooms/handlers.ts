@@ -254,7 +254,7 @@ export const gameSendMessageCallbackHandler = async (ctx: CallbackCtx) => {
 
 	const game = utils.getGameFromMeta(ctx);
 
-	if (game.activePlayer.id !== ctx.from.id) {
+	if (!game.allPlayers.includes(ctx.from.id)) {
 		return;
 	}
 
@@ -291,7 +291,7 @@ export const gameSendMessageTextHandler = async (ctx: MessageCtx) => {
 
 	const game = new Game({ id: activeGameSchema.id });
 
-	if (!room.settings.allowMailing || game.activePlayer.id !== ctx.from.id || game.hasMailedThisTurn(ctx.from.id)) {
+	if (!room.settings.allowMailing || !game.allPlayers.includes(ctx.from.id) || game.hasMailedThisTurn(ctx.from.id)) {
 		ctx.session.flow = {};
 		return;
 	}

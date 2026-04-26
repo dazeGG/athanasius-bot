@@ -192,11 +192,16 @@ export class Game {
 
 	/* MAILING */
 	public hasMailedThisTurn (playerId: PlayerId): boolean {
-		return this.utils.mailedThisTurn === playerId;
+		return this.utils.mailedThisTurn?.includes(playerId) ?? false;
 	}
 
 	public async markMailedThisTurn (playerId: PlayerId): Promise<void> {
-		this.utils.mailedThisTurn = playerId;
+		if (!this.utils.mailedThisTurn) {
+			this.utils.mailedThisTurn = [];
+		}
+		if (!this.utils.mailedThisTurn.includes(playerId)) {
+			this.utils.mailedThisTurn.push(playerId);
+		}
 		await this.save();
 	}
 

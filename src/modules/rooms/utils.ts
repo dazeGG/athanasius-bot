@@ -98,7 +98,7 @@ export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 
 		if (room.settings.allowMailing) {
 			const game = new Game({ id: activeGameSchema.id });
-			if (game.activePlayer.id === meId && !game.hasMailedThisTurn(meId)) {
+			if (game.allPlayers.includes(meId) && !game.hasMailedThisTurn(meId)) {
 				keyboard.text('Отправить сообщение', stringifyCallbackData({ module: 'room', action: 'sendmsg', meta: room.id }));
 				keyboard.row();
 			}
