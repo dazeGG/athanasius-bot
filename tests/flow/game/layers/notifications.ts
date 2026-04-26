@@ -80,9 +80,11 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 
 		const aliceMessages = getMessagesFor(ALICE.id);
 
-		assert(aliceMessages.length === 1, 'Composed player should receive a single combined message with summary and turn prompt');
-		assert(aliceMessages[0]!.includes('Вот что было за последний круг'), 'Message should contain the composed summary');
-		assert(aliceMessages[0]!.includes('Твой ход!'), 'Message should contain the regular turn prompt');
+		assert(aliceMessages.length === 2, 'Composed player should receive two separate messages: summary and turn prompt');
+		assert(aliceMessages[0]!.includes('Вот что было за последний круг'), 'First message should contain the composed summary');
+		assert(!aliceMessages[0]!.includes('Твой ход!'), 'First message should not contain the turn prompt');
+		assert(aliceMessages[1]!.includes('Твой ход!'), 'Second message should contain the regular turn prompt');
+		assert(!aliceMessages[1]!.includes('Вот что было за последний круг'), 'Second message should not contain the summary');
 	});
 
 	await runCase('Last-round summary stops at the active player’s previous turn', async () => {
