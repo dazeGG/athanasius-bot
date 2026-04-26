@@ -5,6 +5,7 @@ import { globalKeyboardComposer } from '~/shared/lib';
 
 import gameComposer from './game';
 import handComposer from './hand';
+import mailingComposer from './mailing';
 import notesComposer from './notes';
 import regComposer from './reg';
 import roomsComposer from './rooms';
@@ -16,6 +17,7 @@ const createModulesComposer = (): Composer<AppContext> => {
 	composer.use(globalKeyboardComposer);
 	composer.use(gameComposer);
 	composer.use(handComposer);
+	composer.use(mailingComposer);
 	composer.use(notesComposer);
 	composer.use(regComposer);
 	composer.use(roomsComposer);

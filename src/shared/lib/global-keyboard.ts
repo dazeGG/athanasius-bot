@@ -5,7 +5,7 @@ import type { AppContext } from '~/core';
 
 export const GLOBAL_KEYBOARD: KeyboardButton[][] = [
 	[{ text: 'Настройки' }, { text: 'Комнаты' }],
-	[{ text: 'Заметки' }, { text: 'Рука' }],
+	[{ text: 'Заметки' }, { text: 'Рука' }, { text: 'Сообщение' }],
 ];
 
 const addGlobalKeyboardMessageHandler = async (ctx: AppContext) => {
