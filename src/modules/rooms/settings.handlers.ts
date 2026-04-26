@@ -45,20 +45,22 @@ export class SettingsHandlers {
 			return;
 		}
 
-		await ctx.answerCallbackQuery();
-
 		if (!await utils.ensureRoomMember(ctx, room)) {
+			await ctx.answerCallbackQuery();
 			return;
 		}
 
 		if (!await utils.ensureRoomOwner(ctx, room)) {
+			await ctx.answerCallbackQuery();
 			return;
 		}
 
 		await ORM.Rooms.changeJoinCode(room.id);
+		const updatedRoom = ORM.Rooms.getById(room.id);
+		await ctx.answerCallbackQuery({ text: `Новый код: ${updatedRoom.settings.joinCode}` });
 		await ctx.editMessageText(
-			utils.getSettingsStartText(room),
-			{ reply_markup: utils.getSettingsInlineKeyboard(room) },
+			utils.getSettingsStartText(updatedRoom),
+			{ reply_markup: utils.getSettingsInlineKeyboard(updatedRoom) },
 		);
 	}
 
