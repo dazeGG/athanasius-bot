@@ -1,7 +1,7 @@
 import { BOT, logGameEvent } from '~/core';
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
-import { sendFirstMessage } from '~/entities/game/services';
+import { sendFirstMessage, notifyEndGameMessage } from '~/entities/game/services';
 import { escapeHtml } from '~/shared/lib';
 import { getAthanasiusesListText, MIN_PLAYERS_TO_START, txt as gameTxt } from '~/shared/ui/game';
 import { getCallbackMeta } from '~/core/lib';
@@ -269,6 +269,41 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 	await sendFirstMessage(game, sender);
 	await ctx.editMessageText(
 		`${utils.getRoomBaseText(room, true)}\n\n${gameTxt.gameMessageResendSuccess}`,
+		{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
+	);
+};
+
+export const gameForceEndCallbackHandler = async (ctx: CallbackCtx) => {
+	await ctx.answerCallbackQuery();
+
+	const room = utils.getRoomFromMeta(ctx);
+
+	if (!await utils.ensureRoomMember(ctx, room)) {
+		return;
+	}
+
+	if (!await utils.ensureRoomOwner(ctx, room)) {
+		return;
+	}
+
+	const activeGameSchema = ORM.Games.getActive(room.id);
+
+	if (!activeGameSchema) {
+		await ctx.editMessageText(
+			utils.getRoomBaseText(room),
+			{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
+		);
+		return;
+	}
+
+	const game = new Game({ id: activeGameSchema.id });
+	const sender = BOT.api.sendMessage.bind(BOT.api);
+
+	await game.forceEnd();
+	await notifyEndGameMessage(game, sender);
+
+	await ctx.editMessageText(
+		utils.getRoomBaseText(room) + `\n\n${ui.txt.gameForceEnded}`,
 		{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
 	);
 };

@@ -22,6 +22,7 @@ export const txt = {
 	ownerCannotLeave: 'Владелец комнаты не может выйти из своей комнаты',
 	cannotKickOwner: 'Нельзя выгнать владельца комнаты',
 	roomDeleted: 'Комната удалена',
+	gameForceEnded: 'Игра завершена досрочно',
 } as const;
 
 /* DEFAULT KEYBOARD */
