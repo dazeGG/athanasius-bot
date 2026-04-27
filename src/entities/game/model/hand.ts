@@ -1,12 +1,10 @@
 import _ from 'lodash';
 
-import { Deck, DeckConfig } from '~/entities/deck';
-import type { CardId, Card, CardName, SuitName } from '~/entities/deck';
+import { Deck } from '~/entities/deck';
+import type { CardId, Card, CardName } from '~/entities/deck';
 import type { GameUtilsParsed } from '~/db';
 
 import type { HandHasOptions } from '../types';
-
-const isRedSuit = (suit: SuitName): boolean => DeckConfig.RED_SUITS.some(s => s === suit);
 
 export class Hand {
 	private hand: CardId[];
@@ -48,8 +46,8 @@ export class Hand {
 
 		if (colors) {
 			const counts: [number, number] = neededCardsInHand.reduce(
-				(a, c) => isRedSuit(c.suit) ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
-				[0, 0],
+				(a, c) => c.color === 'red' ? [a[0] + 1, a[1]] : [a[0], a[1] + 1],
+				[0, 0] as [number, number],
 			);
 
 			return colors.red === counts[0] && colors.black === counts[1];
@@ -67,9 +65,11 @@ export class Hand {
 						return [a[0], a[1], a[2] + 1, a[3]];
 					case 'Clubs':
 						return [a[0], a[1], a[2], a[3] + 1];
+					default:
+						return a;
 					}
 				},
-				[0, 0, 0, 0],
+				[0, 0, 0, 0] as [number, number, number, number],
 			);
 
 			return (
@@ -83,7 +83,7 @@ export class Hand {
 		return !!neededCardsInHand.length;
 	}
 
-	private getAthanasiuses (cardsToAthanasius: number): CardName[] {
+	private getAthanasiuses (cardsToAthanasius: number, jokerCardsToAthanasius: number): CardName[] {
 		const cardsCounts = this.cardsInHand.reduce<Partial<Record<CardName, number>>>((acc, card) => {
 			acc[card.name] = (acc[card.name] ?? 0) + 1;
 			return acc;
@@ -92,7 +92,8 @@ export class Hand {
 		const athanasiusCards: CardName[] = [];
 
 		(Object.keys(cardsCounts) as CardName[]).forEach(cardName => {
-			if (cardsCounts[cardName] === cardsToAthanasius) {
+			const required = cardName === 'Joker' ? jokerCardsToAthanasius : cardsToAthanasius;
+			if (cardsCounts[cardName] === required) {
 				athanasiusCards.push(cardName);
 			}
 		});
@@ -100,8 +101,8 @@ export class Hand {
 		return athanasiusCards;
 	}
 
-	public handleAthanasiuses ({ cardsToAthanasius }: GameUtilsParsed): ReturnType<typeof this.getAthanasiuses> {
-		const athanasiuses = this.getAthanasiuses(cardsToAthanasius);
+	public handleAthanasiuses ({ cardsToAthanasius, jokerCardsToAthanasius }: GameUtilsParsed): ReturnType<typeof this.getAthanasiuses> {
+		const athanasiuses = this.getAthanasiuses(cardsToAthanasius, jokerCardsToAthanasius);
 
 		athanasiuses.forEach(athanasius => {
 			this.removeCardsByName(athanasius);

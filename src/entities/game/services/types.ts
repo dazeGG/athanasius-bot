@@ -1,4 +1,4 @@
-import type { CallbackContext } from '~/core';
+import type { CallbackCtx } from '~/core';
 import type { UserSchema } from '~/db';
 import type {
 	Game,
@@ -8,13 +8,15 @@ import type {
 	ColorsStageMeta,
 	SuitsStageMeta,
 	Suits,
+	Sender,
 } from '~/entities/game';
 
 export interface GameServiceOptions {
-    ctx: CallbackContext;
+    ctx: CallbackCtx;
     game: Game;
     me: UserSchema;
     turnMeta: TurnMeta;
+    sender: Sender;
 }
 
 export interface GameServiceOptionsStage {

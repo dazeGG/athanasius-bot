@@ -21,6 +21,15 @@ class Users {
 		return user;
 	}
 
+	public static async awardAchievement (id: UserId, achievement: string): Promise<void> {
+		const user = this.get(id);
+		const achievements = user.achievements ?? [];
+		if (!achievements.includes(achievement)) {
+			user.achievements = [...achievements, achievement];
+			await DB.write();
+		}
+	}
+
 	public static async update (id: UserId, newSettings: UserSettings): Promise<UserSchema> {
 		const user = this.get(id);
 		user.settings = newSettings;
@@ -92,7 +101,6 @@ class Rooms {
 					decksCount: 4,
 					towHands: false,
 					allowMailing: false,
-					allowMailingAtTurn: false,
 				},
 			});
 
@@ -119,8 +127,13 @@ class Rooms {
 
 	public static async removePlayer (playerId: number, roomId: RoomId): Promise<RoomSchema> {
 		const room = this.getById(roomId);
+		const playerIndex = room.players.indexOf(playerId);
 
-		room.players.splice(room.players.indexOf(playerId), 1);
+		if (playerIndex < 0) {
+			throw new Error('Игрока нет в комнате');
+		}
+
+		room.players.splice(playerIndex, 1);
 		await DB.write();
 
 		return room;
@@ -143,6 +156,20 @@ class Rooms {
 
 		return room;
 	}
+
+	public static async deleteRoom (roomId: RoomId): Promise<RoomSchema> {
+		const room = this.getById(roomId);
+		const activeGame = Games.getActive(roomId);
+
+		if (activeGame) {
+			throw new Error('Нельзя удалить комнату с активной игрой');
+		}
+
+		DB.data.rooms = DB.data.rooms.filter(r => r.id !== roomId);
+		await DB.write();
+
+		return room;
+	}
 }
 
 class Games {
@@ -154,6 +181,10 @@ class Games {
 		return DB.data.games.filter(g => g.players.includes(myId) && !g.ended);
 	}
 
+	public static isInActiveGame (myId: UserId): boolean {
+		return DB.data.games.some(g => g.players.includes(myId) && !g.ended);
+	}
+
 	public static getById (id: GameId): GameSchema {
 		const game = DB.data.games.find(g => g.id === id);
 
@@ -162,6 +193,23 @@ class Games {
 		}
 
 		return game;
+	}
+
+	public static getNote (gameId: GameId, userId: UserId): Record<string, UserId | null> {
+		const game = this.getById(gameId);
+		return game.notes?.[userId] ?? {};
+	}
+
+	public static async setNoteCell (gameId: GameId, userId: UserId, key: string, value: UserId | null): Promise<void> {
+		const game = this.getById(gameId);
+		if (!game.notes) {
+			game.notes = {};
+		}
+		if (!game.notes[userId]) {
+			game.notes[userId] = {};
+		}
+		game.notes[userId][key] = value;
+		await DB.write();
 	}
 }
 

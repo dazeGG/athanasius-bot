@@ -1,39 +1,32 @@
-import type TelegramBot from 'node-telegram-bot-api';
+import { Composer } from 'grammy';
+import type { KeyboardButton } from 'grammy/types';
 
-import { BOT } from '~/core';
-import type { MessageContext } from '~/core';
+import type { AppContext } from '~/core';
 
-export const GLOBAL_KEYBOARD: TelegramBot.ReplyKeyboardMarkup['keyboard'] = [
+export const GLOBAL_KEYBOARD: KeyboardButton[][] = [
 	[{ text: 'Настройки' }, { text: 'Комнаты' }],
-	[{ text: 'Рука' }],
+	[{ text: 'Заметки' }, { text: 'Рука' }, { text: 'Сообщение' }],
 ];
 
-const addGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
-	await BOT.sendMessage({
-		ctx,
-		text: 'Добавил клавиатуру',
-		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+const addGlobalKeyboardMessageHandler = async (ctx: AppContext) => {
+	await ctx.reply('Добавил клавиатуру', {
+		reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true },
 	});
 };
 
-const removeGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
-	await BOT.sendMessage({
-		ctx,
-		text: 'Убрал клавиатуру',
-		options: { reply_markup: { remove_keyboard: true } },
+const removeGlobalKeyboardMessageHandler = async (ctx: AppContext) => {
+	await ctx.reply('Убрал клавиатуру', {
+		reply_markup: { remove_keyboard: true },
 	});
 };
 
-const updateGlobalKeyboardMessageHandler = async (ctx: MessageContext) => {
-	await BOT.sendMessage({
-		ctx,
-		text: 'Обновил клавиатуру',
-		options: { reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true } },
+const updateGlobalKeyboardMessageHandler = async (ctx: AppContext) => {
+	await ctx.reply('Обновил клавиатуру', {
+		reply_markup: { keyboard: GLOBAL_KEYBOARD, resize_keyboard: true },
 	});
 };
 
-export const registerGlobalKeyboard = () => {
-	BOT.registerCommand('/addglobalkeyboard', addGlobalKeyboardMessageHandler);
-	BOT.registerCommand('/removeglobalkeyboard', removeGlobalKeyboardMessageHandler);
-	BOT.registerCommand('/updateglobalkeyboard', updateGlobalKeyboardMessageHandler);
-};
+export const globalKeyboardComposer = new Composer<AppContext>();
+globalKeyboardComposer.command('addglobalkeyboard', addGlobalKeyboardMessageHandler);
+globalKeyboardComposer.command('removeglobalkeyboard', removeGlobalKeyboardMessageHandler);
+globalKeyboardComposer.command('updateglobalkeyboard', updateGlobalKeyboardMessageHandler);

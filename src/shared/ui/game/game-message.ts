@@ -1,4 +1,5 @@
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import type {
 	TurnMeta,
 	Suits,
@@ -7,14 +8,43 @@ import type {
 	ColorsStageMeta,
 	SuitsStageMeta,
 } from '~/entities/game';
+import type { UserSchema } from '~/db';
 
 import { txt } from '.';
 
+export function formatSuits ({ hearts, diamonds, spades, clubs }: Pick<Suits, 'hearts' | 'diamonds' | 'spades' | 'clubs'>): string {
+	const parts: string[] = [];
+	if (hearts > 0) {
+		parts.push(`♥️ ${hearts}`);
+	}
+	if (diamonds > 0) {
+		parts.push(`♦️ ${diamonds}`);
+	}
+	if (spades > 0) {
+		parts.push(`♠️ ${spades}`);
+	}
+	if (clubs > 0) {
+		parts.push(`♣️ ${clubs}`);
+	}
+	return parts.join(' ');
+}
+
+export function formatColors (red: number, black: number): string {
+	const parts: string[] = [];
+	if (red > 0) {
+		parts.push(`🔴 ${red}`);
+	}
+	if (black > 0) {
+		parts.push(`⚫ ${black}`);
+	}
+	return parts.join(' ');
+}
+
 export class GameMessage {
-	private static generateChoiceMessage (turnMeta: TurnMeta): string {
+	public static generateChoiceMessage (turnMeta: TurnMeta): string {
 		let choiceMessage = '<b>' + txt.yourChoice + ':</b>\n\n';
 
-		choiceMessage += '• ' + txt.player + ': ' + '<b>' + turnMeta.player.name + '</b>\n';
+		choiceMessage += '• ' + txt.player + ': ' + '<b>' + escapeHtml(turnMeta.player.name) + '</b>\n';
 
 		if (turnMeta.cardName) {
 			choiceMessage += '• ' + txt.card + ': ' + '<b>' + DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName] + '</b>\n';
@@ -35,8 +65,8 @@ export class GameMessage {
 		return choiceMessage;
 	}
 
-	public static getFirstMessage (initialMessage: boolean): string {
-		return initialMessage ? txt.firstTurnMessage : '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
+	public static getConfirmMessage (turnMeta: TurnMeta): string {
+		return this.generateChoiceMessage(turnMeta) + '\n' + txt.confirmQuestion;
 	}
 
 	public static getCardSelectMessage (turnMeta: TurnMeta): string {
@@ -75,15 +105,15 @@ export class GameMessage {
 
 		if (turnMeta.count && turnMeta.redCount !== undefined && turnMeta.blackCount !== undefined) {
 			if (suits.hearts + suits.diamonds > turnMeta.redCount) {
-				text += `\n\n⚠️<b>${txt.redCountError}</b>`;
+				text += `\n\n⚠️ <b>${txt.redCountError}</b>`;
 			}
 
 			if (suits.spades + suits.clubs > turnMeta.blackCount) {
-				text += `\n\n⚠️<b>${txt.blackCountError}</b>`;
+				text += `\n\n⚠️ <b>${txt.blackCountError}</b>`;
 			}
 
 			if (suits.hearts + suits.diamonds + suits.spades + suits.clubs > turnMeta.count) {
-				text += `\n\n⚠️<b>${txt.suitsCountError}</b>`;
+				text += `\n\n⚠️ <b>${txt.suitsCountError}</b>`;
 			}
 		}
 
@@ -99,11 +129,25 @@ export class GameMessage {
 			this.getSuitsNowSelected(turnMeta, suits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count);
 	}
 
-	public static getCardsStealMessage (turnMeta: SuitsStageMeta): string {
-		return '🟩 <b>Ты успешно украл карты :)</b>\n' +
-			'\n' +
-			`Игрок: ${turnMeta.player.name}\n` +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Масти: ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+	public static getCardsStealMessage (turnMeta: SuitsStageMeta, me: UserSchema, composeAthanasius: boolean): string {
+		const emoji = composeAthanasius ? '⭐' : '🟩';
+		const base = `${emoji} <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const suits = formatSuits(turnMeta.suits);
+		let msg = suits ? `${base} | ${suits}` : base;
+		if (composeAthanasius) {
+			msg += ' — Афанасий!';
+		}
+		return msg;
+	}
+
+	public static getJokerStealMessage (turnMeta: ColorsStageMeta, me: UserSchema, composeAthanasius: boolean): string {
+		const emoji = composeAthanasius ? '⭐' : '🟩';
+		const base = `${emoji} <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const colors = formatColors(turnMeta.redCount, turnMeta.blackCount);
+		let msg = colors ? `${base} | ${colors}` : base;
+		if (composeAthanasius) {
+			msg += ' — Афанасий!';
+		}
+		return msg;
 	}
 }

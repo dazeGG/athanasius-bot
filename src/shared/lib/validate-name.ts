@@ -11,8 +11,11 @@ const VALIDATION_TEXTS = {
 } as const;
 
 const RESERVED_NAMES = ['имя', 'вовощ'];
+const normalizeName = (name: string): string => name.toLowerCase();
 
-export const validateName = (name: string): { success: boolean; message: string } => {
+export const validateName = (name: string, currentUserId?: number): { success: boolean; message: string } => {
+	const normalizedName = normalizeName(name);
+
 	if (name.length < 2) {
 		return { success: false, message: VALIDATION_TEXTS.nameLessThan4 };
 	}
@@ -25,11 +28,11 @@ export const validateName = (name: string): { success: boolean; message: string 
 		return { success: false, message: VALIDATION_TEXTS.invalidCharacters };
 	}
 
-	if (DB.data.users.find(u => u.name === name)) {
+	if (DB.data.users.find(u => normalizeName(u.name) === normalizedName && u.id !== currentUserId)) {
 		return { success: false, message: VALIDATION_TEXTS.nameAlreadyUsed };
 	}
 
-	if (RESERVED_NAMES.includes(name.toLowerCase())) {
+	if (RESERVED_NAMES.includes(normalizedName)) {
 		return { success: false, message: VALIDATION_TEXTS.invalidName };
 	}
 

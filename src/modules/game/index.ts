@@ -1,30 +1,15 @@
-import { BOT } from '~/core';
-import { DB } from '~/db';
-import { Game } from '~/entities/game';
+import { Composer } from 'grammy';
+
 import { isRegistered } from '~/shared/lib';
-import type { CallbackContextCallback } from '~/core';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 
-const turnGuard = (ctx: CallbackContextCallback): boolean => {
-	const gameId = ctx.data.meta?.split('#')[1];
+const composer = new Composer<AppContext>();
+const registered = composer.filter(isRegistered);
 
-	if (!gameId) {
-		return false;
-	}
+registered.callbackQuery(/^g:t:/, handlers.gameTurnCallbackHandler);
+registered.callbackQuery(/^g:tc:/, handlers.gameTurnConfirmCallbackHandler);
+registered.callbackQuery(/^g:tb:/, handlers.gameTurnBackCallbackHandler);
 
-	const user = DB.data.users.find(user => user.id === ctx.from.id);
-	const game = new Game({ id: gameId });
-
-	if (!user || !game) {
-		return false;
-	}
-
-	return game.activePlayer.id === user.id && isRegistered(ctx);
-};
-
-const registerGame = () => {
-	BOT.registerCallbackHandler(handlers.gameTurnCallbackHandler, { module: 'g', action: 't' }, turnGuard);
-};
-
-export default registerGame;
+export default composer;

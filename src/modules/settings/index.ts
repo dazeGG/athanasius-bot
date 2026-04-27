@@ -1,13 +1,20 @@
-import { BOT } from '~/core';
+import { Composer } from 'grammy';
+
 import { isRegistered } from '~/shared/lib';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 
-const registerSettings = () => {
-	BOT.registerMessageHandler(handlers.settingsStartMessageHandler, { exact: 'Настройки' }, isRegistered);
-	BOT.registerMessageHandler(handlers.settingsChangeNameStateMessageHandler, { state: 'SETTINGS_CHANGE_NAME' }, isRegistered);
+const composer = new Composer<AppContext>();
+const registered = composer.filter(isRegistered);
 
-	BOT.registerCallbackHandler(handlers.settingsCallbackHandler, { module: 'settings' }, isRegistered);
-};
+registered.hears('Настройки', handlers.settingsStartMessageHandler);
 
-export default registerSettings;
+registered.on('message:text').filter(
+	ctx => ctx.session.flow.name === 'SETTINGS_CHANGE_NAME',
+	handlers.settingsChangeNameStateMessageHandler,
+);
+
+registered.callbackQuery(/^settings:/, handlers.settingsCallbackHandler);
+
+export default composer;

@@ -1,10 +1,28 @@
 import type { CardName } from './types';
 
+export type DeckType = 52 | 36 | 54;
+type RegularCardName = Exclude<CardName, 'Joker'>;
+
 export class DeckConfig {
-	public static CARD_NAMES: CardName[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+	public static REGULAR_CARD_NAMES: RegularCardName[] = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+	public static JOKER_NAME: CardName = 'Joker';
+
+	public static CARD_NAMES: CardName[] = [...DeckConfig.REGULAR_CARD_NAMES, DeckConfig.JOKER_NAME];
 
 	public static isCardName (value: string): value is CardName {
 		return this.CARD_NAMES.includes(value as CardName);
+	}
+
+	public static getDeckTypeLabel (deckType: DeckType = 52): string {
+		switch (deckType) {
+		case 36:
+			return '36 карт';
+		case 54:
+			return '54 карты';
+		case 52:
+			return '52 карты';
+		}
 	}
 
 	public static SUITS = [
@@ -15,7 +33,7 @@ export class DeckConfig {
 	] as const;
 
 	public static RED_SUITS = ['Hearts', 'Diamonds'] as const;
-	public static BLACK_SUITS = ['Hearts', 'Diamonds'] as const;
+	public static BLACK_SUITS = ['Spades', 'Clubs'] as const;
 
 	public static SUIT_VIEW_MAP = {
 		Hearts: '♥️',
@@ -47,7 +65,9 @@ export class DeckConfig {
 		{ name: 'A', value: 14 },
 	] as const;
 
-	public static RANKS_MAP = {
+	public static RANKS_36 = DeckConfig.RANKS.filter(r => r.value >= 6);
+
+	public static RANKS_MAP: Record<string, number> = {
 		'2': 2,
 		'3': 3,
 		'4': 4,
@@ -61,9 +81,10 @@ export class DeckConfig {
 		'Q': 12,
 		'K': 13,
 		'A': 14,
-	} as const;
+		'Joker': 15,
+	};
 
-	public static CARDS_VIEW_MAP = {
+	public static CARDS_VIEW_MAP: Record<string, string> = {
 		'2': '2',
 		'3': '3',
 		'4': '4',
@@ -77,9 +98,10 @@ export class DeckConfig {
 		Q: 'Q',
 		K: 'K',
 		A: 'A',
+		Joker: '🃏',
 		hearts: '♥️',
 		diamonds: '♦️',
 		spades: '♠️',
 		clubs: '♣️',
-	} as const;
+	};
 }

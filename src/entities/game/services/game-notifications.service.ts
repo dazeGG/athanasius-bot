@@ -1,146 +1,177 @@
-import { BOT } from '~/core';
 import { ORM } from '~/db';
+import { Achievements, escapeHtml } from '~/shared/lib';
 import { TurnStage } from '~/entities/game';
 import { txt, gkb, InfoMessage, GameMessage } from '~/shared/ui/game';
 import type { GameSchema } from '~/db';
-import type { Game } from '~/entities/game';
+import type { Game, Sender } from '~/entities/game';
 
 import { SERVICES_CONFIG } from './config';
 import type { GameServiceOptions, GameServiceOptionsStage, UpdateMessageOptionsStage } from './types';
 
-export class GameNotificationsService {
-	public static async sendFirstMessage (game: Game, initial: boolean = false) {
-		const canSendTurnMessage = await game.ensureActivePlayerHasCards();
-
-		if (!canSendTurnMessage) {
-			return;
+export async function notifyInitialAthanasiuses (game: Game, sender: Sender): Promise<void> {
+	for (const [playerIdStr, cardNames] of Object.entries(game.getAthanasiuses())) {
+		if (cardNames.length === 0) {
+			continue;
 		}
 
-		let text: string;
+		const playerId = Number(playerIdStr);
+		await ORM.Users.awardAchievement(playerId, Achievements.DEAL_ATHANASIUS);
+		await sender(playerId, InfoMessage.dealAthanasiusMe(cardNames));
+		await game.mailing(
+			{ text: InfoMessage.dealAthanasiusMailing(ORM.Users.get(playerId), cardNames) },
+			[playerId],
+			sender,
+		);
+	}
+}
 
-		if (initial) {
-			text = txt.firstTurnMessage;
-		} else {
-			text = '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту';
+export async function sendFirstMessage (game: Game, sender: Sender, initial: boolean = false) {
+	const canSendTurnMessage = await game.ensureActivePlayerHasCards();
 
-			if (game.activePlayer.settings.updatesView === 'composed') {
-				await BOT.sendMessageByChatId({
-					chatId: game.activePlayer.id,
-					text: `🟨 Вот что было за последний круг:\n\n${game.getLastRoundLogs()}`,
-				});
+	if (!canSendTurnMessage) {
+		return;
+	}
+
+	let text: string;
+
+	const gamePrefix = `${escapeHtml(game.gameName)}\n\n`;
+
+	if (initial) {
+		text = gamePrefix + txt.firstTurnMessage;
+	} else {
+		text = gamePrefix + txt.turnMessage;
+
+		if (game.activePlayer.settings.updatesView === 'composed') {
+			const lastRoundLogs = game.getLastRoundLogs();
+			if (lastRoundLogs) {
+				await sender(game.activePlayer.id, `${gamePrefix}Вот что было за последний круг:\n\n${lastRoundLogs}`);
 			}
 		}
-
-		await BOT.sendMessageByChatId({
-			chatId: game.activePlayer.id,
-			text,
-			keyboard: gkb.playersSelect({ me: game.activePlayer.id, gameId: game.gameId, playerIds: game.allPlayers }),
-		});
 	}
 
-	public static async notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptions) {
-		switch (turnMeta.stage) {
-		case TurnStage.player:
-			await BOT.editMessage({
-				ctx,
-				text: GameMessage.getCardSelectMessage(turnMeta),
-				keyboard: gkb.cardSelect({ me: ctx.callback.from.id, game, playerId: turnMeta.player.id }),
-			});
-			break;
-		case TurnStage.card:
-			await BOT.editMessage({
-				ctx,
-				text: GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT),
-				keyboard: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }),
-			});
-			break;
-		case TurnStage.count:
-			await BOT.editMessage({
-				ctx,
-				text: GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT),
-				keyboard: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }),
-			});
-			break;
-		case TurnStage.colors:
-			await BOT.editMessage({
-				ctx,
-				text: GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS),
-				keyboard: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }),
-			});
-			break;
+	await sender(game.activePlayer.id, text, {
+		reply_markup: gkb.playersSelect({
+			me: game.activePlayer.id,
+			gameId: game.gameId,
+			playerIds: game.playersWithCards,
+		}),
+	});
+}
+
+export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptions) {
+	switch (turnMeta.stage) {
+	case TurnStage.player:
+		await ctx.editMessageText(
+			withGameName(game, GameMessage.getCardSelectMessage(turnMeta)),
+			{ reply_markup: gkb.cardSelect({ me: ctx.from.id, game, playerId: turnMeta.player.id }) },
+		);
+		break;
+	case TurnStage.card:
+		await ctx.editMessageText(
+			withGameName(game, GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT)),
+			{ reply_markup: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }) },
+		);
+		break;
+	case TurnStage.count:
+		await ctx.editMessageText(
+			withGameName(game, GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT)),
+			{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }) },
+		);
+		break;
+	case TurnStage.colors:
+		// Defensive guard for direct service calls; processTurn handles Joker colors as the final stage.
+		if (turnMeta.cardName !== 'Joker') {
+			await ctx.editMessageText(
+				withGameName(game, GameMessage.getSuitsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_SUITS)),
+				{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: SERVICES_CONFIG.INITIAL_SUITS }) },
+			);
 		}
+		break;
 	}
+}
 
-	public static async updateCountMessage ({ ctx, game, turnMeta, newCount }: UpdateMessageOptionsStage['Count']) {
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getCountSelectMessage(turnMeta, newCount),
-			keyboard: gkb.countSelect({ game, turnMeta, count: newCount }),
-		});
-	}
+export async function updateCountMessage ({ ctx, game, turnMeta, newCount }: UpdateMessageOptionsStage['Count']) {
+	await ctx.editMessageText(
+		withGameName(game, GameMessage.getCountSelectMessage(turnMeta, newCount)),
+		{ reply_markup: gkb.countSelect({ game, turnMeta, count: newCount }) },
+	);
+}
 
-	public static async updateColorsMessage ({ ctx, game, turnMeta, newRedCount }: UpdateMessageOptionsStage['Colors']) {
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getColorsSelectMessage(turnMeta, newRedCount),
-			keyboard: gkb.colorsSelect({ game, turnMeta, redCount: newRedCount }),
-		});
-	}
+export async function updateColorsMessage ({ ctx, game, turnMeta, newRedCount }: UpdateMessageOptionsStage['Colors']) {
+	await ctx.editMessageText(
+		withGameName(game, GameMessage.getColorsSelectMessage(turnMeta, newRedCount)),
+		{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: newRedCount }) },
+	);
+}
 
-	public static async updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: UpdateMessageOptionsStage['Suits']) {
-		await BOT.editMessage({
-			ctx,
-			text: GameMessage.getSuitsSelectMessage(turnMeta, newSuits),
-			keyboard: gkb.suitsSelect({ game, turnMeta, suits: newSuits }),
-		});
-	}
+export async function updateSuitsMessage ({ ctx, game, turnMeta, newSuits }: UpdateMessageOptionsStage['Suits']) {
+	await ctx.editMessageText(
+		withGameName(game, GameMessage.getSuitsSelectMessage(turnMeta, newSuits)),
+		{ reply_markup: gkb.suitsSelect({ game, turnMeta, suits: newSuits }) },
+	);
+}
 
-	public static async notifyWrongCardMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Card']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongCardMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongCardMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await GameNotificationsService.sendFirstMessage(game);
-	}
+function withGameName (game: Game, text: string): string {
+	return `${escapeHtml(game.gameName)}\n\n${text}`;
+}
 
-	public static async notifyWrongCountMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Count']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongCountMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongCountMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await GameNotificationsService.sendFirstMessage(game);
-	}
+async function notifyWrongTurn ({ ctx, game, me, sender }: Pick<GameServiceOptions, 'ctx' | 'game' | 'me' | 'sender'>, meText: string, mailingText: string): Promise<void> {
+	await ctx.editMessageText(withGameName(game, meText));
+	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id], sender);
+	await sendFirstMessage(game, sender);
+}
 
-	public static async notifyWrongColorsMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Colors']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongColorsMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongColorsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await GameNotificationsService.sendFirstMessage(game);
-	}
+export async function notifyWrongCardMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Card']) {
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongCardMe(turnMeta, me), InfoMessage.wrongCardMailing(turnMeta, me));
+}
 
-	public static async notifyWrongSuitsMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-		await BOT.editMessage({ ctx, text: InfoMessage.wrongSuitsMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.wrongSuitsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-		await this.sendFirstMessage(game);
-	}
+export async function notifyWrongCountMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Count']) {
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongCountMe(turnMeta, me), InfoMessage.wrongCountMailing(turnMeta, me));
+}
 
-	public static async notifyStealMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-		await BOT.editMessage({ ctx, text: GameMessage.getCardsStealMessage(turnMeta) });
-		await game.mailing({ text: InfoMessage.stealCardsMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-	}
+export async function notifyWrongColorsMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Colors']) {
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongColorsMe(turnMeta, me), InfoMessage.wrongColorsMailing(turnMeta, me));
+}
 
-	public static async notifyComposeAthanasiusMessage ({ ctx, game, me, turnMeta }: GameServiceOptionsStage['Suits']) {
-		await BOT.sendMessage({ ctx, text: InfoMessage.newAthanasiusMe(turnMeta) });
-		await game.mailing({ text: InfoMessage.newAthanasiusMailing(turnMeta, me) }, [me.id, ...game.playersWithComposedUpdated]);
-	}
+export async function notifyWrongSuitsMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits']) {
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongSuitsMe(turnMeta, me), InfoMessage.wrongSuitsMailing(turnMeta, me));
+}
 
-	private static getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {
-		const athanasiusesMap: [string, number][] = [];
+export async function notifyStealMessage (
+	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits'],
+	composeAthanasius: boolean,
+) {
+	await ctx.editMessageText(withGameName(game, GameMessage.getCardsStealMessage(turnMeta, me, composeAthanasius)));
+	const mailingText = composeAthanasius
+		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
+		: InfoMessage.stealCardsMailing(turnMeta, me);
+	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, withGameName(game, InfoMessage.stealVictimMessage(turnMeta, me)));
+}
 
-		Object.entries(athanasiuses).forEach(([playerId, cardNames]) => {
-			const player = ORM.Users.get(Number(playerId));
-			athanasiusesMap.push([player.name, cardNames.length]);
-		});
+export async function notifyJokerStealMessage (
+	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Colors'],
+	composeAthanasius: boolean,
+) {
+	await ctx.editMessageText(withGameName(game, GameMessage.getJokerStealMessage(turnMeta, me, composeAthanasius)));
+	const mailingText = composeAthanasius
+		? InfoMessage.jokerStealWithAthanasiusMailing(turnMeta, me)
+		: InfoMessage.jokerStealMailing(turnMeta, me);
+	await game.realtimeMailing({ text: withGameName(game, mailingText) }, [me.id, turnMeta.player.id], sender);
+	await sender(turnMeta.player.id, withGameName(game, InfoMessage.jokerStealVictimMessage(turnMeta, me)));
+}
 
-		return athanasiusesMap.sort((a, b) => b[1] - a[1]);
-	}
+function getSortedAthanasiusesMap (athanasiuses: GameSchema['athanasiuses']): [string, number][] {
+	const athanasiusesMap: [string, number][] = [];
 
-	public static async notifyEndGameMessage (game: Game) {
-		await game.mailing({ text: InfoMessage.gameEndedMailing(this.getSortedAthanasiusesMap(game.getAthanasiuses())) });
-	}
+	Object.entries(athanasiuses).forEach(([playerId, cardNames]) => {
+		const player = ORM.Users.get(Number(playerId));
+		athanasiusesMap.push([player.name, cardNames.length]);
+	});
+
+	return athanasiusesMap.sort((a, b) => b[1] - a[1]);
+}
+
+export async function notifyEndGameMessage (game: Game, sender: Sender) {
+	await game.mailing({ text: InfoMessage.gameEndedMailing(getSortedAthanasiusesMap(game.getAthanasiuses())) }, [], sender);
 }

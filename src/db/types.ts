@@ -1,14 +1,21 @@
-import type TelegramBot from 'node-telegram-bot-api';
 import type { nanoid } from 'nanoid';
 
 import type { CardName } from '~/entities/deck';
 
-export type UserId = TelegramBot.User['id'];
+export type UserId = number;
 export type RoomId = ReturnType<typeof nanoid>;
 export type GameId = ReturnType<typeof nanoid>;
 
+export interface ConfirmModeSettings {
+	card: boolean;
+	count: boolean;
+	colors: boolean;
+	suits: boolean;
+}
+
 export interface UserSettings {
 	updatesView: 'instant' | 'composed';
+	confirmMode?: ConfirmModeSettings;
 }
 
 export interface RoomSettings {
@@ -17,7 +24,6 @@ export interface RoomSettings {
 	decksCount: number;
 	towHands: boolean;
 	allowMailing: boolean;
-	allowMailingAtTurn: boolean;
 }
 
 export interface GameLog {
@@ -26,14 +32,19 @@ export interface GameLog {
 	cardName: CardName;
 	steal: boolean;
 	stealData?: [number] | [number, number] | [number, number, number, number];
+	athanasius?: boolean;
 }
 
 export interface GameUtils {
 	cardsToAthanasius: number;
+	jokerCardsToAthanasius: number;
 	logs: string[];
+	mailedThisTurn?: UserId[];
 }
 
 export interface GameUtilsParsed {
 	cardsToAthanasius: number;
+	jokerCardsToAthanasius: number;
 	logs: GameLog[];
+	mailedThisTurn?: UserId[];
 }

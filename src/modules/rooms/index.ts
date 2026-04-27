@@ -1,67 +1,51 @@
-import { BOT } from '~/core';
+import { Composer } from 'grammy';
+
 import { isRegistered } from '~/shared/lib';
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 import { SettingsHandlers } from './settings.handlers';
 
-const registerRooms = () => {
-	BOT.registerMessageHandler(handlers.roomsMessageHandler, { exact: 'Комнаты' }, isRegistered);
+const composer = new Composer<AppContext>();
+const registered = composer.filter(isRegistered);
 
-	/**
-	 *  JOIN ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.joinRoomCallbackHandler, { module: 'rooms', action: 'join' }, isRegistered);
-	BOT.registerMessageHandler(handlers.joinRoomCodeMessageHandler, { state: 'ROOMS_JOIN' }, isRegistered);
+// ── Message handlers ──────────────────────────────────────────────────────────
 
-	/**
-	 *  KICK AND LEAVE FROM ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.kickCallbackHandler, { module: 'room', action: 'kick' }, isRegistered);
-	BOT.registerCallbackHandler(handlers.leaveRoomCallbackHandler, { module: 'room', action: 'leave' }, isRegistered);
+registered.hears('Комнаты', handlers.roomsMessageHandler);
 
-	/**
-	 *  CREATE ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.createRoomCallbackHandler, { module: 'rooms', action: 'create' }, isRegistered);
-	BOT.registerMessageHandler(handlers.createRoomNameMessageHandler, { state: 'ROOMS_CREATE' }, isRegistered);
+registered.on('message:text').filter(
+	ctx => ctx.session.flow.name === 'ROOMS_JOIN',
+	handlers.joinRoomCodeMessageHandler,
+);
 
-	/**
-	 *  ROOM
-	 */
-	BOT.registerCallbackHandler(handlers.openRoomCallbackHandler, { module: 'rooms', action: 'open' }, isRegistered);
+registered.on('message:text').filter(
+	ctx => ctx.session.flow.name === 'ROOMS_CREATE',
+	handlers.createRoomNameMessageHandler,
+);
 
-	/**
-	 *  GAME START
-	 */
-	BOT.registerCallbackHandler(handlers.gameStartCallbackHandler, { module: 'room', action: 'start' }, isRegistered);
+registered.on('message:text').filter(
+	ctx => ctx.session.flow.name === 'ROOM_CDC',
+	SettingsHandlers.changeDecksCountMessage,
+);
 
-	/**
-	 *  GET ATHANASIUSES
-	 */
-	BOT.registerCallbackHandler(handlers.gameGetAthanasiusesCallbackHandler, { module: 'room', action: 'getath' }, isRegistered);
+// ── Callback handlers ─────────────────────────────────────────────────────────
 
-	/**
-	 *  WHOSE TURN
-	 */
-	BOT.registerCallbackHandler(handlers.gameWhoseTurnCallbackHandler, { module: 'room', action: 'whoseturn' }, isRegistered);
+registered.callbackQuery(/^rooms:join:/, handlers.joinRoomCallbackHandler);
+registered.callbackQuery(/^room:kick:/, handlers.kickCallbackHandler);
+registered.callbackQuery(/^room:leave:/, handlers.leaveRoomCallbackHandler);
+registered.callbackQuery(/^rooms:create:/, handlers.createRoomCallbackHandler);
+registered.callbackQuery(/^rooms:open:/, handlers.openRoomCallbackHandler);
+registered.callbackQuery(/^room:start:/, handlers.gameStartCallbackHandler);
+registered.callbackQuery(/^room:delete:/, handlers.deleteRoomCallbackHandler);
+registered.callbackQuery(/^room:getath:/, handlers.gameGetAthanasiusesCallbackHandler);
+registered.callbackQuery(/^room:whoseturn:/, handlers.gameWhoseTurnCallbackHandler);
+registered.callbackQuery(/^room:sendturnmsg:/, handlers.gameSendTurnMessageCallbackHandler);
+registered.callbackQuery(/^room:endgame:/, handlers.gameForceEndCallbackHandler);
+registered.callbackQuery(/^rooms:back:/, handlers.backCallbackHandler);
+registered.callbackQuery(/^room:settings:/, SettingsHandlers.start);
+registered.callbackQuery(/^room:cjc:/, SettingsHandlers.changeJoinCode);
+registered.callbackQuery(/^room:cdc:/, SettingsHandlers.changeDecksCount);
+registered.callbackQuery(/^room:cdt:/, SettingsHandlers.changeDeckType);
+registered.callbackQuery(/^room:cam:/, SettingsHandlers.toggleAllowMailing);
 
-	/**
-	 *  RESEND TURN MESSAGE
-	 */
-	BOT.registerCallbackHandler(handlers.gameSendTurnMessageCallbackHandler, { module: 'room', action: 'sendturnmsg' }, isRegistered);
-
-	/**
-	 *  BACK
-	 */
-	BOT.registerCallbackHandler(handlers.backCallbackHandler, { module: 'rooms', back: true }, isRegistered);
-
-	/**
-	 *  SETTINGS
-	 */
-	BOT.registerCallbackHandler(SettingsHandlers.start, { module: 'room', action: 'settings' }, isRegistered);
-	BOT.registerCallbackHandler(SettingsHandlers.changeJoinCode, { module: 'room', action: 'cjc' }, isRegistered);
-	BOT.registerCallbackHandler(SettingsHandlers.changeDecksCount, { module: 'room', action: 'cdc' }, isRegistered);
-	BOT.registerMessageHandler(SettingsHandlers.changeDecksCountMessage, { state: 'ROOM_CDC' }, isRegistered);
-};
-
-export default registerRooms;
+export default composer;

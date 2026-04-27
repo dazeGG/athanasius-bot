@@ -1,25 +1,23 @@
 const NAME_RULES = 'Правила для имени:\n' +
-	'• Имя не должно быть короче 4 символов\n' +
+	'• Имя не должно быть короче 2 символов\n' +
 	'• Имя не должно быть длиннее 16 символов\n' +
-	'• Имя должно быть уникальным';
+	'• Имя должно быть уникальным независимо от регистра';
 
-/* TEXTS */
 export const txt = {
 	yourSettings: 'Твои настройки',
 	name: 'Имя',
 	updatesView: 'Вид обновлений',
+	confirmMode: 'Режим подтверждения',
+	confirmModeMenu: '<b>Режим подтверждения</b>\n\nВыбери на каких стадиях хода запрашивать подтверждение:',
+	confirmStages: {
+		card: 'Карта',
+		count: 'Количество',
+		colors: 'Цвета',
+		suits: 'Масти',
+	},
 	chooseWhatToChange: 'Выбери что ты хочешь изменить',
 	changeName: 'Отлично, напиши мне новое имя в следующем сообщении\n' +
 		'\n' +
 		NAME_RULES,
 	success: '<b>Применил изменения!</b>',
-} as const;
-
-/* KEYBOARDS */
-export const kb: ModuleKeyboards = {
-	baseSettings: [
-		[{ text: 'Имя', callback_data: { module: 'settings', action: 'name' } }],
-		[{ text: 'Вид обновлений', callback_data: { module: 'settings', action: 'updatesView' } }],
-		[{ text: 'Выход', callback_data: { module: 'settings', action: 'exit' } }],
-	],
 } as const;

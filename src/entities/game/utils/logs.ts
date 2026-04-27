@@ -1,55 +1,89 @@
 import { ORM } from '~/db';
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import type { GameLog, GameUtilsParsed } from '~/db';
 
 import type { PlayerId } from '../types';
 
-export class GameLogs {
-	private static formatStealData (stealData: number[]): string {
-		switch (stealData.length) {
-		case 1:
-			return `${stealData[0]}`;
-		case 2:
-			return `🔴: ${stealData[0]} ⚫: ${stealData[1]}`;
-		case 4:
-			return `♥️: ${stealData[0]} ♦️: ${stealData[1]} ♠️: ${stealData[2]} ♣️: ${stealData[3]}`;
-		default:
-			throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
+function formatStealData (stealData: number[]): string {
+	switch (stealData.length) {
+	case 1:
+		return `${stealData[0]}`;
+	case 2: {
+		const parts: string[] = [];
+		if (stealData[0] > 0) {
+			parts.push(`🔴 ${stealData[0]}`);
+		}
+		if (stealData[1] > 0) {
+			parts.push(`⚫ ${stealData[1]}`);
+		}
+		return parts.join(' ');
+	}
+	case 4: {
+		const [hearts, diamonds, spades, clubs] = stealData;
+		const parts: string[] = [];
+		if (hearts > 0) {
+			parts.push(`♥️ ${hearts}`);
+		}
+		if (diamonds > 0) {
+			parts.push(`♦️ ${diamonds}`);
+		}
+		if (spades > 0) {
+			parts.push(`♠️ ${spades}`);
+		}
+		if (clubs > 0) {
+			parts.push(`♣️ ${clubs}`);
+		}
+		return parts.join(' ');
+	}
+	default:
+		throw new Error('Wrong stealData! Expected 1, 2 or 4 numbers!');
+	}
+}
+
+function getLogPrefix (log: GameLog): string {
+	if (log.athanasius) {
+		return '⭐';
+	}
+	if (log.steal) {
+		return '🟩';
+	}
+	return '🟥';
+}
+
+function getLogMessage (log: GameLog, viewerId?: PlayerId): string {
+	const from = ORM.Users.get(log.from);
+	const to = ORM.Users.get(log.to);
+	const isVictim = viewerId !== undefined && log.to === viewerId && log.steal;
+	const prefix = isVictim ? '🟧' : getLogPrefix(log);
+	const toName = escapeHtml(to.name);
+
+	let msg = `${prefix} <b>${escapeHtml(from.name)} → ${toName}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+
+	if (log.stealData?.length) {
+		const formatted = formatStealData(log.stealData);
+		if (formatted) {
+			msg += ` | ${formatted}`;
 		}
 	}
 
-	private static getLogMessage (log: GameLog): string {
-		const from = ORM.Users.get(log.from);
-		const to = ORM.Users.get(log.to);
+	if (log.athanasius) {
+		msg += ' — Афанасий!';
+	}
 
-		let msg = `<b>${from.name} -> ${to.name}</b> | ${DeckConfig.CARDS_VIEW_MAP[log.cardName]}`;
+	return msg;
+}
 
-		if (log.stealData?.length) {
-			if (log.steal) {
-				msg += ' | ' + GameLogs.formatStealData(log.stealData);
-			} else {
-				msg += ` | Не ${GameLogs.formatStealData(log.stealData)}`;
-			}
+export function getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): string {
+	const result: string[] = [];
+
+	for (let i = utils.logs.length - 1; i >= 0; i--) {
+		const log = utils.logs[i];
+		if (log.from === playerId) {
+			break;
 		}
-
-		return msg;
+		result.push(getLogMessage(log, playerId));
 	}
 
-	public static hasLogs (utils: GameUtilsParsed, playerId: PlayerId): boolean {
-		return utils.logs[utils.logs.length - 1].from !== playerId;
-	}
-
-	public static getLastRoundLogs (utils: GameUtilsParsed, playerId: PlayerId): string {
-		const result: string[] = [];
-
-		for (let i = utils.logs.length - 1; i >= 0; i--) {
-			const log = utils.logs[i];
-			if (log.from === playerId) {
-				break;
-			}
-			result.push(GameLogs.getLogMessage(log));
-		}
-
-		return result.reverse().join('\n');
-	}
+	return result.reverse().join('\n');
 }

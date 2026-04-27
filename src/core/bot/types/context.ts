@@ -1,32 +1,22 @@
-import type TelegramBot from 'node-telegram-bot-api';
+import type { Context, Filter, SessionFlavor } from 'grammy';
 
-type BaseContext = {
-  chatId: TelegramBot.ChatId;
-};
+import type { RoomId } from '~/db';
 
-export type MessageContextMessage = Omit<(TelegramBot.Message), 'text' | 'from'> & {
-  text: string;
-  from: TelegramBot.User;
-};
+export type AppFlowState =
+	| { name?: undefined }
+	| { name: 'REGISTRATION' | 'ROOMS_JOIN' | 'ROOMS_CREATE' | 'SETTINGS_CHANGE_NAME' }
+	| { name: 'ROOM_CDC'; roomId: RoomId }
+	| { name: 'GAME_MAILING'; roomId: RoomId; promptMessageId?: number };
 
-export type MessageContext = BaseContext & {
-  message: MessageContextMessage;
-};
-
-export interface CallbackData {
-  module: string;
-  action?: string;
-  back?: boolean;
-  meta?: string;
+export interface AppSession {
+	flow: AppFlowState;
 }
 
-export type CallbackContextCallback = Omit<(TelegramBot.CallbackQuery), 'message' | 'data'> & {
-  message: TelegramBot.Message;
-  data: CallbackData;
-};
+export const createInitialSessionData = (): AppSession => ({
+	flow: {},
+});
 
-export type CallbackContext = BaseContext & {
-  callback: CallbackContextCallback;
-};
+export type AppContext = Context & SessionFlavor<AppSession>;
 
-export type BotContext = MessageContext & { callback?: never } | CallbackContext & { message?: never };
+export type MessageCtx = Filter<AppContext, 'message:text'>;
+export type CallbackCtx = Filter<AppContext, 'callback_query:data'>;

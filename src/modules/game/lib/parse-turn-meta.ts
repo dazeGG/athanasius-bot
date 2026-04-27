@@ -1,88 +1,132 @@
 import { DB } from '~/db';
+import { DeckConfig } from '~/entities/deck';
 import type { CardName } from '~/entities/deck';
 
 import { TurnStage } from '~/entities/game';
-import type { Suits, TurnMeta } from '~/entities/game';
+import type { TurnMeta } from '~/entities/game';
 
-const getCount = (countData: string): [number, string] => {
-	return [+countData.replace(/\D/g, ''), countData.replace(/\d/g, '')];
+import { InvalidGameFlowError, STALE_GAME_MESSAGE_TEXT } from './validate-turn-meta';
+
+const throwInvalidTurnMeta = (): never => {
+	throw new InvalidGameFlowError(STALE_GAME_MESSAGE_TEXT);
+};
+
+const ensureDefined = (value?: string): string => {
+	if (value === undefined) {
+		throwInvalidTurnMeta();
+	}
+
+	return value!;
+};
+
+const getActionCount = (countData?: string): [number, string] => {
+	const normalizedCountData = ensureDefined(countData);
+
+	if (!/^\d+(\+|-|select)$/.test(normalizedCountData)) {
+		throwInvalidTurnMeta();
+	}
+
+	const action = normalizedCountData.endsWith('select') ? 'select' : normalizedCountData.slice(-1);
+	const count = normalizedCountData.slice(0, normalizedCountData.length - action.length);
+
+	return [Number(count), action];
+};
+
+const getPlainCount = (countData?: string): number => {
+	const normalizedCountData = ensureDefined(countData);
+
+	if (!/^\d+$/.test(normalizedCountData)) {
+		throwInvalidTurnMeta();
+	}
+
+	return Number(normalizedCountData);
 };
 
 export const parseTurnMeta = (meta: string): TurnMeta => {
 	const [turnStage, gameId, playerId, cardName, countData, redCountData, suitsData] = meta.split('#');
 
-	if (turnStage === undefined || gameId === undefined || gameId.length === 0 || playerId === undefined || playerId.length === 0) {
-		throw new Error('Parse turn meta error');
+	if (!turnStage || !gameId || !playerId) {
+		throwInvalidTurnMeta();
 	}
 
-	const user = DB.data.users.find(user  => user.id === +playerId);
+	const user = DB.data.users.find(user => user.id === +playerId);
 
 	if (!user) {
-		throw new Error('Cannot find player with provided in turn meta player id');
+		throwInvalidTurnMeta();
 	}
 
-	let count, countAction, redCount, redCountAction, blackCount, suits;
-
-	if (countData) {
-		[count, countAction] = getCount(countData);
-	}
-
-	if (redCountData) {
-		[redCount, redCountAction] = getCount(redCountData);
-		blackCount = count as number - redCount;
-	}
-
-	if (suitsData) {
-		const [hearts, diamonds, spades, clubs, mode, action] = suitsData.split('!');
-		suits = { hearts: +hearts, diamonds: +diamonds, spades: +spades, clubs: +clubs, mode, action };
-	}
+	const base = { gameId, player: user! };
 
 	switch (+turnStage) {
 	case TurnStage.player:
-		return {
-			stage: TurnStage.player,
-			gameId,
-			player: user,
-		};
+		return { ...base, stage: TurnStage.player };
+
 	case TurnStage.card:
+		if (!cardName || !DeckConfig.isCardName(cardName)) {
+			throwInvalidTurnMeta();
+		}
+
+		return { ...base, stage: TurnStage.card, cardName: cardName as CardName };
+
+	case TurnStage.count: {
+		if (!cardName || !DeckConfig.isCardName(cardName)) {
+			throwInvalidTurnMeta();
+		}
+
+		const [count, countAction] = getActionCount(countData);
+		return { ...base, stage: TurnStage.count, cardName: cardName as CardName, count, countAction };
+	}
+
+	case TurnStage.colors: {
+		if (!cardName || !DeckConfig.isCardName(cardName)) {
+			throwInvalidTurnMeta();
+		}
+
+		const count = getPlainCount(countData);
+		const [redCount, redCountAction] = getActionCount(redCountData);
 		return {
-			stage: TurnStage.card,
-			gameId,
-			player: user,
-			cardName: cardName as CardName,
-		};
-	case TurnStage.count:
-		return {
-			stage: TurnStage.count,
-			gameId,
-			player: user,
-			cardName: cardName as CardName,
-			count: count as number,
-			countAction: countAction as string,
-		};
-	case TurnStage.colors:
-		return {
+			...base,
 			stage: TurnStage.colors,
-			gameId,
-			player: user,
 			cardName: cardName as CardName,
-			count: count as number,
-			redCount: redCount as number,
-			blackCount: blackCount as number,
-			redCountAction: redCountAction as string,
+			count,
+			redCount,
+			blackCount: count - redCount,
+			redCountAction,
 		};
-	case TurnStage.suits:
+	}
+
+	case TurnStage.suits: {
+		if (!cardName || !DeckConfig.isCardName(cardName) || !suitsData) {
+			throwInvalidTurnMeta();
+		}
+
+		const count = getPlainCount(countData);
+		const redCount = getPlainCount(redCountData);
+		const [hearts, diamonds, spades, clubs, mode, action] = suitsData.split('!');
+
+		if (
+			hearts === undefined
+			|| diamonds === undefined
+			|| spades === undefined
+			|| clubs === undefined
+			|| mode === undefined
+			|| action === undefined
+		) {
+			throwInvalidTurnMeta();
+		}
+
 		return {
+			...base,
 			stage: TurnStage.suits,
-			gameId,
-			player: user,
 			cardName: cardName as CardName,
-			count: count as number,
-			redCount: redCount as number,
-			blackCount: blackCount as number,
-			suits: suits as Suits,
+			count,
+			redCount,
+			blackCount: count - redCount,
+			suits: { hearts: +hearts, diamonds: +diamonds, spades: +spades, clubs: +clubs, mode, action },
 		};
+	}
+
 	default:
-		throw new Error('Invalid stage');
+		return throwInvalidTurnMeta();
 	}
 };

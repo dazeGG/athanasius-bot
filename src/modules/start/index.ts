@@ -1,9 +1,11 @@
-import { BOT } from '~/core';
+import { Composer } from 'grammy';
+
+import type { AppContext } from '~/core';
 
 import * as handlers from './handlers';
 
-const registerStart = () => {
-	BOT.registerCommand('/start', handlers.startCommandHandler);
-};
+const composer = new Composer<AppContext>();
 
-export default registerStart;
+composer.command('start', handlers.startCommandHandler);
+
+export default composer;

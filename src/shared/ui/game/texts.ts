@@ -17,9 +17,7 @@ export const txt = {
 	colors: 'Цвета',
 	nowSelected: 'Сейчас выбрано',
 	firstTurnMessage: 'Ты ходишь первым, выбери у кого хочешь спросить карту',
-	turnFirstMessage: '<b>Твой ход!</b>\n' +
-		'\n' +
-		'Выбери у кого хочешь спросить карту',
+	turnMessage: '<b>Твой ход!</b>\n\nВыбери у кого хочешь спросить карту',
 	turnCardSelect: 'Выбери какую карту ты хочешь спросить',
 	turnCountSelect: 'Выбери сколько карт ты хочешь спросить',
 	turnColorsSelect: 'Выбери сколько <b>красных</b> карт ты хочешь спросить',
@@ -28,4 +26,5 @@ export const txt = {
 	blackCountError: 'Количество черных мастей не должно быть больше выбранного',
 	suitsCountError: 'Количество мастей не должно быть больше выбранного количества карт',
 	gameMessageResendSuccess: 'Игровое сообщение успешно отправлено!',
+	confirmQuestion: 'Спрашиваем?',
 } as const;

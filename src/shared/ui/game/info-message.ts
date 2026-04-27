@@ -1,28 +1,35 @@
 import { DeckConfig } from '~/entities/deck';
+import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
+import type { CardName } from '~/entities/deck';
 import type { RoomSchema, UserSchema } from '~/db';
-import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta, TurnMeta } from '~/entities/game';
+import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta } from '~/entities/game';
 
 import { txt } from '.';
+import { formatSuits, formatColors } from './game-message';
 
 export class InfoMessage {
-	/* MAILING */
-	private static players (turnMeta: TurnMeta, me: UserSchema): string {
-		return `🟨 <b>${me.name} -> ${turnMeta.player.name}</b>\n\n`;
+	/* HELPERS */
+	private static mailingLine (prefix: string, me: UserSchema, targetName: string, cardName: CardName, trailing?: string): string {
+		const base = `${prefix} <b>${escapeHtml(me.name)} → ${escapeHtml(targetName)}</b> | ${DeckConfig.CARDS_VIEW_MAP[cardName]}`;
+		return trailing ? `${base} | ${trailing}` : base;
 	}
 
-	private static playersCard (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) + `<b>Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}</b>\n`;
-	}
 
+	/* GAME LIFECYCLE */
 	public static gameStartedMailing (room: RoomSchema): string {
-		return `Комната ${room.name} | ${txt.gameStarted}\n` +
+		return `Комната ${escapeHtml(room.name)} | ${txt.gameStarted}\n` +
 			'\n' +
 			txt.players + ':\n' +
 			playersList(room.players) + '\n' +
 			'\n' +
 			txt.gameSettings + ':\n' +
-			'• ' + txt.decksCount + ': ' + room.settings.decksCount;
+			'• ' + txt.decksCount + ': ' + room.settings.decksCount + '\n' +
+			'• Тип колоды: ' + DeckConfig.getDeckTypeLabel(room.settings.deckType);
+	}
+
+	private static formatPlayerResult (name: string, count: number): string {
+		return `${escapeHtml(name)} - ${count} ${this.athanasiusRightText(count)}`;
 	}
 
 	private static athanasiusRightText (count: number): string {
@@ -45,88 +52,138 @@ export class InfoMessage {
 	}
 
 	public static gameEndedMailing (athMap: [string, number][]): string {
-		let text = `🦎 <b>${txt.gameEnded}</b>\n\n`;
-		text += 'Вот они, победители, слева на право:\n\n';
+		let text = `🏁 <b>${txt.gameEnded}</b>\n\n`;
 
-		const [first, second, third, ...others] = athMap;
+		// Группируем по уникальным значениям Афанасиев (убывание)
+		const tiers: [string, number][][] = [];
+		for (const player of athMap) {
+			const last = tiers[tiers.length - 1];
+			if (last && last[0][1] === player[1]) {
+				last.push(player);
+			} else {
+				tiers.push([player]);
+			}
+		}
 
-		text += `🥇 ${first[0]} - ${first[1]} ${this.athanasiusRightText(first[1])}\n`;
-		text += `🥈 ${second[0]} - ${second[1]} ${this.athanasiusRightText(second[1])}\n`;
+		const medals = [
+			{ emoji: '🥇', tier: tiers[0] },
+			{ emoji: '🥈', tier: tiers[1] },
+			{ emoji: '🥉', tier: tiers[2] },
+		];
 
-		if (others.length == 0) {
-			text += '\nОстальные результаты:\n\n';
-			text += `🦧 ${third[0]} - ${third[1]} ${this.athanasiusRightText(third[1])}`;
-		} else {
-			text += `🥉 ${third[0]} - ${third[1]} ${this.athanasiusRightText(third[1])}\n`;
+		let medalCount = 0;
+		const medalTiers: number[] = [];
 
-			text += '\nОстальные результаты:\n\n';
+		for (let i = 0; i < medals.length; i++) {
+			if (!medals[i].tier) break;
+			if (medalCount >= 3) break;
+			medalTiers.push(i);
+			medalCount += medals[i].tier.length;
+		}
 
-			others.forEach((other, i) => {
-				text += `🦧 ${other[0]} - ${other[1]} ${this.athanasiusRightText(other[1])}`;
+		const medalistTierIndices = new Set(medalTiers);
+		const loserTierIndex = tiers.length - 1;
+		const loserTierIsNotMedal = !medalistTierIndices.has(loserTierIndex);
 
-				if (i !== others.length - 1) {
-					text += '\n';
-				}
+		text += 'Вот они, победители, слева направо:\n';
+		for (const i of medalTiers) {
+			const { emoji, tier } = medals[i];
+			for (const player of tier) {
+				text += `${emoji} ${this.formatPlayerResult(player[0], player[1])}\n`;
+			}
+		}
+
+		const plainPlayers = tiers
+			.filter((_, i) => !medalistTierIndices.has(i) && !(loserTierIsNotMedal && i === loserTierIndex))
+			.flat();
+
+		if (plainPlayers.length > 0) {
+			text += '\n<b>Простые ребята:</b>\n';
+			plainPlayers.forEach((player, i) => {
+				text += `${i + medalCount + 1}. ${this.formatPlayerResult(player[0], player[1])}\n`;
 			});
 		}
 
-		return text;
+		if (loserTierIsNotMedal) {
+			const losers = tiers[loserTierIndex];
+			text += '\n<b>Главный неудачник:</b>\n';
+			for (const player of losers) {
+				text += `🦧 ${this.formatPlayerResult(player[0], player[1])}\n`;
+			}
+		}
+
+		return text.trimEnd();
 	}
 
+	public static dealAthanasiusMe (cardNames: string[]): string {
+		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
+		return `🎴 Стоп.\n\nПри раздаче тебе выпал Афанасий ${cards}.\nТакое случается раз в тысячу игр.`;
+	}
+
+	public static dealAthanasiusMailing (player: UserSchema, cardNames: string[]): string {
+		const cards = cardNames.map(n => DeckConfig.CARDS_VIEW_MAP[n as keyof typeof DeckConfig.CARDS_VIEW_MAP]).join(' и ');
+		return `🎴 Стоп.\n\nПри раздаче у ${escapeHtml(player.name)} выпал Афанасий ${cards}.\nЗапомните этот момент.`;
+	}
+
+	/* MAILING — single-line log format */
 	public static wrongCardMailing (turnMeta: CardStageMeta, me: UserSchema): string {
-		return this.players(turnMeta, me) + `Нет карт ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName);
 	}
 
 	public static wrongCountMailing (turnMeta: CountStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Количество не ${turnMeta.count}`;
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, `${turnMeta.count}`);
 	}
 
 	public static wrongColorsMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount} (${turnMeta.count})`;
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount));
 	}
 
 	public static wrongSuitsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs} (${turnMeta.count})`;
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, formatSuits(turnMeta.suits));
 	}
 
 	public static stealCardsMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return this.playersCard(turnMeta, me) + `Украл ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+		return this.mailingLine('🟩', me, turnMeta.player.name, turnMeta.cardName, formatSuits(turnMeta.suits));
 	}
 
-	public static newAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
-		return `🟨 У <b>${me.name}</b> новый Афанасий ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}!`;
+	public static stealWithAthanasiusMailing (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		return this.mailingLine('⭐', me, turnMeta.player.name, turnMeta.cardName, formatSuits(turnMeta.suits)) + ' — Афанасий!';
 	}
 
-	/* ME */
-	private static meWrongBase (turnMeta: TurnMeta): string {
-		return `🟥 <b>К сожалению, ты не угадал :(</b>\n\nИгрок: ${turnMeta.player.name}\n`;
+	public static stealVictimMessage (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		const base = `🟧 <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const suits = formatSuits(turnMeta.suits);
+		return suits ? `${base} | ${suits}` : base;
 	}
 
-	private static meWrongWithCard (turnMeta: CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {
-		return this.meWrongBase(turnMeta) + `Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n`;
+	public static jokerStealMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟩', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount));
 	}
 
-	private static meWrongWithCount (turnMeta: ColorsStageMeta | SuitsStageMeta): string {
-		return this.meWrongWithCard(turnMeta) + `Количество: <b>${turnMeta.count}</b>\n`;
+	public static jokerStealWithAthanasiusMailing (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.mailingLine('⭐', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount)) + ' — Афанасий!';
 	}
 
-	public static wrongCardMe (turnMeta: CardStageMeta): string {
-		return this.meWrongBase(turnMeta) + `Нет карт ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+	public static jokerStealVictimMessage (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		const base = `🟧 <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const colors = formatColors(turnMeta.redCount, turnMeta.blackCount);
+		return colors ? `${base} | ${colors}` : base;
 	}
 
-	public static wrongCountMe (turnMeta: CountStageMeta): string {
-		return this.meWrongWithCard(turnMeta) + `Количество не ${turnMeta.count}`;
+	/* ME — log format */
+	public static wrongCardMe (turnMeta: CardStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName);
 	}
 
-	public static wrongColorsMe (turnMeta: ColorsStageMeta): string {
-		return this.meWrongWithCount(turnMeta) + `Цвета не 🔴: ${turnMeta.redCount} ⚫: ${turnMeta.blackCount}`;
+	public static wrongCountMe (turnMeta: CountStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, `${turnMeta.count}`);
 	}
 
-	public static wrongSuitsMe (turnMeta: SuitsStageMeta): string {
-		return this.meWrongWithCount(turnMeta) + `Не ♥️: ${turnMeta.suits.hearts} ♦️: ${turnMeta.suits.diamonds} ♠️: ${turnMeta.suits.spades} ♣️: ${turnMeta.suits.clubs}`;
+	public static wrongColorsMe (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount));
 	}
 
-	public static newAthanasiusMe (turnMeta: SuitsStageMeta): string {
-		return `🟩 У тебя новый Афанасий <b>${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}</b>!`;
+	public static wrongSuitsMe (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, formatSuits(turnMeta.suits));
 	}
 }

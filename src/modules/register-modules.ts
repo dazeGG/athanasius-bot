@@ -1,21 +1,29 @@
-import { registerGlobalKeyboard } from '~/shared/lib';
+import { Composer } from 'grammy';
 
-import registerGame from './game';
-import registerHand from './hand';
-import registerReg from './reg';
-import registerRooms from './rooms';
-import registerSettings from './settings';
-import registerStart from './start';
+import type { AppContext } from '~/core';
+import { globalKeyboardComposer } from '~/shared/lib';
 
-const registerModules = () => {
-	registerGlobalKeyboard();
+import gameComposer from './game';
+import handComposer from './hand';
+import mailingComposer from './mailing';
+import notesComposer from './notes';
+import regComposer from './reg';
+import roomsComposer from './rooms';
+import settingsComposer from './settings';
+import startComposer from './start';
 
-	registerGame();
-	registerHand();
-	registerReg();
-	registerRooms();
-	registerSettings();
-	registerStart();
+const createModulesComposer = (): Composer<AppContext> => {
+	const composer = new Composer<AppContext>();
+	composer.use(globalKeyboardComposer);
+	composer.use(gameComposer);
+	composer.use(handComposer);
+	composer.use(mailingComposer);
+	composer.use(notesComposer);
+	composer.use(regComposer);
+	composer.use(roomsComposer);
+	composer.use(settingsComposer);
+	composer.use(startComposer);
+	return composer;
 };
 
-export default registerModules;
+export default createModulesComposer;

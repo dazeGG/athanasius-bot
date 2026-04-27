@@ -1,5 +1,5 @@
 import { Deck } from '~/entities/deck';
-import type { CardId, CardName } from '~/entities/deck';
+import type { CardId, CardName, DeckType } from '~/entities/deck';
 import type { GameUtilsParsed } from '~/db';
 import { shuffleArray } from '~/shared/lib';
 
@@ -11,6 +11,7 @@ interface ConstructorOptionsInit {
 	hands?: never;
 	players: PlayerId[];
 	decksCount: number;
+	deckType: DeckType;
 	queue: Queue;
 }
 
@@ -18,21 +19,22 @@ interface ConstructorOptionsByHands {
 	hands: Record<PlayerId, CardId[]>;
 	players?: never;
 	decksCount?: never;
+	deckType?: never;
 	queue?: never;
 }
 
 export class Hands {
 	private readonly hands: Map<PlayerId, Hand>;
 
-	constructor ({ hands, players, decksCount, queue }: ConstructorOptionsInit | ConstructorOptionsByHands) {
+	constructor ({ hands, players, decksCount, deckType, queue }: ConstructorOptionsInit | ConstructorOptionsByHands) {
 		if (hands) {
 			this.hands = new Map();
 
 			Object.keys(hands).map(Number).forEach(playerId => {
 				this.hands.set(playerId, new Hand(hands[playerId]));
 			});
-		} else if (players && decksCount && queue) {
-			const cardsIds = Deck.getDeck().map(card => card.id);
+		} else if (players && decksCount && deckType && queue) {
+			const cardsIds = Deck.getDeck(deckType).map(card => card.id);
 			const mainDeck = shuffleArray<CardId>(Array(decksCount).fill(cardsIds).flat());
 
 			this.hands = new Map();
@@ -53,12 +55,7 @@ export class Hands {
 			throw new Error(`No hand for player ${playerId}`);
 		}
 
-		return new Proxy(hand, {
-			get (target, prop, receiver) {
-				const value = Reflect.get(target, prop, receiver);
-				return typeof value === 'function' ? value.bind(target) : value;
-			},
-		});
+		return hand;
 	}
 
 	private dealCards (mainDeck: CardId[], players: PlayerId[]): void {
@@ -78,13 +75,10 @@ export class Hands {
 	}
 
 	public get allHands (): Record<PlayerId, CardId[]> {
-		const preResult = Object.fromEntries(this.hands);
 		const result: Record<PlayerId, CardId[]> = {};
-
-		Object.keys(preResult).map(Number).forEach(playerId => {
-			result[playerId] = preResult[playerId.toString()].cardIds;
+		this.hands.forEach((hand, playerId) => {
+			result[playerId] = hand.cardIds;
 		});
-
 		return result;
 	}
 
@@ -98,6 +92,17 @@ export class Hands {
 		this.hand(playerId).removeCards(cardIds);
 		this.hand(me).pushCards(cardIds);
 		return this.hand(me).handleAthanasiuses(utils);
+	}
+
+	public collectInitialAthanasiuses (utils: GameUtilsParsed): Record<PlayerId, CardName[]> {
+		const result: Record<PlayerId, CardName[]> = {};
+		this.hands.forEach((hand, playerId) => {
+			const athanasiuses = hand.handleAthanasiuses(utils);
+			if (athanasiuses.length > 0) {
+				result[playerId] = athanasiuses;
+			}
+		});
+		return result;
 	}
 
 	public handleGameEnd (queue: PlayerId[]): boolean {

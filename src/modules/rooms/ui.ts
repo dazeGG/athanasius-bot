@@ -1,7 +1,10 @@
+import { InlineKeyboard } from 'grammy';
+
 import { ORM } from '~/db';
-import { MIN_PLAYERS_TO_START } from '~/shared/ui/game';
-import type { RawButtons } from '~/core';
-import type { RoomSchema, UserId, RoomId } from '~/db';
+import { stringifyCallbackData } from '~/core/lib';
+import type { RoomSchema, RoomId } from '~/db';
+
+const DECKS_COUNT_CONSTRAINT = 'Количество колод должно быть целым числом в диапазоне от 1 до 100';
 
 /* TEXTS */
 export const txt = {
@@ -9,95 +12,53 @@ export const txt = {
 	roomsList: 'Вот список твоих комнат',
 	createdRoom: 'Создал комнату',
 	kickPlayer: 'Выбери кого хочешь выгнать',
-	sendTurnMessage: 'Отправить сообщение хода',
+	joinCodePrompt: 'Напиши код подключения',
+	roomNamePrompt: 'Напиши название комнаты',
+	decksCountPrompt: `Напиши новое количество колод\n${DECKS_COUNT_CONSTRAINT}`,
+	decksCountError: DECKS_COUNT_CONSTRAINT,
+	deckTypePrompt: 'Выбери тип колоды',
+	gameAlreadyStarted: 'Игра уже началась',
+	ownerOnly: 'Только владелец комнаты может управлять комнатой',
+	ownerCannotLeave: 'Владелец комнаты не может выйти из своей комнаты',
+	cannotKickOwner: 'Нельзя выгнать владельца комнаты',
+	roomDeleted: 'Комната удалена',
+	gameForceEnded: 'Игра завершена досрочно',
 } as const;
 
-/* KEYBOARDS */
-export const kb: ModuleKeyboards = {
-	default: [
-		[{ text: 'Зайти по коду', callback_data: { module: 'rooms', action: 'join' } }],
-		[{ text: 'Создать комнату', callback_data: { module: 'rooms', action: 'create' } }],
-	],
-} as const;
+/* DEFAULT KEYBOARD */
+export const defaultKeyboard = new InlineKeyboard()
+	.text('Зайти по коду', stringifyCallbackData({ module: 'rooms', action: 'join' }))
+	.row()
+	.text('Создать комнату', stringifyCallbackData({ module: 'rooms', action: 'create' }));
 
 /* GENERABLE KEYBOARDS */
 export const gkb = {
-	roomsList: (rooms: RoomSchema[]): RawButtons => {
-		return [
-			...rooms.map(r => {
-				return [{ text: r.name, callback_data: { module: 'rooms', action: 'open', meta: r.id } }];
-			}),
-			...kb.default,
-		];
+	athanasiuses: (roomId: RoomId): InlineKeyboard => {
+		return new InlineKeyboard()
+			.text('Обновить', stringifyCallbackData({ module: 'room', action: 'getath', meta: roomId }))
+			.row()
+			.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${roomId}` }));
 	},
 
-	room: (myId: UserId, room: RoomSchema): RawButtons => {
-		const kb = [];
-
-		if (room.owner === myId) {
-			kb.push([{ text: 'Настройки', callback_data: { module: 'room', action: 'settings', meta: room.id } }]);
-
-			if (room.players.length > 1) {
-				kb.push([{ text: 'Выгнать игроков', callback_data: { module: 'room', action: 'kick', meta: `${room.id}:` } }]);
-			}
-
-			if (room.players.length >= MIN_PLAYERS_TO_START) {
-				kb.push([{ text: 'Начать игру', callback_data: { module: 'room', action: 'start', meta: room.id } }]);
-			}
-		} else {
-			kb.push([{ text: 'Выйти', callback_data: { module: 'room', action: 'leave', meta: room.id } }]);
-		}
-
-		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
-
-		return kb;
+	whoseTurn: (roomId: RoomId): InlineKeyboard => {
+		return new InlineKeyboard()
+			.text('Обновить', stringifyCallbackData({ module: 'room', action: 'whoseturn', meta: roomId }))
+			.row()
+			.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${roomId}` }));
 	},
 
-	roomOngoing: (myId: UserId, room: RoomSchema): RawButtons => {
-		const kb = [];
+	kickList: (myId: number, room: RoomSchema): InlineKeyboard => {
+		const keyboard = new InlineKeyboard();
 
-		// TODO: Сделать завершение игры
-		// if (room.owner === myId) {
-		// 	kb.push([{ text: 'Завершить игру', callback_data: { module: 'room', action: 'end', meta: room.id } }]);
-		// }
+		room.players
+			.filter(p => p !== myId)
+			.forEach(playerId => {
+				keyboard.text(ORM.Users.get(playerId).name, stringifyCallbackData({ module: 'room', action: 'kick', meta: `${room.id}:${playerId}` }));
+				keyboard.row();
+			});
 
-		kb.push([
-			{ text: 'Афанасии', callback_data: { module: 'room', action: 'getath', meta: room.id } },
-			{ text: 'Чей ход', callback_data: { module: 'room', action: 'whoseturn', meta: room.id } },
-		]);
+		keyboard.text('Назад', stringifyCallbackData({ module: 'rooms', back: true, meta: `room:${room.id}` }));
 
-		if (room.owner === myId) {
-			kb.push([{ text: txt.sendTurnMessage, callback_data: { module: 'room', action: 'sendturnmsg', meta: room.id } }]);
-		}
-
-		kb.push([{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: 'list' } }]);
-
-		return kb;
-	},
-
-	backToRoom: (roomId: RoomId): RawButtons => {
-		return [
-			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${roomId}` } }],
-		];
-	},
-
-	kickList: (myId: UserId, room: RoomSchema): RawButtons => {
-		return [
-			...room.players.filter(p => p !== myId).map(playerId => {
-				return [{
-					text: ORM.Users.get(playerId).name,
-					callback_data: { module: 'room', action: 'kick', meta: `${room.id}:${playerId}` },
-				}];
-			}),
-			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${room.id}` } }],
-		];
-	},
-
-	settings: (room: RoomSchema): RawButtons => {
-		return [
-			[{ text: 'Код подключения', callback_data: { module: 'room', action: 'cjc', meta: room.id } }],
-			[{ text: 'Количество колод', callback_data: { module: 'room', action: 'cdc', meta: room.id } }],
-			[{ text: 'Назад', callback_data: { module: 'rooms', back: true, meta: `room:${room.id}` } }],
-		];
+		return keyboard;
 	},
 } as const;
