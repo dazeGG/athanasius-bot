@@ -6,7 +6,7 @@ export type AppFlowState =
 	| { name?: undefined }
 	| { name: 'REGISTRATION' | 'ROOMS_JOIN' | 'ROOMS_CREATE' | 'SETTINGS_CHANGE_NAME' }
 	| { name: 'ROOM_CDC'; roomId: RoomId }
-	| { name: 'GAME_MAILING'; roomId: RoomId };
+	| { name: 'GAME_MAILING'; roomId: RoomId; promptMessageId?: number };
 
 export interface AppSession {
 	flow: AppFlowState;

@@ -9,7 +9,7 @@ import { txt } from '../../src/modules/mailing/ui';
 import { escapeHtml } from '../../src/shared/lib';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
-import { assert, assertSent, assertNotSent } from '../runner';
+import { assert, assertSent, assertNotSent, assertDeleted } from '../runner';
 
 const PLAYERS = [
 	{ id: 2001, username: 'alice_m', name: 'Алиса' },
@@ -138,7 +138,7 @@ describe('mailingModule', async () => {
 		await handlers.mailingMessageHandler(makeMessageCtx(ALICE, 'Сообщение'));
 		const log = getLog();
 
-		assertSent(log, ALICE.id, txt.sendMessagePrompt);
+		assertSent(log, ALICE.id, txt.sendMessagePrompt('Комната Алисы'));
 		assert(SESSIONS.get(ALICE.id).flow.name === 'GAME_MAILING', 'Should enter GAME_MAILING flow directly');
 		const flow = SESSIONS.get(ALICE.id).flow;
 		assert(flow.name === 'GAME_MAILING' && flow.roomId === 'room-m', 'Flow should carry the roomId');
@@ -172,7 +172,7 @@ describe('mailingModule', async () => {
 		await handlers.mailingSelectCallbackHandler(makeCallbackCtx(BOB, { module: 'mailing', action: 'select', meta: 'room-m' }));
 		const log = getLog();
 
-		assertSent(log, BOB.id, txt.sendMessagePrompt);
+		assertSent(log, BOB.id, txt.sendMessagePrompt('Комната Алисы'));
 		assert(SESSIONS.get(BOB.id).flow.name === 'GAME_MAILING', 'Should enter GAME_MAILING flow');
 		const flow = SESSIONS.get(BOB.id).flow;
 		assert(flow.name === 'GAME_MAILING' && flow.roomId === 'room-m', 'Flow should carry the roomId');
@@ -234,7 +234,7 @@ describe('mailingModule', async () => {
 		await handlers.mailingTextHandler(makeMessageCtx(ALICE, '   '));
 		const log = getLog();
 
-		assertSent(log, ALICE.id, txt.sendMessagePrompt);
+		assertSent(log, ALICE.id, txt.sendMessagePrompt('Комната Алисы'));
 		assert(SESSIONS.get(ALICE.id).flow.name === 'GAME_MAILING', 'Flow should stay open after blank message');
 		assert(DB.data.games[0]!.utils.mailedThisTurn === undefined, 'Blank message must not mark player as mailed');
 		assertNotSent(log, BOB.id, '');
@@ -247,7 +247,7 @@ describe('mailingModule', async () => {
 		await handlers.mailingTextHandler(makeMessageCtx(ALICE, 'x'.repeat(301)));
 		const log = getLog();
 
-		assertSent(log, ALICE.id, txt.sendMessagePrompt);
+		assertSent(log, ALICE.id, txt.sendMessagePrompt('Комната Алисы'));
 		assert(SESSIONS.get(ALICE.id).flow.name === 'GAME_MAILING', 'Flow should stay open after overlong message');
 		assert(DB.data.games[0]!.utils.mailedThisTurn === undefined, 'Overlong message must not mark player as mailed');
 		assertNotSent(log, BOB.id, 'xxx');
@@ -287,5 +287,38 @@ describe('mailingModule', async () => {
 		assertSent(log, ALICE.id, txt.mailingDisabled);
 		assertNotSent(log, BOB.id, 'Привет');
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Flow should be cleared');
+	});
+
+	it('Сообщение button stores promptMessageId in session flow', async () => {
+		await seedMailingGame({ allowMailing: true });
+
+		await handlers.mailingMessageHandler(makeMessageCtx(ALICE, 'Сообщение'));
+
+		const flow = SESSIONS.get(ALICE.id).flow;
+		assert(flow.name === 'GAME_MAILING' && flow.promptMessageId !== undefined, 'Flow should store promptMessageId after showing prompt');
+	});
+
+	it('Valid message deletes the prompt and sends success reply', async () => {
+		await seedMailingGame({ allowMailing: true });
+		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m', promptMessageId: 42 });
+
+		await handlers.mailingTextHandler(makeMessageCtx(ALICE, 'Привет всем'));
+		const log = getLog();
+
+		assertDeleted(log, ALICE.id, 42);
+		assertSent(log, ALICE.id, txt.sendMessageSuccess);
+	});
+
+	it('Invalid message deletes old prompt and re-sends it', async () => {
+		await seedMailingGame({ allowMailing: true });
+		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m', promptMessageId: 99 });
+
+		await handlers.mailingTextHandler(makeMessageCtx(ALICE, '   '));
+		const log = getLog();
+
+		assertDeleted(log, ALICE.id, 99);
+		assertSent(log, ALICE.id, txt.sendMessagePrompt('Комната Алисы'));
+		const flow = SESSIONS.get(ALICE.id).flow;
+		assert(flow.name === 'GAME_MAILING' && flow.promptMessageId !== undefined, 'Flow should carry new promptMessageId');
 	});
 });

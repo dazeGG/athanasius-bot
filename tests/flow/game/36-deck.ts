@@ -187,7 +187,7 @@ describe('deck36Flow', async () => {
 			}));
 
 			const persisted = getPersistedGame();
-			assertSent(getLog(), ALICE.id, 'Ты успешно украл карты');
+			assertSent(getLog(), ALICE.id, '🟩 <b>Алиса → Борис</b> | A | ♥️ 1 ♠️ 1', { type: 'edit' });
 			assert(getGame().activePlayer.id === ALICE.id, 'Turn should stay with Alice after successful steal');
 			assert((persisted.hands[ALICE.id] ?? []).length === 4, 'Alice should hold 4 cards after steal');
 			assert((persisted.hands[BOB.id] ?? []).length === 0, 'Bob should have no A cards left');
@@ -217,7 +217,7 @@ describe('deck36Flow', async () => {
 				action: 'select',
 			}));
 
-			assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+			assertSent(getLog(), ALICE.id, '🟥 <b>Алиса → Борис</b> | A | ♥️ 2', { type: 'edit' });
 			assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after failure');
 		});
 	});

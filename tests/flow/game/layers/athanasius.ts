@@ -53,7 +53,7 @@ describe('Athanasius', async () => {
 		assert(persisted.athanasiuses[ALICE.id]?.includes('A'), 'Alice should record the newly composed Athanasius');
 		assert((persisted.hands[ALICE.id] ?? []).length === 0, 'Alice’s hand should be empty after the full set is removed');
 		assert(getGame().activePlayer.id === CAROL.id, 'Turn should skip empty players and move to Carol');
-		assertSent(getLog(), ALICE.id, 'Ты успешно украл карты');
+		assertSent(getLog(), ALICE.id, '⭐ <b>Алиса → Борис</b> | A | ♥️ 1 ♠️ 1 — Афанасий!', { type: 'edit' });
 		assertSent(getLog(), BOB.id, '🟧 <b>Алиса → Борис</b> | A');
 		assertSent(getLog(), CAROL.id, '⭐ <b>Алиса → Борис</b> | A');
 	});

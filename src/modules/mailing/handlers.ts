@@ -29,8 +29,9 @@ export const mailingMessageHandler = async (ctx: AppContext) => {
 
 	if (games.length === 1) {
 		const roomId = games[0].roomId;
-		ctx.session.flow = { name: 'GAME_MAILING', roomId };
-		await ctx.reply(ui.txt.sendMessagePrompt);
+		const room = ORM.Rooms.getById(roomId);
+		const sent = await ctx.reply(ui.txt.sendMessagePrompt(room.name), { reply_markup: ui.cancelKeyboard() });
+		ctx.session.flow = { name: 'GAME_MAILING', roomId, promptMessageId: sent.message_id };
 		return;
 	}
 
@@ -59,22 +60,34 @@ export const mailingSelectCallbackHandler = async (ctx: CallbackCtx) => {
 		return;
 	}
 
-	ctx.session.flow = { name: 'GAME_MAILING', roomId };
-	await ctx.editMessageText(ui.txt.sendMessagePrompt);
+	const edited = await ctx.editMessageText(ui.txt.sendMessagePrompt(room.name), { reply_markup: ui.cancelKeyboard() });
+	const promptMessageId = typeof edited !== 'boolean' ? edited.message_id : undefined;
+	ctx.session.flow = { name: 'GAME_MAILING', roomId, promptMessageId };
+};
+
+export const mailingCancelCallbackHandler = async (ctx: CallbackCtx) => {
+	await ctx.answerCallbackQuery();
+	ctx.session.flow = {};
+	await ctx.editMessageText(ui.txt.sendMessageCancelled);
 };
 
 export const mailingTextHandler = async (ctx: MessageCtx) => {
-	const roomId = ctx.session.flow.name === 'GAME_MAILING' ? ctx.session.flow.roomId : undefined;
-
-	if (!roomId) {
+	if (ctx.session.flow.name !== 'GAME_MAILING') {
 		ctx.session.flow = {};
 		return;
 	}
 
+	const { roomId, promptMessageId } = ctx.session.flow;
+
 	const text = ctx.message.text.trim();
 
 	if (text.length < 1 || text.length > 300) {
-		await ctx.reply(ui.txt.sendMessagePrompt);
+		const room = ORM.Rooms.getById(roomId);
+		if (promptMessageId) {
+			await ctx.api.deleteMessage(ctx.chat.id, promptMessageId);
+		}
+		const sent = await ctx.reply(ui.txt.sendMessagePrompt(room.name), { reply_markup: ui.cancelKeyboard() });
+		ctx.session.flow = { name: 'GAME_MAILING', roomId, promptMessageId: sent.message_id };
 		return;
 	}
 
@@ -106,5 +119,8 @@ export const mailingTextHandler = async (ctx: MessageCtx) => {
 	await game.markMailedThisTurn(ctx.from.id);
 
 	ctx.session.flow = {};
+	if (promptMessageId) {
+		await ctx.api.deleteMessage(ctx.chat.id, promptMessageId);
+	}
 	await ctx.reply(ui.txt.sendMessageSuccess);
 };
