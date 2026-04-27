@@ -2,11 +2,11 @@
  * hand.ts — hand lookup coverage split into explicit cases.
  */
 
+import { describe, it } from 'vitest';
 import { Deck } from '../../src/entities/deck';
 
 import { clearDB, getLog, resetLog, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
@@ -356,10 +356,10 @@ const seedGameWithEmptyHand = async (): Promise<void> => {
 /**
  * Runs tests coverage for hand listing, opening, navigation, and closing.
  */
-export async function handModule ({ runCase }: ModuleTools): Promise<void> {
+describe('handModule', async () => {
 	const handlers = await import('../../src/modules/hand/handlers');
 
-	await runCase('Shows empty hand state when there are no active games', async () => {
+	it('Shows empty hand state when there are no active games', async () => {
 		await resetHandCase();
 		await seedRegisteredUsers();
 
@@ -370,7 +370,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'У тебя пока нет запущенных игр');
 	});
 
-	await runCase('Shows one active game in the hand picker', async () => {
+	it('Shows one active game in the hand picker', async () => {
 		await resetHandCase();
 		await seedOneActiveGame();
 
@@ -382,7 +382,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, ROOM_ONE.name);
 	});
 
-	await runCase('Shows multiple active games in the hand picker', async () => {
+	it('Shows multiple active games in the hand picker', async () => {
 		await resetHandCase();
 		await seedTwoActiveGames();
 
@@ -394,7 +394,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, ROOM_TWO.name);
 	});
 
-	await runCase('Shows the selected hand for a game', async () => {
+	it('Shows the selected hand for a game', async () => {
 		await resetHandCase();
 		await seedOneActiveGame();
 
@@ -408,7 +408,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Закрыть');
 	});
 
-	await runCase('Back callback returns from a hand to the games list', async () => {
+	it('Back callback returns from a hand to the games list', async () => {
 		await resetHandCase();
 		await seedTwoActiveGames();
 
@@ -420,7 +420,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, ROOM_TWO.name);
 	});
 
-	await runCase('Close callback deletes the hand picker message', async () => {
+	it('Close callback deletes the hand picker message', async () => {
 		await resetHandCase();
 		await seedOneActiveGame();
 
@@ -431,7 +431,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(log.length === 1, 'Close callback should only delete the hand message');
 	});
 
-	await runCase('Ended game is not shown in the hand picker', async () => {
+	it('Ended game is not shown in the hand picker', async () => {
 		await resetHandCase();
 		await seedEndedGame();
 
@@ -441,7 +441,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'У тебя пока нет запущенных игр');
 	});
 
-	await runCase('Mix of active and ended games — only the active game appears', async () => {
+	it('Mix of active and ended games — only the active game appears', async () => {
 		await resetHandCase();
 		await seedActiveAndEndedGames();
 
@@ -454,7 +454,7 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(!sentTexts.some(t => t.includes(ROOM_TWO.name)), 'Ended game room must not appear in the picker');
 	});
 
-	await runCase('Shows empty-hand message when player has no cards left', async () => {
+	it('Shows empty-hand message when player has no cards left', async () => {
 		await resetHandCase();
 		await seedGameWithEmptyHand();
 
@@ -463,4 +463,4 @@ export async function handModule ({ runCase }: ModuleTools): Promise<void> {
 		const log = getLog();
 		assertSent(log, ALICE.id, 'У тебя закончились карты');
 	});
-}
+});

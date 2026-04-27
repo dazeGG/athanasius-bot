@@ -2,6 +2,7 @@
  * rooms.ts — room creation, joining, settings, and membership flows split into explicit cases.
  */
 
+import { describe, it } from 'vitest';
 import type { CallbackData } from '../../src/core';
 import { ORM, DB } from '../../src/db';
 import { txt as roomTxt } from '../../src/modules/rooms/ui';
@@ -16,7 +17,6 @@ import type {
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertKeyboardButton, assertSent, assertNotSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
@@ -277,14 +277,11 @@ const seedActiveRoom = async ({
 	return ORM.Rooms.getById('room-mailing');
 };
 
-/**
- * Runs tests coverage for room management, membership, settings, and start-game entrypoints.
- */
-export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('../../src/modules/rooms/handlers');
-	const { SettingsHandlers } = await import('../../src/modules/rooms/settings.handlers');
+const { SettingsHandlers } = await import('../../src/modules/rooms/settings.handlers');
 
-	await runCase('Shows empty rooms view with default actions', async () => {
+describe('rooms', async () => {
+	const handlers = await import('../../src/modules/rooms/handlers');
+	it('Shows empty rooms view with default actions', async () => {
 		await resetRoomsCase();
 		await seedRegisteredUsers();
 
@@ -296,7 +293,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Зайти по коду · Создать комнату');
 	});
 
-	await runCase('Shows existing rooms list with room buttons', async () => {
+	it('Shows existing rooms list with room buttons', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await handlers.roomsMessageHandler(makeMessageCtx(BOB, 'Комнаты'));
@@ -308,7 +305,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, BOB.id, 'Зайти по коду · Создать комнату');
 	});
 
-	await runCase('Creates a room from callback and name input', async () => {
+	it('Creates a room from callback and name input', async () => {
 		await resetRoomsCase();
 		await seedRegisteredUsers();
 
@@ -316,7 +313,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(room.settings.decksCount === 4, 'New room should start with 4 decks');
 	});
 
-	await runCase('Escapes unsafe room names in room headers, confirmations, and join mailings', async () => {
+	it('Escapes unsafe room names in room headers, confirmations, and join mailings', async () => {
 		await resetRoomsCase();
 		await seedRegisteredUsers();
 
@@ -338,7 +335,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
 	});
 
-	await runCase('Rejects duplicate room name and keeps creation state', async () => {
+	it('Rejects duplicate room name and keeps creation state', async () => {
 		await resetRoomsCase();
 		await seedRegisteredUsers();
 		await createRoom(ALICE, handlers);
@@ -352,7 +349,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getAll().filter(room => room.name === DEFAULT_ROOM_NAME).length === 1, 'Only one room with duplicate name should exist');
 	});
 
-	await runCase('Rejects wrong join code and clears join state', async () => {
+	it('Rejects wrong join code and clears join state', async () => {
 		await resetRoomsCase();
 		await seedRegisteredUsers();
 		await createRoom(ALICE, handlers);
@@ -367,12 +364,12 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getAll()[0].players.length === 1, 'Wrong code should not change room players');
 	});
 
-	await runCase('Allows joining by code and notifies existing players', async () => {
+	it('Allows joining by code and notifies existing players', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
 	});
 
-	await runCase('Rejects joining the same room twice', async () => {
+	it('Rejects joining the same room twice', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await startJoinRoomFlow(BOB, handlers);
@@ -384,7 +381,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
 	});
 
-	await runCase('Shows different room controls for owner and member', async () => {
+	it('Shows different room controls for owner and member', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
@@ -406,7 +403,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'Начать игру');
 	});
 
-	await runCase('Supports back navigation to rooms list and room details', async () => {
+	it('Supports back navigation to rooms list and room details', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.backCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', back: true, meta: 'list' }));
@@ -422,7 +419,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Выгнать игроков · Начать игру · Удалить комнату · Назад');
 	});
 
-	await runCase('Blocks stale room access for non-members', async () => {
+	it('Blocks stale room access for non-members', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(DAVE, { module: 'rooms', action: 'open', meta: room.id }));
@@ -438,7 +435,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id]);
 	});
 
-	await runCase('Allows owner to kick a player and ignores stale leave callback safely', async () => {
+	it('Allows owner to kick a player and ignores stale leave callback safely', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.kickCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'kick', meta: `${room.id}:` }));
@@ -463,7 +460,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id]);
 	});
 
-	await runCase('Protects kick flow from stale player callbacks', async () => {
+	it('Protects kick flow from stale player callbacks', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.kickCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'kick', meta: `${room.id}:${BOB.id}` }));
@@ -477,7 +474,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id]);
 	});
 
-	await runCase('Prevents non-owners from kicking players', async () => {
+	it('Prevents non-owners from kicking players', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.kickCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'kick', meta: `${room.id}:` }));
@@ -488,7 +485,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id, CAROL.id]);
 	});
 
-	await runCase('Allows a member to leave room and notifies remaining players', async () => {
+	it('Allows a member to leave room and notifies remaining players', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.leaveRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'leave', meta: room.id }));
@@ -501,7 +498,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id]);
 	});
 
-	await runCase('Prevents the owner from leaving or being kicked', async () => {
+	it('Prevents the owner from leaving or being kicked', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.leaveRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'leave', meta: room.id }));
@@ -516,7 +513,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, BOB.id, CAROL.id]);
 	});
 
-	await runCase('Changes join code and accepts only the new one', async () => {
+	it('Changes join code and accepts only the new one', async () => {
 		const room = await setupRoomWithPlayers([CAROL], handlers);
 		const oldCode = room.settings.joinCode;
 
@@ -544,7 +541,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertRoomPlayers(room.id, [ALICE.id, CAROL.id, EVE.id]);
 	});
 
-	await runCase('Prevents non-owners from changing room settings', async () => {
+	it('Prevents non-owners from changing room settings', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 		const oldJoinCode = room.settings.joinCode;
 
@@ -567,7 +564,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Member should not be able to change decks count');
 	});
 
-	await runCase('Settings screen exposes the per-turn mailing toggle state', async () => {
+	it('Settings screen exposes the per-turn mailing toggle state', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await SettingsHandlers.start(makeCallbackCtx(ALICE, { module: 'room', action: 'settings', meta: room.id }));
@@ -577,7 +574,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertKeyboardButton(log, ALICE.id, 'Сообщения в ход: ❌', `room:cam:${room.id}`);
 	});
 
-	await runCase('Owner can toggle per-turn mailing on and off before a game starts', async () => {
+	it('Owner can toggle per-turn mailing on and off before a game starts', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await SettingsHandlers.toggleAllowMailing(makeCallbackCtx(ALICE, { module: 'room', action: 'cam', meta: room.id }));
@@ -598,7 +595,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertKeyboardButton(log, ALICE.id, 'Сообщения в ход: ❌', `room:cam:${room.id}`);
 	});
 
-	await runCase('Non-owners cannot toggle per-turn mailing', async () => {
+	it('Non-owners cannot toggle per-turn mailing', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await SettingsHandlers.toggleAllowMailing(makeCallbackCtx(BOB, { module: 'room', action: 'cam', meta: room.id }));
@@ -608,7 +605,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(!ORM.Rooms.getById(room.id).settings.allowMailing, 'Member should not be able to enable allowMailing');
 	});
 
-	await runCase('Room settings callbacks are blocked after the game has started', async () => {
+	it('Room settings callbacks are blocked after the game has started', async () => {
 		const room = await seedActiveRoom({ allowMailing: false });
 		const oldJoinCode = room.settings.joinCode;
 
@@ -637,7 +634,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(!ORM.Rooms.getById(room.id).settings.allowMailing, 'allowMailing should stay unchanged during an active game');
 	});
 
-	await runCase('Validates decks count changes in room settings', async () => {
+	it('Validates decks count changes in room settings', async () => {
 		const room = await setupRoomWithPlayers([], handlers);
 
 		await SettingsHandlers.changeDecksCount(makeCallbackCtx(ALICE, { module: 'room', action: 'cdc', meta: room.id }));
@@ -666,7 +663,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 7, 'Valid decks count should update room settings');
 	});
 
-	await runCase('Rejects fractional decks count values', async () => {
+	it('Rejects fractional decks count values', async () => {
 		const room = await setupRoomWithPlayers([], handlers);
 
 		await SettingsHandlers.changeDecksCount(makeCallbackCtx(ALICE, { module: 'room', action: 'cdc', meta: room.id }));
@@ -680,7 +677,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getById(room.id).settings.decksCount === 4, 'Fractional decks count should not change room settings');
 	});
 
-	await runCase('Shows start-game error when there are fewer than three players', async () => {
+	it('Shows start-game error when there are fewer than three players', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
@@ -690,7 +687,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(DB.data.games.length === 0, 'Game should not start with fewer than three players');
 	});
 
-	await runCase('Prevents non-owners from starting the game', async () => {
+	it('Prevents non-owners from starting the game', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'start', meta: room.id }));
@@ -700,7 +697,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(DB.data.games.length === 0, 'Member should not be able to start the game');
 	});
 
-	await runCase('Starts a game with three players and sends initial messages', async () => {
+	it('Starts a game with three players and sends initial messages', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
@@ -715,7 +712,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertExactlyOnePlayerReceived(log, [ALICE.id, BOB.id, CAROL.id], gameTxt.firstTurnMessage);
 	});
 
-	await runCase('Allows room members to inspect ongoing game info', async () => {
+	it('Allows room members to inspect ongoing game info', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
 		resetLog();
@@ -732,7 +729,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, CAROL.id, 'Обновить · Назад');
 	});
 
-	await runCase('Active room keyboard shows the resend-turn-message button for the owner when a game is active', async () => {
+	it('Active room keyboard shows the resend-turn-message button for the owner when a game is active', async () => {
 		const room = await seedActiveRoom({ allowMailing: true });
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
@@ -741,7 +738,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertKeyboardButton(log, ALICE.id, 'Отправить сообщение хода', `room:sendturnmsg:${room.id}`);
 	});
 
-	await runCase('Active room keyboard does not show the resend-turn-message button to non-owners', async () => {
+	it('Active room keyboard does not show the resend-turn-message button to non-owners', async () => {
 		const room = await seedActiveRoom({ allowMailing: true });
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'rooms', action: 'open', meta: room.id }));
@@ -749,7 +746,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'Отправить сообщение хода');
 	});
 
-	await runCase('Active room keyboard shows resend-turn-message button regardless of mailing setting', async () => {
+	it('Active room keyboard shows resend-turn-message button regardless of mailing setting', async () => {
 		const room = await seedActiveRoom({ allowMailing: false });
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
@@ -757,7 +754,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertKeyboardButton(log, ALICE.id, 'Отправить сообщение хода', `room:sendturnmsg:${room.id}`);
 	});
 
-	await runCase('gameSendTurnMessageCallbackHandler resends turn message to active player', async () => {
+	it('gameSendTurnMessageCallbackHandler resends turn message to active player', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
 		resetLog();
@@ -769,7 +766,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, gameTxt.gameMessageResendSuccess);
 	});
 
-	await runCase('gameSendTurnMessageCallbackHandler silently rejects non-owners', async () => {
+	it('gameSendTurnMessageCallbackHandler silently rejects non-owners', async () => {
 		const room = await seedActiveRoom({ allowMailing: true });
 
 		await handlers.gameSendTurnMessageCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'sendturnmsg', meta: room.id }));
@@ -780,7 +777,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, gameTxt.firstTurnMessage);
 	});
 
-	await runCase('gameSendTurnMessageCallbackHandler falls back gracefully when no active game', async () => {
+	it('gameSendTurnMessageCallbackHandler falls back gracefully when no active game', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.gameSendTurnMessageCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'sendturnmsg', meta: room.id }));
@@ -792,7 +789,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, gameTxt.gameMessageResendSuccess);
 	});
 
-	await runCase('Shows delete button for owner when no active game', async () => {
+	it('Shows delete button for owner when no active game', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
@@ -801,7 +798,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Удалить комнату');
 	});
 
-	await runCase('Does not show delete button for non-owner', async () => {
+	it('Does not show delete button for non-owner', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await handlers.openRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'rooms', action: 'open', meta: room.id }));
@@ -810,7 +807,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'Удалить комнату');
 	});
 
-	await runCase('Does not show delete button for owner with active game', async () => {
+	it('Does not show delete button for owner with active game', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
 		resetLog();
@@ -821,7 +818,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, 'Удалить комнату');
 	});
 
-	await runCase('Owner deletes room, all members notified, room removed from DB', async () => {
+	it('Owner deletes room, all members notified, room removed from DB', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 
 		await handlers.deleteRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'delete', meta: room.id }));
@@ -834,7 +831,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, `Комната ${room.name} была удалена`);
 	});
 
-	await runCase('Prevents non-owner from deleting room', async () => {
+	it('Prevents non-owner from deleting room', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
 		await handlers.deleteRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'delete', meta: room.id }));
@@ -844,7 +841,7 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(ORM.Rooms.getAll().find(r => r.id === room.id) !== undefined, 'Room should not be deleted by non-owner');
 	});
 
-	await runCase('Prevents deleting room with active game', async () => {
+	it('Prevents deleting room with active game', async () => {
 		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
 		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
 		resetLog();
@@ -855,4 +852,4 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Нельзя удалить комнату с активной игрой');
 		assert(ORM.Rooms.getAll().find(r => r.id === room.id) !== undefined, 'Room with active game should not be deleted');
 	});
-}
+});

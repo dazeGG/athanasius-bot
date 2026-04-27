@@ -1,9 +1,9 @@
 /**
  * failures.ts — negative turn outcomes for the staged game flow.
  */
+import { describe, it } from 'vitest';
 import { getLog } from '../../../bootstrap';
 import { assert, assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -35,8 +35,8 @@ const seedFailureGame = async (): Promise<void> => {
 /**
  * Runs failure-path coverage for every declaration stage and stale callbacks after turn shifts.
  */
-export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('Wrong rank ends the turn and passes it to the next player with cards', async () => {
+describe('Failures', async () => {
+	it('Wrong rank ends the turn and passes it to the next player with cards', async () => {
 		await resetGameFlowCase();
 		await seedFailureGame();
 
@@ -47,7 +47,7 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after a wrong rank');
 	});
 
-	await runCase('Wrong count ends the turn and reports the mismatch', async () => {
+	it('Wrong count ends the turn and reports the mismatch', async () => {
 		await resetGameFlowCase();
 		await seedFailureGame();
 
@@ -59,7 +59,7 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after a wrong count');
 	});
 
-	await runCase('Wrong colors end the turn and report the color mismatch', async () => {
+	it('Wrong colors end the turn and report the color mismatch', async () => {
 		await resetGameFlowCase();
 		await seedFailureGame();
 
@@ -71,7 +71,7 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after wrong colors');
 	});
 
-	await runCase('Wrong suits end the turn and report the suit mismatch', async () => {
+	it('Wrong suits end the turn and report the suit mismatch', async () => {
 		await resetGameFlowCase();
 		await seedFailureGame();
 
@@ -89,7 +89,7 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 		assert(getGame().activePlayer.id === BOB.id, 'Turn should move to Bob after wrong suits');
 	});
 
-	await runCase('Old callbacks become stale after the turn has already moved on', async () => {
+	it('Old callbacks become stale after the turn has already moved on', async () => {
 		await resetGameFlowCase();
 		await seedFailureGame();
 
@@ -100,4 +100,4 @@ export async function runFailuresLayer ({ runCase }: ModuleTools): Promise<void>
 
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
-}
+});

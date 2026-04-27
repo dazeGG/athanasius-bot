@@ -2,12 +2,12 @@
  * confirm-mode-settings.ts — confirmMode settings submenu coverage.
  */
 
+import { describe, it } from 'vitest';
 import { DB } from '../../src/db';
 import type { ConfirmModeSettings } from '../../src/db';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods } from '../bootstrap';
 import { assert, assertSent, assertNotSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса', updatesView: 'instant' as const },
@@ -102,12 +102,12 @@ const getUser = (id: number) => {
 	return user!;
 };
 
-export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Promise<void> {
+describe('confirmModeSettingsModule', async () => {
 	const handlers = await import('../../src/modules/settings/handlers');
 
 	// ── Base settings text ────────────────────────────────────────────────────
 
-	await runCase('Base settings shows "выкл" when confirmMode is undefined', async () => {
+	it('Base settings shows "выкл" when confirmMode is undefined', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -117,7 +117,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assertSent(log, ALICE.id, 'Режим подтверждения: выкл');
 	});
 
-	await runCase('Base settings shows "выкл" when all stages are false', async () => {
+	it('Base settings shows "выкл" when all stages are false', async () => {
 		await resetCase();
 		await seedUsersWithConfirm({ card: false, count: false, colors: false, suits: false });
 
@@ -127,7 +127,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assertSent(log, ALICE.id, 'Режим подтверждения: выкл');
 	});
 
-	await runCase('Base settings shows active stage names when some are enabled', async () => {
+	it('Base settings shows active stage names when some are enabled', async () => {
 		await resetCase();
 		await seedUsersWithConfirm({ card: true, count: true, colors: false, suits: false });
 
@@ -138,7 +138,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assertNotSent(log, ALICE.id, 'выкл');
 	});
 
-	await runCase('Base settings shows all stage names when all are enabled', async () => {
+	it('Base settings shows all stage names when all are enabled', async () => {
 		await resetCase();
 		await seedUsersWithConfirm({ card: true, count: true, colors: true, suits: true });
 
@@ -150,7 +150,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 
 	// ── Submenu open ──────────────────────────────────────────────────────────
 
-	await runCase('Clicking "Режим подтверждения" opens submenu with correct text', async () => {
+	it('Clicking "Режим подтверждения" opens submenu with correct text', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -161,7 +161,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assertSent(log, ALICE.id, 'Выбери на каких стадиях');
 	});
 
-	await runCase('Submenu shows ☐ for all disabled stages when confirmMode is undefined', async () => {
+	it('Submenu shows ☐ for all disabled stages when confirmMode is undefined', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -175,7 +175,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assertSent(log, ALICE.id, '☐ Масти');
 	});
 
-	await runCase('Submenu shows ✅ for enabled stages and ☐ for disabled', async () => {
+	it('Submenu shows ✅ for enabled stages and ☐ for disabled', async () => {
 		await resetCase();
 		await seedUsersWithConfirm({ card: true, count: false, colors: true, suits: false });
 
@@ -190,7 +190,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 
 	// ── Toggle cm:card ────────────────────────────────────────────────────────
 
-	await runCase('Toggling cm:card enables card stage and persists to DB', async () => {
+	it('Toggling cm:card enables card stage and persists to DB', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -201,7 +201,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assert(getUser(ALICE.id).settings.confirmMode?.card === true, 'card should be true after toggle');
 	});
 
-	await runCase('Toggling cm:card again disables it', async () => {
+	it('Toggling cm:card again disables it', async () => {
 		await resetCase();
 		await seedUsersWithConfirm({ card: true, count: false, colors: false, suits: false });
 
@@ -214,7 +214,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 
 	// ── Toggle other stages ───────────────────────────────────────────────────
 
-	await runCase('Toggling cm:count works independently', async () => {
+	it('Toggling cm:count works independently', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -227,7 +227,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assert(getUser(ALICE.id).settings.confirmMode?.card === false, 'card should remain false');
 	});
 
-	await runCase('Toggling cm:colors works independently', async () => {
+	it('Toggling cm:colors works independently', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -239,7 +239,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assert(getUser(ALICE.id).settings.confirmMode?.colors === true, 'colors should be true');
 	});
 
-	await runCase('Toggling cm:suits works independently', async () => {
+	it('Toggling cm:suits works independently', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -253,7 +253,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 
 	// ── Multiple stages ───────────────────────────────────────────────────────
 
-	await runCase('Multiple stages can be enabled simultaneously', async () => {
+	it('Multiple stages can be enabled simultaneously', async () => {
 		await resetCase();
 		await seedUsersNoConfirm();
 
@@ -270,7 +270,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 
 	// ── cm:back ───────────────────────────────────────────────────────────────
 
-	await runCase('cm:back returns to base settings showing updated summary', async () => {
+	it('cm:back returns to base settings showing updated summary', async () => {
 		await resetCase();
 		await seedUsersWithConfirm({ card: true, count: false, colors: false, suits: false });
 
@@ -285,7 +285,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 
 	// ── Blocked during active game ────────────────────────────────────────────
 
-	await runCase('confirmMode toggle is blocked during active game', async () => {
+	it('confirmMode toggle is blocked during active game', async () => {
 		await resetCase();
 		await seedActiveGame();
 
@@ -297,7 +297,7 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assert(getUser(ALICE.id).settings.confirmMode === undefined, 'confirmMode should not be set when blocked');
 	});
 
-	await runCase('confirmMode submenu open is blocked during active game', async () => {
+	it('confirmMode submenu open is blocked during active game', async () => {
 		await resetCase();
 		await seedActiveGame();
 
@@ -307,4 +307,4 @@ export async function confirmModeSettingsModule ({ runCase }: ModuleTools): Prom
 		assertSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
 		assertNotSent(log, ALICE.id, 'Выбери на каких стадиях');
 	});
-}
+});

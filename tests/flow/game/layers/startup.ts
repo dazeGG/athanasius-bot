@@ -1,11 +1,11 @@
 /**
  * startup.ts — startup and deal invariants for the staged game flow.
  */
+import { describe, it } from 'vitest';
 import { Deck } from '../../../../src/entities/deck';
 
 import { DB, Game, getLog } from '../../../bootstrap';
 import { assert, assertNotSent, assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -28,8 +28,8 @@ import {
 /**
  * Runs startup-related game flow coverage such as deal invariants and first turn delivery.
  */
-export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('Creates a game with consistent deal invariants and one first-turn recipient', async () => {
+describe('Startup', async () => {
+	it('Creates a game with consistent deal invariants and one first-turn recipient', async () => {
 		await resetGameFlowCase();
 
 		const room = makeRoom({
@@ -66,7 +66,7 @@ export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> 
 		assert(firstTurnRecipients.length === 1, 'Exactly one player should receive the initial first-turn message');
 	});
 
-	await runCase('Creates a 52-card game for rooms saved before deckType existed', async () => {
+	it('Creates a 52-card game for rooms saved before deckType existed', async () => {
 		await resetGameFlowCase();
 
 		const room = makeRoom({
@@ -88,7 +88,7 @@ export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> 
 		assert(totalCards + totalAthanasius === Deck.deckSize, 'Old rooms without deckType should start with a 52-card deck');
 	});
 
-	await runCase('Skips empty players when sending the next turn message', async () => {
+	it('Skips empty players when sending the next turn message', async () => {
 		await resetGameFlowCase();
 
 		await seedGameState({
@@ -111,7 +111,7 @@ export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> 
 		assertNotSent(getLog(), BOB.id, 'Твой ход!');
 	});
 
-	await runCase('Does not send a turn message when no players have cards', async () => {
+	it('Does not send a turn message when no players have cards', async () => {
 		await resetGameFlowCase();
 
 		await seedGameState({
@@ -129,4 +129,4 @@ export async function runStartupLayer ({ runCase }: ModuleTools): Promise<void> 
 
 		assert(getLog().length === 0, 'No turn message should be sent when every player is empty');
 	});
-}
+});

@@ -1,11 +1,11 @@
 /**
  * progression.ts — happy-path staged progression for the game flow.
  */
+import { describe, it } from 'vitest';
 import { Deck } from '../../../../src/entities/deck';
 
 import { getLog } from '../../../bootstrap';
 import { assert, assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -41,8 +41,8 @@ const seedProgressionGame = async (cardsToAthanasius = 4): Promise<void> => {
 /**
  * Runs happy-path coverage for player, card, count, colors, and suits stages.
  */
-export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('Shows only other players with cards in the opening turn keyboard', async () => {
+describe('Progression', async () => {
+	it('Shows only other players with cards in the opening turn keyboard', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame();
 
@@ -57,7 +57,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(!latestMessage.includes(CAROL.name), 'Players without cards should not appear in target selection');
 	});
 
-	await runCase('Player stage opens rank selection from the active hand only', async () => {
+	it('Player stage opens rank selection from the active hand only', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame();
 
@@ -70,7 +70,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(!latestMessage.includes('Q'), 'Ranks that are absent from the active hand should not appear in the keyboard');
 	});
 
-	await runCase('Count stage keeps the upper bound at cardsToAthanasius minus one', async () => {
+	it('Count stage keeps the upper bound at cardsToAthanasius minus one', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame(8);
 
@@ -84,7 +84,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(!latestMessage.includes('+ ·'), 'Upper-bound keyboard should not allow incrementing past the limit');
 	});
 
-	await runCase('Count selection advances the flow to the colors stage', async () => {
+	it('Count selection advances the flow to the colors stage', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame();
 
@@ -97,7 +97,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(latestMessage.includes('🔴: <b>0</b> ⚫: <b>2</b>'), 'Colors stage should start from the default red/black split');
 	});
 
-	await runCase('Colors selection advances the flow to the suits stage', async () => {
+	it('Colors selection advances the flow to the suits stage', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame();
 
@@ -110,7 +110,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(latestMessage.includes('➕ Добавить'), 'Suits stage should start in increment mode');
 	});
 
-	await runCase('Suits stage shows the select button only after an exact distribution is built', async () => {
+	it('Suits stage shows the select button only after an exact distribution is built', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame();
 
@@ -139,7 +139,7 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(latestMessage.includes('Выбрать'), 'Exact suits split should expose the select button');
 	});
 
-	await runCase('Exact suits success steals cards and keeps the turn while the hand stays non-empty', async () => {
+	it('Exact suits success steals cards and keeps the turn while the hand stays non-empty', async () => {
 		await resetGameFlowCase();
 		await seedProgressionGame();
 
@@ -161,4 +161,4 @@ export async function runProgressionLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(aliceHand.some(card => card === Deck.getCardById(cardIds('A', 'Spades')[0])?.displayName), 'Alice should receive the target spades card');
 		assert(bobHand.length === 0, 'Bob should lose all cards of the stolen rank');
 	});
-}
+});

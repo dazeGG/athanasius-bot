@@ -1,9 +1,9 @@
 /**
  * mailing-mode.ts — per-turn player mailing state coverage for the game flow.
  */
+import { describe, it } from 'vitest';
 import { assert, assertNotSent, assertSent } from '../../../runner';
 import { getLog } from '../../../bootstrap';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -23,8 +23,8 @@ import {
 /**
  * Runs coverage for the persisted "one mailing per current turn" marker.
  */
-export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('markMailedThisTurn persists the active player marker across game reloads', async () => {
+describe('MailingMode', async () => {
+	it('markMailedThisTurn persists the active player marker across game reloads', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			game: makeGame({
@@ -44,7 +44,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(!getGame().hasMailedThisTurn(BOB.id), 'Other players should not be treated as mailed this turn');
 	});
 
-	await runCase('Failed turns clear the per-turn mailing marker when control passes forward', async () => {
+	it('Failed turns clear the per-turn mailing marker when control passes forward', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			game: makeGame({
@@ -64,7 +64,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(getPersistedGame().utils.mailedThisTurn === undefined, 'Mailing marker should reset after the turn shifts');
 	});
 
-	await runCase('Successful steals that keep the same active player preserve the mailing marker', async () => {
+	it('Successful steals that keep the same active player preserve the mailing marker', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			game: makeGame({
@@ -90,7 +90,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(getPersistedGame().utils.mailedThisTurn?.includes(ALICE.id) === true, 'Mailing marker should remain while the same turn continues');
 	});
 
-	await runCase('Successful steals that empty the active hand clear the marker after skipping empty players', async () => {
+	it('Successful steals that empty the active hand clear the marker after skipping empty players', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			game: makeGame({
@@ -116,7 +116,7 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assert(getPersistedGame().utils.mailedThisTurn === undefined, 'Mailing marker should reset when the active player changes');
 	});
 
-	await runCase('First turn delivery skips an empty mailed player and clears the stale marker', async () => {
+	it('First turn delivery skips an empty mailed player and clears the stale marker', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			game: makeGame({
@@ -137,4 +137,4 @@ export async function runMailingModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(getLog(), BOB.id, 'Твой ход!');
 		assertNotSent(getLog(), ALICE.id, 'Твой ход!');
 	});
-}
+});

@@ -1,9 +1,9 @@
 /**
  * guards.ts — anti-corruption and stale callback checks for the game flow.
  */
+import { describe, it } from 'vitest';
 import { getLog } from '../../../bootstrap';
 import { assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -38,8 +38,8 @@ const seedGuardGame = async (gameOverrides: Partial<ReturnType<typeof makeGame>>
 /**
  * Runs guard coverage for invalid payloads, stale callbacks, and illegal actors.
  */
-export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('Soft-rejects callbacks without meta', async () => {
+describe('Guards', async () => {
+	it('Soft-rejects callbacks without meta', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -48,7 +48,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Soft-rejects malformed callback meta', async () => {
+	it('Soft-rejects malformed callback meta', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -57,7 +57,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Soft-rejects unknown game ids', async () => {
+	it('Soft-rejects unknown game ids', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -66,7 +66,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Soft-rejects callbacks into ended games', async () => {
+	it('Soft-rejects callbacks into ended games', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame({ ended: Date.now() });
 
@@ -75,7 +75,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects callbacks from non-active players', async () => {
+	it('Rejects callbacks from non-active players', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -84,7 +84,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), BOB.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects targets outside the current game', async () => {
+	it('Rejects targets outside the current game', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -93,7 +93,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects self-targeting callbacks', async () => {
+	it('Rejects self-targeting callbacks', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -102,7 +102,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects targets that no longer have cards', async () => {
+	it('Rejects targets that no longer have cards', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame({
 			hands: {
@@ -117,7 +117,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects ranks that are missing from the active hand', async () => {
+	it('Rejects ranks that are missing from the active hand', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -126,7 +126,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects invalid count payloads', async () => {
+	it('Rejects invalid count payloads', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -135,7 +135,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects invalid color payloads', async () => {
+	it('Rejects invalid color payloads', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -144,7 +144,7 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
 
-	await runCase('Rejects invalid suits payloads', async () => {
+	it('Rejects invalid suits payloads', async () => {
 		await resetGameFlowCase();
 		await seedGuardGame();
 
@@ -152,4 +152,4 @@ export async function runGuardsLayer ({ runCase }: ModuleTools): Promise<void> {
 
 		assertSent(getLog(), ALICE.id, STALE_GAME_MESSAGE_TEXT);
 	});
-}
+});

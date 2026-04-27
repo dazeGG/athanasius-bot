@@ -3,10 +3,10 @@
  */
 
 import type { ApiCallFn } from 'grammy';
+import { describe, it } from 'vitest';
 
 import { SESSIONS, BOT, clearDB, getLog, resetLog, seedDB } from '../bootstrap';
 import { assert, assertSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 import {
 	ALICE,
@@ -30,11 +30,8 @@ const seedUser = async (id: number, name: string) => {
 	});
 };
 
-/**
- * Runs regression checks for shared core behavior.
- */
-export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<void> {
-	await runCase('Clears both state and context, and drops stale context when state changes', async () => {
+describe('core', async () => {
+	it('Clears both state and context, and drops stale context when state changes', async () => {
 		resetLog();
 		await clearDB();
 
@@ -54,7 +51,7 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 		assert(!('roomId' in SESSIONS.get(ALICE.id).flow), 'Alice context should be cleared');
 	});
 
-	await runCase('Publishes user-facing Telegram commands alongside keyboard helpers', async () => {
+	it('Publishes user-facing Telegram commands alongside keyboard helpers', async () => {
 		const { commands } = await import('../../src/commands');
 
 		assert(commands.some(command => command.command === 'start'), 'Commands list should include /start');
@@ -62,7 +59,7 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 		assert(commands.some(command => command.command === 'addglobalkeyboard'), 'Commands list should keep keyboard helper commands');
 	});
 
-	await runCase('Installs an HTML parse mode transformer for text messages', async () => {
+	it('Installs an HTML parse mode transformer for text messages', async () => {
 		const transformer = BOT.api.config.installedTransformers().at(-1);
 		assert(transformer !== undefined, 'Bot API should install at least one transformer');
 
@@ -92,7 +89,7 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 		assert(capturedPayload?.parse_mode === 'HTML', 'Transformer should inject HTML parse mode for text messages');
 	});
 
-	await runCase('Escapes HTML-sensitive user content before rendering it into messages', async () => {
+	it('Escapes HTML-sensitive user content before rendering it into messages', async () => {
 		const { escapeHtml } = await import('../../src/shared/lib');
 
 		assert(
@@ -102,7 +99,7 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 		assert(escapeHtml('Комната Алисы') === 'Комната Алисы', 'escapeHtml should keep plain text unchanged');
 	});
 
-	await runCase('Routes invalid game callbacks through the composer and returns a stale-message reply', async () => {
+	it('Routes invalid game callbacks through the composer and returns a stale-message reply', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			users: createUsers(),
@@ -129,86 +126,97 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 
 	// ─── validateName ────────────────────────────────────────────────────────────
 
-	await runLayer('validateName — name validation rules', async ({ runCase }) => {
-		const { validateName } = await import('../../src/shared/lib');
-
-		await runCase('Rejects name shorter than 2 characters', async () => {
+	describe('validateName — name validation rules', async () => {
+		it('Rejects name shorter than 2 characters', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('а');
 			assert(!result.success, 'Single-char name must be rejected');
 			assert(result.message.includes('короче 2'), 'Should mention minimum length');
 		});
 
-		await runCase('Accepts 2-character Cyrillic name (minimum boundary)', async () => {
+		it('Accepts 2-character Cyrillic name (minimum boundary)', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('аб');
 			assert(result.success, '2-char Cyrillic name must be accepted');
 		});
 
-		await runCase('Accepts 16-character Cyrillic name (maximum boundary)', async () => {
+		it('Accepts 16-character Cyrillic name (maximum boundary)', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('АБВГДЕЖЗИЙКЛМНОП');
 			assert(result.success, '16-char Cyrillic name must be accepted');
 		});
 
-		await runCase('Rejects name longer than 16 characters', async () => {
+		it('Rejects name longer than 16 characters', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('АБВГДЕЖЗИЙКЛМНОПР');
 			assert(!result.success, '17-char name must be rejected');
 			assert(result.message.includes('длиннее 16'), 'Should mention maximum length');
 		});
 
-		await runCase('Rejects name with Latin letters', async () => {
+		it('Rejects name with Latin letters', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('Alice');
 			assert(!result.success, 'Latin-only name must be rejected');
 			assert(result.message.includes('русские буквы'), 'Should explain charset restriction');
 		});
 
-		await runCase('Rejects name with digits', async () => {
+		it('Rejects name with digits', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('Имя123');
 			assert(!result.success, 'Name with digits must be rejected');
 		});
 
-		await runCase('Rejects name containing a space', async () => {
+		it('Rejects name containing a space', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('Анна Иванова');
 			assert(!result.success, 'Name with space must be rejected');
 		});
 
-		await runCase('Accepts name with dash', async () => {
+		it('Accepts name with dash', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('Анна-Юг');
 			assert(result.success, 'Name with Cyrillic and dash must be accepted');
 		});
 
-		await runCase('Accepts name with underscore', async () => {
+		it('Accepts name with underscore', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('Анна_Юг');
 			assert(result.success, 'Name with Cyrillic and underscore must be accepted');
 		});
 
-		await runCase('Rejects reserved name "имя" (exact case)', async () => {
+		it('Rejects reserved name "имя" (exact case)', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('имя');
 			assert(!result.success, '"имя" must be rejected');
 			assert(result.message.includes('нельзя взять'), 'Should say name is reserved');
 		});
 
-		await runCase('Rejects reserved name "ИМЯ" (uppercase — case-insensitive check)', async () => {
+		it('Rejects reserved name "ИМЯ" (uppercase — case-insensitive check)', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('ИМЯ');
 			assert(!result.success, '"ИМЯ" must be rejected as a reserved name regardless of case');
 		});
 
-		await runCase('Rejects reserved name "вовощ"', async () => {
+		it('Rejects reserved name "вовощ"', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			const result = validateName('вовощ');
 			assert(!result.success, '"вовощ" must be rejected as reserved');
 		});
 
-		await runCase('Rejects name already taken by another user', async () => {
+		it('Rejects name already taken by another user', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			await seedUser(1001, 'Алиса');
 			const result = validateName('Алиса', 9999);
@@ -216,14 +224,16 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 			assert(result.message.includes('уже используется'), 'Should say name is taken');
 		});
 
-		await runCase('Rejects taken name regardless of case (case-insensitive duplicate check)', async () => {
+		it('Rejects taken name regardless of case (case-insensitive duplicate check)', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			await seedUser(1001, 'Алиса');
 			const result = validateName('алиса', 9999);
 			assert(!result.success, 'Lowercase variant of existing name must be rejected');
 		});
 
-		await runCase('Allows user to keep their own name (self-rename exclusion)', async () => {
+		it('Allows user to keep their own name (self-rename exclusion)', async () => {
+			const { validateName } = await import('../../src/shared/lib');
 			await clearDB();
 			await seedUser(1001, 'Алиса');
 			const result = validateName('Алиса', 1001);
@@ -233,21 +243,22 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 
 	// ─── shuffleArray ─────────────────────────────────────────────────────────────
 
-	await runLayer('shuffleArray — Fisher-Yates shuffle', async ({ runCase }) => {
-		const { shuffleArray } = await import('../../src/shared/lib');
-
-		await runCase('Empty array returns empty array', () => {
+	describe('shuffleArray — Fisher-Yates shuffle', async () => {
+		it('Empty array returns empty array', async () => {
+			const { shuffleArray } = await import('../../src/shared/lib');
 			const result = shuffleArray([]);
 			assert(result.length === 0, 'Shuffled empty array must be empty');
 		});
 
-		await runCase('Single-element array returns same single element', () => {
+		it('Single-element array returns same single element', async () => {
+			const { shuffleArray } = await import('../../src/shared/lib');
 			const result = shuffleArray([42]);
 			assert(result.length === 1, 'Length must be 1');
 			assert(result[0] === 42, 'Single element must be preserved');
 		});
 
-		await runCase('Shuffled array contains exactly the same elements', () => {
+		it('Shuffled array contains exactly the same elements', async () => {
+			const { shuffleArray } = await import('../../src/shared/lib');
 			const input = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 			const result = shuffleArray(input);
 			assert(result.length === input.length, 'Length must be preserved');
@@ -259,7 +270,8 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 			);
 		});
 
-		await runCase('Does not mutate the original array', () => {
+		it('Does not mutate the original array', async () => {
+			const { shuffleArray } = await import('../../src/shared/lib');
 			const input = [10, 20, 30, 40, 50];
 			const copy = [...input];
 			shuffleArray(input);
@@ -272,40 +284,45 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 
 	// ─── stringifyCallbackData / getCallbackMeta ─────────────────────────────────
 
-	await runLayer('stringifyCallbackData / getCallbackMeta — callback encoding', async ({ runCase }) => {
-		const { stringifyCallbackData, getCallbackMeta } = await import('../../src/core/lib');
-
-		await runCase('Basic format: module:action:meta', () => {
+	describe('stringifyCallbackData / getCallbackMeta — callback encoding', async () => {
+		it('Basic format: module:action:meta', async () => {
+			const { stringifyCallbackData } = await import('../../src/core/lib');
 			const data = stringifyCallbackData({ module: 'hand', action: 'show', meta: 'game123' });
 			assert(data === 'hand:show:game123', `Expected "hand:show:game123", got "${data}"`);
 		});
 
-		await runCase('Back action produces module:back:meta', () => {
+		it('Back action produces module:back:meta', async () => {
+			const { stringifyCallbackData } = await import('../../src/core/lib');
 			const data = stringifyCallbackData({ module: 'hand', back: true, meta: 'game123' });
 			assert(data === 'hand:back:game123', `Expected "hand:back:game123", got "${data}"`);
 		});
 
-		await runCase('Empty meta produces trailing colon', () => {
+		it('Empty meta produces trailing colon', async () => {
+			const { stringifyCallbackData } = await import('../../src/core/lib');
 			const data = stringifyCallbackData({ module: 'notes', action: 'exit' });
 			assert(data === 'notes:exit:', `Expected "notes:exit:", got "${data}"`);
 		});
 
-		await runCase('getCallbackMeta extracts meta after second colon', () => {
+		it('getCallbackMeta extracts meta after second colon', async () => {
+			const { getCallbackMeta } = await import('../../src/core/lib');
 			const meta = getCallbackMeta('hand:show:game123');
 			assert(meta === 'game123', `Expected "game123", got "${meta}"`);
 		});
 
-		await runCase('getCallbackMeta preserves colons inside meta', () => {
+		it('getCallbackMeta preserves colons inside meta', async () => {
+			const { getCallbackMeta } = await import('../../src/core/lib');
 			const meta = getCallbackMeta('notes:grid:gameABC:A');
 			assert(meta === 'gameABC:A', `Expected "gameABC:A", got "${meta}"`);
 		});
 
-		await runCase('getCallbackMeta returns undefined for empty meta', () => {
+		it('getCallbackMeta returns undefined for empty meta', async () => {
+			const { getCallbackMeta } = await import('../../src/core/lib');
 			const meta = getCallbackMeta('notes:exit:');
 			assert(meta === undefined, `Expected undefined for empty meta, got "${meta}"`);
 		});
 
-		await runCase('Round-trip: stringify then parse gives back the same meta', () => {
+		it('Round-trip: stringify then parse gives back the same meta', async () => {
+			const { stringifyCallbackData, getCallbackMeta } = await import('../../src/core/lib');
 			const original = 'ng1:K:3:2';
 			const data = stringifyCallbackData({ module: 'notes', action: 'cycle', meta: original });
 			const parsed = getCallbackMeta(data);
@@ -315,27 +332,28 @@ export async function coreModule ({ runCase, runLayer }: ModuleTools): Promise<v
 
 	// ─── isRegistered ────────────────────────────────────────────────────────────
 
-	await runLayer('isRegistered — registration guard', async ({ runCase }) => {
-		const { isRegistered } = await import('../../src/shared/lib');
-
-		await runCase('Returns true for a user that exists in DB', async () => {
+	describe('isRegistered — registration guard', async () => {
+		it('Returns true for a user that exists in DB', async () => {
+			const { isRegistered } = await import('../../src/shared/lib');
 			await clearDB();
 			await seedUser(ALICE.id, ALICE.name);
 			const ctx = { from: { id: ALICE.id } } as never;
 			assert(isRegistered(ctx), 'Should return true for registered user');
 		});
 
-		await runCase('Returns false for a user that does not exist in DB', async () => {
+		it('Returns false for a user that does not exist in DB', async () => {
+			const { isRegistered } = await import('../../src/shared/lib');
 			await clearDB();
 			const ctx = { from: { id: 99999 } } as never;
 			assert(!isRegistered(ctx), 'Should return false for unregistered user');
 		});
 
-		await runCase('Returns false when ctx.from is absent', async () => {
+		it('Returns false when ctx.from is absent', async () => {
+			const { isRegistered } = await import('../../src/shared/lib');
 			await clearDB();
 			await seedUser(ALICE.id, ALICE.name);
 			const ctx = {} as never;
 			assert(!isRegistered(ctx), 'Should return false when from is absent');
 		});
 	});
-}
+});

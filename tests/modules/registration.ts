@@ -2,9 +2,9 @@
  * registration.ts — /reg flow coverage split into explicit cases.
  */
 
+import { describe, it } from 'vitest';
 import { DB, SESSIONS, resetLog, getLog, clearDB, seedDB, withMessageMethods } from '../bootstrap';
 import { assert, assertSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const GLOBAL_KEYBOARD_LABELS = 'Настройки · Комнаты · Заметки · Рука';
 
@@ -129,13 +129,9 @@ const assertInvalidPendingName = async (
 	resetLog();
 };
 
-/**
- * Runs tests coverage for the registration command and name validation flow.
- */
-export async function registrationModule ({ runCase }: ModuleTools): Promise<void> {
-	const handlers = await import('../../src/modules/reg/handlers');
-
-	await runCase('Prompts new users for a name and stores REGISTRATION state', async () => {
+describe('registration', async () => {
+	it('Prompts new users for a name and stores REGISTRATION state', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 
 		for (const player of PLAYERS) {
@@ -143,14 +139,16 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		}
 	});
 
-	await runCase('Registers users with default profile data and global keyboard', async () => {
+	it('Registers users with default profile data and global keyboard', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 
 		await seedRegisteredPlayers(PLAYERS, handlers);
 		assert(DB.data.users.length === PLAYERS.length, `DB should have ${PLAYERS.length} registered users`);
 	});
 
-	await runCase('Repeated /reg keeps registered users untouched', async () => {
+	it('Repeated /reg keeps registered users untouched', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 		await seedRegisteredPlayers(PLAYERS, handlers);
 
@@ -168,7 +166,8 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		}
 	});
 
-	await runCase('Rejects invalid names while keeping the registration pending', async () => {
+	it('Rejects invalid names while keeping the registration pending', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 		await seedRegisteredPlayers([PLAYERS[1]], handlers);
 		await startRegistration(RECOVERY_PLAYER, handlers);
@@ -180,7 +179,8 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		await assertInvalidPendingName(RECOVERY_PLAYER, PLAYERS[1].name, 'Это имя уже используется', handlers, 1);
 	});
 
-	await runCase('Rejects names that differ only by case', async () => {
+	it('Rejects names that differ only by case', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 		await seedRegisteredPlayers([PLAYERS[1]], handlers);
 		await startRegistration(RECOVERY_PLAYER, handlers);
@@ -188,7 +188,8 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		await assertInvalidPendingName(RECOVERY_PLAYER, 'бОрИс', 'Это имя уже используется', handlers, 1);
 	});
 
-	await runCase('Allows finishing registration after previous invalid attempts', async () => {
+	it('Allows finishing registration after previous invalid attempts', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 		await seedRegisteredPlayers([PLAYERS[1]], handlers);
 		await startRegistration(RECOVERY_PLAYER, handlers);
@@ -200,7 +201,8 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		assert(DB.data.users.length === 2, 'DB should contain Bob and the recovered player after successful registration');
 	});
 
-	await runCase('Accepts names with 2 and 16 characters', async () => {
+	it('Accepts names with 2 and 16 characters', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 
 		await registerFreshPlayer(MIN_NAME_PLAYER, handlers);
@@ -209,7 +211,8 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		assert(DB.data.users.length === 2, 'DB should contain players with valid boundary-length names');
 	});
 
-	await runCase('Accepts names with dash and underscore', async () => {
+	it('Accepts names with dash and underscore', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 
 		await registerFreshPlayer(DASH_NAME_PLAYER, handlers);
@@ -218,7 +221,8 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		assert(DB.data.users.length === 2, 'DB should contain players with separator-based names');
 	});
 
-	await runCase('Updates name for already-registered user in REGISTRATION flow', async () => {
+	it('Updates name for already-registered user in REGISTRATION flow', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 		const player = PLAYERS[0];
 		await seedDB({
@@ -241,10 +245,11 @@ export async function registrationModule ({ runCase }: ModuleTools): Promise<voi
 		assert(DB.data.users.length === 1, 'No duplicate user should be created on rename');
 	});
 
-	await runCase('Rejects reserved name "вовощ" during registration flow', async () => {
+	it('Rejects reserved name "вовощ" during registration flow', async () => {
+		const handlers = await import('../../src/modules/reg/handlers');
 		await resetRegistrationCase();
 		await startRegistration(RECOVERY_PLAYER, handlers);
 
 		await assertInvalidPendingName(RECOVERY_PLAYER, 'вовощ', 'Это имя нельзя взять', handlers, 0);
 	});
-}
+});
