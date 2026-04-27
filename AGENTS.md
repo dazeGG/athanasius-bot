@@ -164,27 +164,34 @@ The project lint rules are defined in [eslint.config.js](./eslint.config.js).
 
 ## Commit Convention
 
-Recent history establishes the default commit style for this repository.
-
-Use semantic commits in the form:
+All commits must follow the [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) specification.
 
 ```text
 type(scope): imperative summary
+
+[optional body]
+
+[optional footer(s)]
 ```
 
-Default expectations:
+Allowed types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`, `ci`, `build`.
 
-- prefer lowercase commit types such as `refactor`, `fix`, `feat`, `test`, `docs`, `chore`;
+Rules:
+
+- types and scope are lowercase;
 - prefer a scope when the change is localized, for example `core`, `modules`, `game`, `tests`, `db`, `deps`;
-- keep the summary short, in English, and action-oriented;
-- keep each commit behaviorally coherent — do not mix unrelated refactors and test rewrites in one commit unless they are inseparable;
+- summary is short, in English, action-oriented, no trailing period;
+- use `!` after type/scope (`feat!:`) or a `BREAKING CHANGE:` footer for breaking changes;
+- keep each commit behaviorally coherent — do not mix unrelated changes;
 - avoid `wip` and vague subjects such as `misc changes` or `fix stuff`.
 
-Examples aligned with recent commits:
+Examples:
 
-- `refactor(modules): migrate rooms module to grammY InlineKeyboard and ctx methods`
-- `refactor(game): migrate game module and notifications to ctx.api and InlineKeyboard`
-- `refactor: update bootstrap and shared modules after ctx.reply migration`
+- `feat(game): add rank restriction to turn declaration`
+- `fix(modules): exclude empty-hand players from target keyboard`
+- `refactor(modules): migrate rooms module to grammY InlineKeyboard`
+- `test(game): add guards layer for hand-empty edge cases`
+- `docs: update AGENTS.md commit convention to Conventional Commits`
 
 ## Coding Preferences
 
@@ -202,14 +209,33 @@ Examples aligned with recent commits:
 
 ## Local Run Commands
 
-Use:
-
 ```bash
 nvm install
 nvm use
 corepack enable
 pnpm install
-pnpm dev
+```
+
+## Scripts
+
+```bash
+pnpm dev          # dev mode with auto-restart
+pnpm start        # production run
+pnpm lint         # ESLint
+pnpm lint:fix     # ESLint with autofix
+pnpm typecheck    # tsc --noEmit (src + eslint config)
+pnpm test         # run all tests (vitest)
+pnpm test:watch   # vitest watch mode
+```
+
+Run a single test file:
+```bash
+pnpm vitest run tests/modules/rooms.ts
+```
+
+Run tests matching a name pattern:
+```bash
+pnpm vitest run --reporter=verbose -t "kick"
 ```
 
 The bot requires:
@@ -217,6 +243,8 @@ The bot requires:
 ```env
 BOT_TOKEN=your_telegram_bot_token
 ```
+
+The test suite in `tests/` is a simulator — no real Telegram connection needed. `tests/bootstrap.ts` mocks the bot transport and DB. `tests/runner.ts` provides assert helpers (`assert`, `assertSent`, `assertNotSent`, `assertKeyboardButton`, `assertDeleted`). Tests use `.env.test` for the test DB path (`DB_FILE=db.test.json`).
 
 ## Agent Expectations
 
