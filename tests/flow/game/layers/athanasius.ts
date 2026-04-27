@@ -122,7 +122,8 @@ export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<voi
 
 		assert(summary.includes('🥇 Алиса - 2 Афанасия'), 'First place should be awarded to Alice');
 		assert(summary.includes('🥈 Борис - 1 Афанасий'), 'Second place should be awarded to Boris');
-		assert(summary.includes('🥉 Каролина - 1 Афанасий'), 'Middle place should use the bronze medal');
+		assert(summary.includes('🥈 Каролина - 1 Афанасий'), 'Carol ties with Boris for silver');
+		assert(!summary.includes('🥉'), 'No bronze when gold+silver already reaches 3');
 		assert(summary.includes('🦧 Давид - 0 Афанасиев'), 'Last place should always receive the monkey');
 		assert(summary.indexOf('🦧') === summary.lastIndexOf('🦧'), 'Monkey emoji should appear exactly once');
 		assert(getPersistedGame().ended !== undefined, 'Game should be marked as ended after the final successful steal');
