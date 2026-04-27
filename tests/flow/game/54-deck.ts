@@ -256,7 +256,7 @@ describe('deck54Flow', async () => {
 			// redCount=1 → Alice claims 1 red, but Bob has 0 red jokers → failure
 			await runTurn(ALICE, turnMeta.colors('game-flow', BOB.id, 'Joker', 1, 1, 'select'));
 
-			assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+			assertSent(getLog(), ALICE.id, '🟥 <b>Алиса → Борис</b> | 🃏 | 🔴 1', { type: 'edit' });
 			assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after failed joker steal');
 		});
 
@@ -307,7 +307,7 @@ describe('deck54Flow', async () => {
 
 			await runTurn(ALICE, turnMeta.count('game-flow', BOB.id, 'Joker', 2, 'select'));
 
-			assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+			assertSent(getLog(), ALICE.id, '🟥 <b>Алиса → Борис</b> | 🃏 | 2', { type: 'edit' });
 			assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after wrong joker count');
 			assert(
 				getPersistedGame().hands[BOB.id]?.includes(jokerCardId('black')),
@@ -424,7 +424,7 @@ describe('deck54Flow', async () => {
 			}));
 
 			const persisted = getPersistedGame();
-			assertSent(getLog(), ALICE.id, 'Ты успешно украл карты');
+			assertSent(getLog(), ALICE.id, '⭐ <b>Алиса → Борис</b> | A | ♥️ 1 ♠️ 1 — Афанасий!', { type: 'edit' });
 			assert(persisted.athanasiuses[ALICE.id]?.includes('A'), 'Alice should form Athanasius A from 52-deck cards in a 54-deck game');
 		});
 
@@ -454,7 +454,7 @@ describe('deck54Flow', async () => {
 				action: 'select',
 			}));
 
-			assertSent(getLog(), ALICE.id, 'К сожалению, ты не угадал');
+			assertSent(getLog(), ALICE.id, '🟥 <b>Алиса → Борис</b> | K | ♥️ 2', { type: 'edit' });
 			assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift after failed regular steal in 54-deck game');
 		});
 
@@ -516,7 +516,7 @@ describe('deck54Flow', async () => {
 			assertSent(getLog(), CAROL.id, '🃏');
 			assertSent(getLog(), DAVE.id, '🃏');
 			// Alice (thief) must not appear as a mailing recipient in the bystander mailing
-			assertNotSent(getLog(), ALICE.id, 'Алиса → Борис');
+			assertNotSent(getLog(), ALICE.id, 'Алиса → Борис', { type: 'send' });
 		});
 	});
 });

@@ -154,7 +154,7 @@ describe('Progression', async () => {
 		const aliceHand = getGame().getHand(ALICE.id)?.cardsInHand.map(card => card.displayName) ?? [];
 		const bobHand = getGame().getHand(BOB.id)?.cardsInHand.map(card => card.displayName) ?? [];
 
-		assertSent(getLog(), ALICE.id, 'Ты успешно украл карты');
+		assertSent(getLog(), ALICE.id, '🟩 <b>Алиса → Борис</b> | A | ♥️ 1 ♠️ 1', { type: 'edit' });
 		assert(getGame().activePlayer.id === ALICE.id, 'Turn should stay with the active player after a successful steal with remaining cards');
 		assert(aliceHand.length === 4, 'Alice should keep her original cards and receive Bob’s rank cards');
 		assert(aliceHand.some(card => card === Deck.getCardById(cardIds('A', 'Hearts')[0])?.displayName), 'Alice should receive the target hearts card');
