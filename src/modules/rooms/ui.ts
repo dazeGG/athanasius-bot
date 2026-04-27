@@ -4,6 +4,8 @@ import { ORM } from '~/db';
 import { stringifyCallbackData } from '~/core/lib';
 import type { RoomSchema, RoomId } from '~/db';
 
+const DECKS_COUNT_CONSTRAINT = 'Количество колод должно быть целым числом в диапазоне от 1 до 100';
+
 /* TEXTS */
 export const txt = {
 	noRooms: 'У тебя пока нет комнат',
@@ -12,9 +14,8 @@ export const txt = {
 	kickPlayer: 'Выбери кого хочешь выгнать',
 	joinCodePrompt: 'Напиши код подключения',
 	roomNamePrompt: 'Напиши название комнаты',
-	decksCountConstraint: 'Количество колод должно быть целым числом в диапазоне от 1 до 100',
-	decksCountPrompt: 'Напиши новое количество колод',
-	decksCountError: 'Неверное значение. Количество колод должно быть целым числом в диапазоне от 1 до 100',
+	decksCountPrompt: `Напиши новое количество колод\n${DECKS_COUNT_CONSTRAINT}`,
+	decksCountError: DECKS_COUNT_CONSTRAINT,
 	deckTypePrompt: 'Выбери тип колоды',
 	gameAlreadyStarted: 'Игра уже началась',
 	ownerOnly: 'Только владелец комнаты может управлять комнатой',

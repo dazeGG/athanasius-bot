@@ -268,7 +268,7 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 
 	await sendFirstMessage(game, sender);
 	await ctx.editMessageText(
-		utils.getRoomBaseText(room, true) + `\n\n${gameTxt.gameMessageResendSuccess}`,
+		`${utils.getRoomBaseText(room, true)}\n\n${gameTxt.gameMessageResendSuccess}`,
 		{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
 	);
 };

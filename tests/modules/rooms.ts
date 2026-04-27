@@ -786,9 +786,10 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		await handlers.gameSendTurnMessageCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'sendturnmsg', meta: room.id }));
 		const log = getLog();
 
-		assertSent(log, ALICE.id, 'Комната');
+		assertSent(log, ALICE.id, `Комната ${room.name}`);
+		assertKeyboardButton(log, ALICE.id, 'Начать игру', `room:start:${room.id}`);
+		assertKeyboardButton(log, ALICE.id, 'Удалить комнату', `room:delete:${room.id}`);
 		assertNotSent(log, ALICE.id, gameTxt.gameMessageResendSuccess);
-		assertNotSent(log, ALICE.id, gameTxt.firstTurnMessage);
 	});
 
 	await runCase('Shows delete button for owner when no active game', async () => {

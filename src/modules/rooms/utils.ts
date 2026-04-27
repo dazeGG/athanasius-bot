@@ -98,7 +98,6 @@ export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 			keyboard.text('Отправить сообщение хода', stringifyCallbackData({ module: 'room', action: 'sendturnmsg', meta: room.id }));
 			keyboard.row();
 		}
-
 	} else {
 		if (room.owner === meId) {
 			keyboard.text('Настройки', stringifyCallbackData({ module: 'room', action: 'settings', meta: room.id }));
