@@ -57,33 +57,66 @@ export class InfoMessage {
 
 	public static gameEndedMailing (athMap: [string, number][]): string {
 		let text = `🏁 <b>${txt.gameEnded}</b>\n\n`;
-		text += 'Вот они, победители, слева направо:\n';
 
-		const [first, second, ...rest] = athMap;
-		const middle = rest.slice(0, -1);
-		const last = rest[rest.length - 1];
-
-		const bronze = middle[0];
-		const plainPlayers = middle.slice(1);
-
-		text += `🥇 ${this.formatPlayerResult(first[0], first[1])}\n`;
-		text += `🥈 ${this.formatPlayerResult(second[0], second[1])}\n`;
-
-		if (bronze) {
-			text += `🥉 ${this.formatPlayerResult(bronze[0], bronze[1])}\n`;
+		// Группируем по уникальным значениям Афанасиев (убывание)
+		const tiers: [string, number][][] = [];
+		for (const player of athMap) {
+			const last = tiers[tiers.length - 1];
+			if (last && last[0][1] === player[1]) {
+				last.push(player);
+			} else {
+				tiers.push([player]);
+			}
 		}
+
+		const medals = [
+			{ emoji: '🥇', tier: tiers[0] },
+			{ emoji: '🥈', tier: tiers[1] },
+			{ emoji: '🥉', tier: tiers[2] },
+		];
+
+		let medalCount = 0;
+		const medalTiers: number[] = [];
+
+		for (let i = 0; i < medals.length; i++) {
+			if (!medals[i].tier) break;
+			if (medalCount >= 3) break;
+			medalTiers.push(i);
+			medalCount += medals[i].tier.length;
+		}
+
+		const medalistTierIndices = new Set(medalTiers);
+		const loserTierIndex = tiers.length - 1;
+		const loserTierIsNotMedal = !medalistTierIndices.has(loserTierIndex);
+
+		text += 'Вот они, победители, слева направо:\n';
+		for (const i of medalTiers) {
+			const { emoji, tier } = medals[i];
+			for (const player of tier) {
+				text += `${emoji} ${this.formatPlayerResult(player[0], player[1])}\n`;
+			}
+		}
+
+		const plainPlayers = tiers
+			.filter((_, i) => !medalistTierIndices.has(i) && !(loserTierIsNotMedal && i === loserTierIndex))
+			.flat();
 
 		if (plainPlayers.length > 0) {
 			text += '\n<b>Простые ребята:</b>\n';
 			plainPlayers.forEach((player, i) => {
-				text += `${i + 4}. ${this.formatPlayerResult(player[0], player[1])}\n`;
+				text += `${i + medalCount + 1}. ${this.formatPlayerResult(player[0], player[1])}\n`;
 			});
 		}
 
-		text += '\n<b>Главный неудачник:</b>\n';
-		text += `🦧 ${this.formatPlayerResult(last[0], last[1])}`;
+		if (loserTierIsNotMedal) {
+			const losers = tiers[loserTierIndex];
+			text += '\n<b>Главный неудачник:</b>\n';
+			for (const player of losers) {
+				text += `🦧 ${this.formatPlayerResult(player[0], player[1])}\n`;
+			}
+		}
 
-		return text;
+		return text.trimEnd();
 	}
 
 	public static dealAthanasiusMe (cardNames: string[]): string {

@@ -55,6 +55,7 @@ const { notesModule }         = await import('./modules/notes');
 const { startModule }         = await import('./modules/start');
 const { deckModule }          = await import('./modules/deck');
 const { deckTypeSettingsModule } = await import('./modules/deck-type-settings');
+const { endGameMessageModule } = await import('./modules/end-game-message');
 const { gameFlow }            = await import('./flow/game');
 const { deck36Flow }          = await import('./flow/game/36-deck');
 const { deck54Flow }          = await import('./flow/game/54-deck');
@@ -82,6 +83,7 @@ await run('Deck', async tools => {
 	await deckModule(tools);
 	await deckTypeSettingsModule(tools);
 });
+await run('End Game Message', endGameMessageModule);
 console.log('\nFlows:\n');
 await run('Game Flow', gameFlow, { kind: 'flow' });
 console.log('');
