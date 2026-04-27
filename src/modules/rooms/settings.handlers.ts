@@ -81,7 +81,7 @@ export class SettingsHandlers {
 			return;
 		}
 
-		await ctx.editMessageText('Напиши новое количество колод\nКоличество колод должно быть целым числом в диапазоне от 1 до 100');
+		await ctx.editMessageText(ui.txt.decksCountPrompt);
 		ctx.session.flow = { name: 'ROOM_CDC', roomId: room.id };
 	}
 
@@ -109,7 +109,7 @@ export class SettingsHandlers {
 		}
 
 		if (!Number.isInteger(newDecksCount) || newDecksCount < 1 || newDecksCount > 100) {
-			await ctx.reply('Количество колод должно быть целым числом в диапазоне от 1 до 100');
+			await ctx.reply(ui.txt.decksCountError);
 			return;
 		}
 
@@ -149,7 +149,7 @@ export class SettingsHandlers {
 		// If no deckType value, show the selection keyboard
 		if (!deckTypeStr) {
 			await ctx.editMessageText(
-				utils.getSettingsStartText(room) + '\n\nВыбери тип колоды',
+				utils.getSettingsStartText(room) + `\n\n${ui.txt.deckTypePrompt}`,
 				{ reply_markup: utils.getDeckTypeInlineKeyboard(room) },
 			);
 			return;
