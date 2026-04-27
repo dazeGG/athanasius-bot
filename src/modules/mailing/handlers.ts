@@ -29,8 +29,9 @@ export const mailingMessageHandler = async (ctx: AppContext) => {
 
 	if (games.length === 1) {
 		const roomId = games[0].roomId;
+		const room = ORM.Rooms.getById(roomId);
 		ctx.session.flow = { name: 'GAME_MAILING', roomId };
-		await ctx.reply(ui.txt.sendMessagePrompt);
+		await ctx.reply(ui.txt.sendMessagePrompt(room.name), { reply_markup: ui.cancelKeyboard() });
 		return;
 	}
 
@@ -60,7 +61,13 @@ export const mailingSelectCallbackHandler = async (ctx: CallbackCtx) => {
 	}
 
 	ctx.session.flow = { name: 'GAME_MAILING', roomId };
-	await ctx.editMessageText(ui.txt.sendMessagePrompt);
+	await ctx.editMessageText(ui.txt.sendMessagePrompt(room.name), { reply_markup: ui.cancelKeyboard() });
+};
+
+export const mailingCancelCallbackHandler = async (ctx: CallbackCtx) => {
+	await ctx.answerCallbackQuery();
+	ctx.session.flow = {};
+	await ctx.editMessageText(ui.txt.sendMessageCancelled);
 };
 
 export const mailingTextHandler = async (ctx: MessageCtx) => {
@@ -74,7 +81,8 @@ export const mailingTextHandler = async (ctx: MessageCtx) => {
 	const text = ctx.message.text.trim();
 
 	if (text.length < 1 || text.length > 300) {
-		await ctx.reply(ui.txt.sendMessagePrompt);
+		const room = ORM.Rooms.getById(roomId);
+		await ctx.reply(ui.txt.sendMessagePrompt(room.name), { reply_markup: ui.cancelKeyboard() });
 		return;
 	}
 
