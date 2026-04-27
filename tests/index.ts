@@ -47,6 +47,7 @@ const { run, printSummary, setRunnerOptions } = await import('./runner');
 const { coreModule }          = await import('./modules/core');
 const { registrationModule }  = await import('./modules/registration');
 const { roomsModule }         = await import('./modules/rooms');
+const { mailingModule }       = await import('./modules/mailing');
 const { settingsModule }      = await import('./modules/settings');
 const { confirmModeSettingsModule } = await import('./modules/confirm-mode-settings');
 const { handModule }          = await import('./modules/hand');
@@ -69,6 +70,7 @@ console.log('Modules:\n');
 await run('Core', coreModule);
 await run('Registration', registrationModule);
 await run('Rooms', roomsModule);
+await run('Mailing', mailingModule);
 await run('Settings', async tools => {
 	await settingsModule(tools);
 	await confirmModeSettingsModule(tools);

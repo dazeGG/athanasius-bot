@@ -1,13 +1,10 @@
-import { InlineKeyboard } from 'grammy';
-
 import { ORM } from '~/db';
 import { Game } from '~/entities/game';
-import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
-import type { AppContext, CallbackCtx } from '~/core';
+import { escapeHtml } from '~/shared/lib';
+import { getCallbackMeta } from '~/core/lib';
+import type { AppContext, CallbackCtx, MessageCtx } from '~/core';
 
-import * as roomsUi from '../rooms/ui';
-
-const noAvailableGames = 'Нет игр, в которых можно отправить сообщение';
+import * as ui from './ui';
 
 function getAvailableGames (meId: number) {
 	return ORM.Games.getActiveWithMe(meId).filter(gameSchema => {
@@ -20,34 +17,24 @@ function getAvailableGames (meId: number) {
 	});
 }
 
-function getGamesListKeyboard (meId: number): InlineKeyboard {
-	const games = getAvailableGames(meId);
-	const kb = new InlineKeyboard();
-	for (const gameSchema of games) {
-		const room = ORM.Rooms.getById(gameSchema.roomId);
-		kb.text(room.name, stringifyCallbackData({ module: 'mailing', action: 'select', meta: gameSchema.roomId })).row();
-	}
-	return kb;
-}
-
 export const mailingMessageHandler = async (ctx: AppContext) => {
 	await ctx.deleteMessage();
 
 	const games = getAvailableGames(ctx.from!.id);
 
 	if (games.length === 0) {
-		await ctx.reply(noAvailableGames);
+		await ctx.reply(ui.txt.noAvailableGames);
 		return;
 	}
 
 	if (games.length === 1) {
 		const roomId = games[0].roomId;
 		ctx.session.flow = { name: 'GAME_MAILING', roomId };
-		await ctx.reply(roomsUi.txt.sendMessagePrompt);
+		await ctx.reply(ui.txt.sendMessagePrompt);
 		return;
 	}
 
-	await ctx.reply('Выбери игру', { reply_markup: getGamesListKeyboard(ctx.from!.id) });
+	await ctx.reply(ui.txt.selectGame, { reply_markup: ui.gamesListKeyboard(games) });
 };
 
 export const mailingSelectCallbackHandler = async (ctx: CallbackCtx) => {
@@ -60,7 +47,7 @@ export const mailingSelectCallbackHandler = async (ctx: CallbackCtx) => {
 
 	const gameSchema = ORM.Games.getActive(roomId);
 	if (!gameSchema) {
-		await ctx.editMessageText(noAvailableGames);
+		await ctx.editMessageText(ui.txt.noAvailableGames);
 		return;
 	}
 
@@ -68,10 +55,56 @@ export const mailingSelectCallbackHandler = async (ctx: CallbackCtx) => {
 	const game = new Game({ id: gameSchema.id });
 
 	if (!room.settings.allowMailing || !game.allPlayers.includes(ctx.from.id) || game.hasMailedThisTurn(ctx.from.id)) {
-		await ctx.editMessageText(noAvailableGames);
+		await ctx.editMessageText(ui.txt.noAvailableGames);
 		return;
 	}
 
 	ctx.session.flow = { name: 'GAME_MAILING', roomId };
-	await ctx.editMessageText(roomsUi.txt.sendMessagePrompt);
+	await ctx.editMessageText(ui.txt.sendMessagePrompt);
+};
+
+export const mailingTextHandler = async (ctx: MessageCtx) => {
+	const roomId = ctx.session.flow.name === 'GAME_MAILING' ? ctx.session.flow.roomId : undefined;
+
+	if (!roomId) {
+		ctx.session.flow = {};
+		return;
+	}
+
+	const text = ctx.message.text.trim();
+
+	if (text.length < 1 || text.length > 300) {
+		await ctx.reply(ui.txt.sendMessagePrompt);
+		return;
+	}
+
+	const room = ORM.Rooms.getById(roomId);
+	const activeGameSchema = ORM.Games.getActive(roomId);
+
+	if (!activeGameSchema) {
+		ctx.session.flow = {};
+		return;
+	}
+
+	const game = new Game({ id: activeGameSchema.id });
+
+	if (!room.settings.allowMailing) {
+		ctx.session.flow = {};
+		await ctx.reply(ui.txt.mailingDisabled);
+		return;
+	}
+
+	if (!game.allPlayers.includes(ctx.from.id) || game.hasMailedThisTurn(ctx.from.id)) {
+		ctx.session.flow = {};
+		return;
+	}
+
+	const sender = ORM.Users.get(ctx.from.id);
+	const header = `${escapeHtml(room.name)} | ${escapeHtml(sender.name)}`;
+
+	await game.mailing({ text: `${header}\n\n${escapeHtml(text)}` }, [ctx.from.id]);
+	await game.markMailedThisTurn(ctx.from.id);
+
+	ctx.session.flow = {};
+	await ctx.reply(ui.txt.sendMessageSuccess);
 };
