@@ -276,7 +276,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Flow should remain empty');
 	});
 
-	await runCase('Text handler drops message if mailing setting was disabled mid-flow', async () => {
+	await runCase('Text handler notifies player when mailing setting was disabled mid-flow', async () => {
 		await seedMailingGame({ allowMailing: true });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m' });
 		DB.data.rooms[0]!.settings.allowMailing = false;
@@ -284,7 +284,8 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		await handlers.mailingTextHandler(makeMessageCtx(ALICE, 'Привет'));
 		const log = getLog();
 
-		assert(log.length === 0, 'No messages should be sent when mailing was disabled');
+		assertSent(log, ALICE.id, txt.mailingDisabled);
+		assertNotSent(log, BOB.id, 'Привет');
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Flow should be cleared');
 	});
 }

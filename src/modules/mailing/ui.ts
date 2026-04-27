@@ -6,6 +6,7 @@ import type { GameSchema } from '~/db';
 
 export const txt = {
 	noAvailableGames: 'Нет игр, в которых можно отправить сообщение',
+	mailingDisabled: 'Отправка сообщений в ход была отключена',
 	sendMessagePrompt: 'Напиши сообщение для игроков (от 1 до 300 символов)',
 	sendMessageSuccess: 'Сообщение отправлено',
 	selectGame: 'Выбери игру',

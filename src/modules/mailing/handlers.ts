@@ -88,7 +88,13 @@ export const mailingTextHandler = async (ctx: MessageCtx) => {
 
 	const game = new Game({ id: activeGameSchema.id });
 
-	if (!room.settings.allowMailing || !game.allPlayers.includes(ctx.from.id) || game.hasMailedThisTurn(ctx.from.id)) {
+	if (!room.settings.allowMailing) {
+		ctx.session.flow = {};
+		await ctx.reply(ui.txt.mailingDisabled);
+		return;
+	}
+
+	if (!game.allPlayers.includes(ctx.from.id) || game.hasMailedThisTurn(ctx.from.id)) {
 		ctx.session.flow = {};
 		return;
 	}
