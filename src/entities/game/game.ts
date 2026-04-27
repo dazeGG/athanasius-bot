@@ -352,6 +352,20 @@ export class Game {
 		}
 	}
 
+	public async forceEnd (): Promise<void> {
+		this.ended = dayjs();
+
+		logGameEvent({
+			type: 'GAME_ENDED',
+			gameId: this.id,
+			roomId: this.roomId,
+			winnerId: this.determineWinner(),
+			duration: this.ended.diff(this.started, 'ms'),
+		});
+
+		await this.save();
+	}
+
 	private determineWinner (): PlayerId {
 		const scores = this.allPlayers.map(id => ({
 			id,

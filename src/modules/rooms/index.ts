@@ -40,6 +40,7 @@ registered.callbackQuery(/^room:delete:/, handlers.deleteRoomCallbackHandler);
 registered.callbackQuery(/^room:getath:/, handlers.gameGetAthanasiusesCallbackHandler);
 registered.callbackQuery(/^room:whoseturn:/, handlers.gameWhoseTurnCallbackHandler);
 registered.callbackQuery(/^room:sendturnmsg:/, handlers.gameSendTurnMessageCallbackHandler);
+registered.callbackQuery(/^room:endgame:/, handlers.gameForceEndCallbackHandler);
 registered.callbackQuery(/^rooms:back:/, handlers.backCallbackHandler);
 registered.callbackQuery(/^room:settings:/, SettingsHandlers.start);
 registered.callbackQuery(/^room:cjc:/, SettingsHandlers.changeJoinCode);

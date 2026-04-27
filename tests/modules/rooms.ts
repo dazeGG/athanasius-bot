@@ -852,4 +852,47 @@ describe('rooms', async () => {
 		assertSent(log, ALICE.id, 'Нельзя удалить комнату с активной игрой');
 		assert(ORM.Rooms.getAll().find(r => r.id === room.id) !== undefined, 'Room with active game should not be deleted');
 	});
+
+	it('Owner can force-end an active game, all players notified', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		resetLog();
+
+		await handlers.gameForceEndCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'endgame', meta: room.id }));
+		const log = getLog();
+
+		const game = DB.data.games.find(g => g.roomId === room.id);
+		assert(game !== undefined, 'Game should still exist in DB after force-end');
+		assert(game!.ended !== undefined, 'Game should have ended timestamp after force-end');
+
+		[ALICE, BOB, CAROL].forEach(player => {
+			assertSent(log, player.id, 'Игра закончилась!');
+		});
+		assertSent(log, ALICE.id, roomTxt.gameForceEnded);
+	});
+
+	it('Non-owner cannot force-end an active game', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		resetLog();
+
+		await handlers.gameForceEndCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'endgame', meta: room.id }));
+		const log = getLog();
+
+		const game = DB.data.games.find(g => g.roomId === room.id);
+		assert(game?.ended === undefined, 'Game should not end when non-owner calls force-end');
+		assertSent(log, BOB.id, roomTxt.ownerOnly);
+	});
+
+	it('Active room keyboard shows force-end button only for owner when game is active', async () => {
+		const room = await seedActiveRoom({ allowMailing: false });
+		resetLog();
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(ALICE, { module: 'rooms', action: 'open', meta: room.id }));
+		assertKeyboardButton(getLog(), ALICE.id, 'Завершить игру', `room:endgame:${room.id}`);
+		resetLog();
+
+		await handlers.openRoomCallbackHandler(makeCallbackCtx(BOB, { module: 'rooms', action: 'open', meta: room.id }));
+		assertNotSent(getLog(), BOB.id, 'Завершить игру');
+	});
 });
