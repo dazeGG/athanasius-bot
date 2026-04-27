@@ -122,26 +122,26 @@ async function notifyWrongTurn ({ ctx, game, me, sender }: Pick<GameServiceOptio
 }
 
 export async function notifyWrongCardMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Card']) {
-	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongCardMe(turnMeta), InfoMessage.wrongCardMailing(turnMeta, me));
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongCardMe(turnMeta, me), InfoMessage.wrongCardMailing(turnMeta, me));
 }
 
 export async function notifyWrongCountMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Count']) {
-	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongCountMe(turnMeta), InfoMessage.wrongCountMailing(turnMeta, me));
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongCountMe(turnMeta, me), InfoMessage.wrongCountMailing(turnMeta, me));
 }
 
 export async function notifyWrongColorsMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Colors']) {
-	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongColorsMe(turnMeta), InfoMessage.wrongColorsMailing(turnMeta, me));
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongColorsMe(turnMeta, me), InfoMessage.wrongColorsMailing(turnMeta, me));
 }
 
 export async function notifyWrongSuitsMessage ({ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits']) {
-	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongSuitsMe(turnMeta), InfoMessage.wrongSuitsMailing(turnMeta, me));
+	await notifyWrongTurn({ ctx, game, me, sender }, InfoMessage.wrongSuitsMe(turnMeta, me), InfoMessage.wrongSuitsMailing(turnMeta, me));
 }
 
 export async function notifyStealMessage (
 	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Suits'],
 	composeAthanasius: boolean,
 ) {
-	await ctx.editMessageText(withGameName(game, GameMessage.getCardsStealMessage(turnMeta, composeAthanasius)));
+	await ctx.editMessageText(withGameName(game, GameMessage.getCardsStealMessage(turnMeta, me, composeAthanasius)));
 	const mailingText = composeAthanasius
 		? InfoMessage.stealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.stealCardsMailing(turnMeta, me);
@@ -153,7 +153,7 @@ export async function notifyJokerStealMessage (
 	{ ctx, game, me, turnMeta, sender }: GameServiceOptionsStage['Colors'],
 	composeAthanasius: boolean,
 ) {
-	await ctx.editMessageText(withGameName(game, GameMessage.getJokerStealMessage(turnMeta, composeAthanasius)));
+	await ctx.editMessageText(withGameName(game, GameMessage.getJokerStealMessage(turnMeta, me, composeAthanasius)));
 	const mailingText = composeAthanasius
 		? InfoMessage.jokerStealWithAthanasiusMailing(turnMeta, me)
 		: InfoMessage.jokerStealMailing(turnMeta, me);

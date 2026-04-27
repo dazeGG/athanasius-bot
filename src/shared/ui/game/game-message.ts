@@ -8,6 +8,7 @@ import type {
 	ColorsStageMeta,
 	SuitsStageMeta,
 } from '~/entities/game';
+import type { UserSchema } from '~/db';
 
 import { txt } from '.';
 
@@ -128,31 +129,25 @@ export class GameMessage {
 			this.getSuitsNowSelected(turnMeta, suits, turnMeta.redCount > 0, turnMeta.redCount !== turnMeta.count);
 	}
 
-	public static getCardsStealMessage (turnMeta: SuitsStageMeta, composeAthanasius: boolean): string {
-		let msg = '🟩 <b>Ты успешно украл карты</b>\n' +
-			'\n' +
-			`Игрок: ${escapeHtml(turnMeta.player.name)}\n` +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Масти: ${formatSuits(turnMeta.suits)}`;
-
+	public static getCardsStealMessage (turnMeta: SuitsStageMeta, me: UserSchema, composeAthanasius: boolean): string {
+		const emoji = composeAthanasius ? '⭐' : '🟩';
+		const base = `${emoji} <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const suits = formatSuits(turnMeta.suits);
+		let msg = suits ? `${base} | ${suits}` : base;
 		if (composeAthanasius) {
-			msg += '\n\n⭐ <b>И это новый Афанасий!</b>';
+			msg += ' — Афанасий!';
 		}
-
 		return msg;
 	}
 
-	public static getJokerStealMessage (turnMeta: ColorsStageMeta, composeAthanasius: boolean): string {
-		let msg = '🟩 <b>Ты успешно украл джокеров</b>\n' +
-			'\n' +
-			`Игрок: ${escapeHtml(turnMeta.player.name)}\n` +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Цвет: ${formatColors(turnMeta.redCount, turnMeta.blackCount)}`;
-
+	public static getJokerStealMessage (turnMeta: ColorsStageMeta, me: UserSchema, composeAthanasius: boolean): string {
+		const emoji = composeAthanasius ? '⭐' : '🟩';
+		const base = `${emoji} <b>${escapeHtml(me.name)} → ${escapeHtml(turnMeta.player.name)}</b> | ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}`;
+		const colors = formatColors(turnMeta.redCount, turnMeta.blackCount);
+		let msg = colors ? `${base} | ${colors}` : base;
 		if (composeAthanasius) {
-			msg += '\n\n⭐ <b>И это новый Афанасий!</b>';
+			msg += ' — Афанасий!';
 		}
-
 		return msg;
 	}
 }
