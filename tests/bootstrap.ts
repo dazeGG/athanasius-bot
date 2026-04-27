@@ -282,6 +282,7 @@ const mockedBot = BOT as unknown as {
 	}) => Promise<void>;
 	api: {
 		sendMessage: (chatId: number, text: string, options?: MessageOptions['options']) => Promise<void>;
+		deleteMessage: (chatId: number, messageId: number) => Promise<void>;
 	};
 };
 
@@ -346,6 +347,10 @@ mockedBot.deleteMessage = async (ctx: {
 }) => {
 	const messageId = getDeletedMessageId(ctx);
 	capture('delete', ctx.chat?.id ?? 0, messageId === undefined ? 'message' : `message#${messageId}`, messageId);
+};
+
+mockedBot.api.deleteMessage = async (chatId: number, messageId: number) => {
+	capture('delete', chatId, `message#${messageId}`, messageId);
 };
 
 mockedBot.api.sendMessage = async (chatId: number, text: string, options?: MessageOptions['options']) => {
