@@ -12,7 +12,7 @@ When sources disagree, use this order:
 
 1. Explicit user instruction in the current task.
 2. This file.
-3. [README.md](/Users/daze/Desktop/WORK/pet/athanasius-bot/README.md).
+3. [README.md](./README.md).
 4. Current implementation details in code.
 
 Important: this repository should be documented and evolved toward the intended product behavior, not merely the current behavior. If code conflicts with the rules below, prefer the target product rules and fix the implementation carefully.
@@ -40,7 +40,7 @@ The project has three main persistent domains:
 - `rooms`
 - `games`
 
-Data is stored in `lowdb` inside the root [db.json](/Users/daze/Desktop/WORK/pet/athanasius-bot/db.json) file.
+Data is stored in `lowdb` inside the root [db.json](./db.json) file.
 
 Active room settings:
 
@@ -111,19 +111,19 @@ The declaration is only successful if the full statement is exact.
 
 Use the existing structure unless the task explicitly asks for refactoring.
 
-- [src/index.ts](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/index.ts): process entrypoint.
-- [src/core](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/core): bot bootstrap, handler registries, state storage, logger, utility plumbing.
-- [src/modules](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/modules): user-facing Telegram modules.
-- [src/entities/deck](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/entities/deck): cards, deck config, sorting, display helpers.
-- [src/entities/game](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/entities/game): game aggregate, hand model, queue model, turn services, game logs.
-- [src/shared](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/shared): shared keyboards, UI texts, reusable helpers.
-- [src/db](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/db): lowdb setup, schemas, ORM-like access layer.
+- [src/index.ts](./src/index.ts): process entrypoint.
+- [src/core](./src/core): bot bootstrap, handler registries, state storage, logger, utility plumbing.
+- [src/modules](./src/modules): user-facing Telegram modules.
+- [src/entities/deck](./src/entities/deck): cards, deck config, sorting, display helpers.
+- [src/entities/game](./src/entities/game): game aggregate, hand model, queue model, turn services, game logs.
+- [src/shared](./src/shared): shared keyboards, UI texts, reusable helpers.
+- [src/db](./src/db): lowdb setup, schemas, ORM-like access layer.
 
 ## Main Runtime Flow
 
 High-level runtime:
 
-1. The bot starts in [src/index.ts](/Users/daze/Desktop/WORK/pet/athanasius-bot/src/index.ts).
+1. The bot starts in [src/index.ts](./src/index.ts).
 2. Commands are registered.
 3. Modules register message handlers and callback handlers.
 4. A callback from the game UI is parsed into staged turn metadata.
@@ -160,7 +160,7 @@ Follow repository conventions:
 - Curly braces on all control blocks.
 - Prefer `import type` for type-only imports.
 
-The project lint rules are defined in [eslint.config.js](/Users/daze/Desktop/WORK/pet/athanasius-bot/eslint.config.js).
+The project lint rules are defined in [eslint.config.js](./eslint.config.js).
 
 ## Commit Convention
 
@@ -196,8 +196,8 @@ Examples aligned with recent commits:
 
 ## Data And Persistence
 
-- Persistent state lives in [db.json](/Users/daze/Desktop/WORK/pet/athanasius-bot/db.json).
-- Runtime logs are written under [logs](/Users/daze/Desktop/WORK/pet/athanasius-bot/logs).
+- Persistent state lives in [db.json](./db.json).
+- Runtime logs are written under [logs](./logs).
 - Changes that alter saved schemas should be made deliberately and kept backward-compatible when possible.
 
 ## Local Run Commands
