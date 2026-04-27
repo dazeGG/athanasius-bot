@@ -15,10 +15,6 @@ export class InfoMessage {
 		return trailing ? `${base} | ${trailing}` : base;
 	}
 
-	private static meWrongHeader (turnMeta: CardStageMeta | CountStageMeta | ColorsStageMeta | SuitsStageMeta): string {
-		return '🟥 <b>К сожалению, ты не угадал</b>\n\n' +
-			`Игрок: ${escapeHtml(turnMeta.player.name)}\n`;
-	}
 
 	/* GAME LIFECYCLE */
 	public static gameStartedMailing (room: RoomSchema): string {
@@ -174,29 +170,20 @@ export class InfoMessage {
 		return colors ? `${base} | ${colors}` : base;
 	}
 
-	/* ME — paragraph format with ❌ on wrong field */
-	public static wrongCardMe (turnMeta: CardStageMeta): string {
-		return this.meWrongHeader(turnMeta) +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]} ❌`;
+	/* ME — log format */
+	public static wrongCardMe (turnMeta: CardStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName);
 	}
 
-	public static wrongCountMe (turnMeta: CountStageMeta): string {
-		return this.meWrongHeader(turnMeta) +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Количество: ${turnMeta.count} ❌`;
+	public static wrongCountMe (turnMeta: CountStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, `${turnMeta.count}`);
 	}
 
-	public static wrongColorsMe (turnMeta: ColorsStageMeta): string {
-		return this.meWrongHeader(turnMeta) +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Количество: ${turnMeta.count}\n` +
-			`Цвета: ${formatColors(turnMeta.redCount, turnMeta.blackCount)} ❌`;
+	public static wrongColorsMe (turnMeta: ColorsStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, formatColors(turnMeta.redCount, turnMeta.blackCount));
 	}
 
-	public static wrongSuitsMe (turnMeta: SuitsStageMeta): string {
-		return this.meWrongHeader(turnMeta) +
-			`Карта: ${DeckConfig.CARDS_VIEW_MAP[turnMeta.cardName]}\n` +
-			`Количество: ${turnMeta.count}\n` +
-			`Масти: ${formatSuits(turnMeta.suits)} ❌`;
+	public static wrongSuitsMe (turnMeta: SuitsStageMeta, me: UserSchema): string {
+		return this.mailingLine('🟥', me, turnMeta.player.name, turnMeta.cardName, formatSuits(turnMeta.suits));
 	}
 }
