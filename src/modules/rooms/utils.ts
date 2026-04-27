@@ -64,8 +64,6 @@ export const mailing = async (text: string, room: RoomSchema, exclude: PlayerId[
 	);
 };
 
-export const getRoomsListText = () => ui.txt.roomsList;
-
 export const getRoomsInlineKeyboard = (rooms: RoomSchema[]) => {
 	const keyboard = new InlineKeyboard();
 
@@ -96,13 +94,11 @@ export const getRoomInlineKeyboard = (meId: number, room: RoomSchema) => {
 		keyboard.text('Чей ход', stringifyCallbackData({ module: 'room', action: 'whoseturn', meta: room.id }));
 		keyboard.row();
 
-		if (room.settings.allowMailing) {
-			const game = new Game({ id: activeGameSchema.id });
-			if (game.allPlayers.includes(meId) && !game.hasMailedThisTurn(meId)) {
-				keyboard.text('Отправить сообщение', stringifyCallbackData({ module: 'room', action: 'sendmsg', meta: room.id }));
-				keyboard.row();
-			}
+		if (room.owner === meId) {
+			keyboard.text('Отправить сообщение хода', stringifyCallbackData({ module: 'room', action: 'sendturnmsg', meta: room.id }));
+			keyboard.row();
 		}
+
 	} else {
 		if (room.owner === meId) {
 			keyboard.text('Настройки', stringifyCallbackData({ module: 'room', action: 'settings', meta: room.id }));
