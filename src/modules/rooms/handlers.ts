@@ -253,7 +253,17 @@ export const gameSendTurnMessageCallbackHandler = async (ctx: CallbackCtx) => {
 		return;
 	}
 
-	const game = utils.getGameFromMeta(ctx);
+	const activeGameSchema = ORM.Games.getActive(room.id);
+
+	if (!activeGameSchema) {
+		await ctx.editMessageText(
+			utils.getRoomBaseText(room),
+			{ reply_markup: utils.getRoomInlineKeyboard(ctx.from.id, room) },
+		);
+		return;
+	}
+
+	const game = new Game({ id: activeGameSchema.id });
 	const sender = BOT.api.sendMessage.bind(BOT.api);
 
 	await sendFirstMessage(game, sender);

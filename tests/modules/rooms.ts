@@ -757,6 +757,40 @@ export async function roomsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertKeyboardButton(log, ALICE.id, 'Отправить сообщение хода', `room:sendturnmsg:${room.id}`);
 	});
 
+	await runCase('gameSendTurnMessageCallbackHandler resends turn message to active player', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+		await handlers.gameStartCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'start', meta: room.id }));
+		resetLog();
+
+		await handlers.gameSendTurnMessageCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'sendturnmsg', meta: room.id }));
+		const log = getLog();
+
+		assertExactlyOnePlayerReceived(log, [ALICE.id, BOB.id, CAROL.id], gameTxt.turnMessage);
+		assertSent(log, ALICE.id, gameTxt.gameMessageResendSuccess);
+	});
+
+	await runCase('gameSendTurnMessageCallbackHandler silently rejects non-owners', async () => {
+		const room = await seedActiveRoom({ allowMailing: true });
+
+		await handlers.gameSendTurnMessageCallbackHandler(makeCallbackCtx(BOB, { module: 'room', action: 'sendturnmsg', meta: room.id }));
+		const log = getLog();
+
+		assertNotSent(log, BOB.id, gameTxt.gameMessageResendSuccess);
+		assertNotSent(log, ALICE.id, gameTxt.firstTurnMessage);
+		assertNotSent(log, BOB.id, gameTxt.firstTurnMessage);
+	});
+
+	await runCase('gameSendTurnMessageCallbackHandler falls back gracefully when no active game', async () => {
+		const room = await setupRoomWithPlayers([BOB, CAROL], handlers);
+
+		await handlers.gameSendTurnMessageCallbackHandler(makeCallbackCtx(ALICE, { module: 'room', action: 'sendturnmsg', meta: room.id }));
+		const log = getLog();
+
+		assertSent(log, ALICE.id, 'Комната');
+		assertNotSent(log, ALICE.id, gameTxt.gameMessageResendSuccess);
+		assertNotSent(log, ALICE.id, gameTxt.firstTurnMessage);
+	});
+
 	await runCase('Shows delete button for owner when no active game', async () => {
 		const room = await setupRoomWithPlayers([BOB], handlers);
 
