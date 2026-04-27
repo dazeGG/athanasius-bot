@@ -2,9 +2,9 @@
  * end-game-message.ts — unit tests for gameEndedMailing medal distribution logic.
  */
 
+import { describe, it } from 'vitest';
 import { InfoMessage } from '~/shared/ui/game/info-message';
 import { assert } from '../runner';
-import type { ModuleTools } from '../runner';
 
 function msg (athMap: [string, number][]): string {
 	return InfoMessage.gameEndedMailing(athMap);
@@ -39,9 +39,9 @@ function noPlain (text: string): boolean {
 	return !text.includes('Простые ребята');
 }
 
-export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<void> {
+describe('endGameMessageModule', async () => {
 	// ── 3 игрока, все разные ────────────────────────────────────────────────────
-	await runCase('3 игрока, все разные — 🥇🥈🥉, без неудачника', () => {
+	it('3 игрока, все разные — 🥇🥈🥉, без неудачника', async () => {
 		const text = msg([['A', 3], ['B', 2], ['C', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -51,7 +51,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 3 игрока, все одинаковые ────────────────────────────────────────────────
-	await runCase('3 игрока, все одинаковые — все 🥇, без неудачника', () => {
+	it('3 игрока, все одинаковые — все 🥇, без неудачника', async () => {
 		const text = msg([['A', 2], ['B', 2], ['C', 2]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -62,7 +62,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 3 игрока, двое с максимумом ─────────────────────────────────────────────
-	await runCase('3 игрока, 2 золота — серебро для третьего, без неудачника', () => {
+	it('3 игрока, 2 золота — серебро для третьего, без неудачника', async () => {
 		const text = msg([['A', 3], ['B', 3], ['C', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -72,7 +72,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 3 игрока, двое с минимумом ──────────────────────────────────────────────
-	await runCase('3 игрока, двое с минимумом — оба получают 🥈, без неудачника', () => {
+	it('3 игрока, двое с минимумом — оба получают 🥈, без неудачника', async () => {
 		const text = msg([['A', 3], ['B', 1], ['C', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -81,7 +81,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 4 игрока, все разные ────────────────────────────────────────────────────
-	await runCase('4 игрока, все разные — 🥇🥈🥉, последний 🦧', () => {
+	it('4 игрока, все разные — 🥇🥈🥉, последний 🦧', async () => {
 		const text = msg([['A', 4], ['B', 3], ['C', 2], ['D', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -91,7 +91,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 4 игрока, 2 золота ──────────────────────────────────────────────────────
-	await runCase('4 игрока, 2 золота — серебро третьему, последний 🦧', () => {
+	it('4 игрока, 2 золота — серебро третьему, последний 🦧', async () => {
 		const text = msg([['A', 3], ['B', 3], ['C', 2], ['D', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -100,7 +100,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 4 игрока, 3 золота ──────────────────────────────────────────────────────
-	await runCase('4 игрока, 3 золота — серебра и бронзы нет, последний 🦧', () => {
+	it('4 игрока, 3 золота — серебра и бронзы нет, последний 🦧', async () => {
 		const text = msg([['A', 3], ['B', 3], ['C', 3], ['D', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -111,7 +111,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 4 игрока, все одинаковые ────────────────────────────────────────────────
-	await runCase('4 игрока, все одинаковые — все 🥇, без неудачника', () => {
+	it('4 игрока, все одинаковые — все 🥇, без неудачника', async () => {
 		const text = msg([['A', 2], ['B', 2], ['C', 2], ['D', 2]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -121,7 +121,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 4 игрока, бронза на двоих ───────────────────────────────────────────────
-	await runCase('4 игрока, последние двое одинаковые — оба 🥉, без неудачника', () => {
+	it('4 игрока, последние двое одинаковые — оба 🥉, без неудачника', async () => {
 		const text = msg([['A', 3], ['B', 2], ['C', 1], ['D', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -131,7 +131,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 5 игроков, все разные ───────────────────────────────────────────────────
-	await runCase('5 игроков, все разные — 🥇🥈🥉, простой и 🦧', () => {
+	it('5 игроков, все разные — 🥇🥈🥉, простой и 🦧', async () => {
 		const text = msg([['A', 5], ['B', 4], ['C', 3], ['D', 2], ['E', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -141,7 +141,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 5 игроков, 2 золота ─────────────────────────────────────────────────────
-	await runCase('5 игроков, 2 золота — серебро третьему, простой и 🦧', () => {
+	it('5 игроков, 2 золота — серебро третьему, простой и 🦧', async () => {
 		const text = msg([['A', 5], ['B', 5], ['C', 3], ['D', 2], ['E', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -151,7 +151,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 5 игроков, последние двое одинаковые ────────────────────────────────────
-	await runCase('5 игроков, 2 неудачника — оба 🦧, простых нет', () => {
+	it('5 игроков, 2 неудачника — оба 🦧, простых нет', async () => {
 		const text = msg([['A', 5], ['B', 4], ['C', 3], ['D', 1], ['E', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -162,7 +162,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 5 игроков, 3 золота ─────────────────────────────────────────────────────
-	await runCase('5 игроков, 3 золота — серебра и бронзы нет, простой и 🦧', () => {
+	it('5 игроков, 3 золота — серебра и бронзы нет, простой и 🦧', async () => {
 		const text = msg([['A', 4], ['B', 4], ['C', 4], ['D', 2], ['E', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -174,7 +174,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 5 игроков, 3 золота + 2 неудачника ─────────────────────────────────────
-	await runCase('5 игроков, 3 золота + 2 одинаковых минимума — оба 🦧, простых нет', () => {
+	it('5 игроков, 3 золота + 2 одинаковых минимума — оба 🦧, простых нет', async () => {
 		const text = msg([['A', 4], ['B', 4], ['C', 4], ['D', 1], ['E', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasGold(text, 'B'), 'B должен получить 🥇');
@@ -185,7 +185,7 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 	});
 
 	// ── 1 золото + 2 серебра — бронзы нет ──────────────────────────────────────
-	await runCase('1 золото + 2 серебра — бронзы нет', () => {
+	it('1 золото + 2 серебра — бронзы нет', async () => {
 		const text = msg([['A', 5], ['B', 3], ['C', 3], ['D', 1]]);
 		assert(hasGold(text, 'A'), 'A должен получить 🥇');
 		assert(hasSilver(text, 'B'), 'B должен получить 🥈');
@@ -193,4 +193,4 @@ export async function endGameMessageModule ({ runCase }: ModuleTools): Promise<v
 		assert(!text.includes('🥉'), 'Бронзы не должно быть');
 		assert(hasLoser(text, 'D'), 'D должен быть неудачником');
 	});
-}
+});

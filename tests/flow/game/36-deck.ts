@@ -1,12 +1,12 @@
 /**
  * 36-deck.ts — game flow tests for rooms configured with the 36-card deck type.
  */
+import { describe, it } from 'vitest';
 import { Deck } from '../../../src/entities/deck';
 
 import { DB, Game } from '../../bootstrap';
 import { assert, assertSent } from '../../runner';
 import { getLog } from '../../bootstrap';
-import type { ModuleTools } from '../../runner';
 
 import {
 	ALICE,
@@ -31,9 +31,9 @@ import {
 /**
  * Runs game flow coverage for the 36-card deck type.
  */
-export async function deck36Flow (tools: ModuleTools): Promise<void> {
-	await tools.runLayer('Startup', async ({ runCase }) => {
-		await runCase('36-card game: Game.create deals exactly 36 cards per deck across all players', async () => {
+describe('deck36Flow', async () => {
+	describe('Startup', async () => {
+		it('36-card game: Game.create deals exactly 36 cards per deck across all players', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -58,7 +58,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			);
 		});
 
-		await runCase('36-card game: Game.create with 2 decks deals 72 cards total', async () => {
+		it('36-card game: Game.create with 2 decks deals 72 cards total', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -83,7 +83,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			);
 		});
 
-		await runCase('36-card game: cardsToAthanasius = 4 for 1 deck', async () => {
+		it('36-card game: cardsToAthanasius = 4 for 1 deck', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -101,7 +101,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			assert(game.cardsToAthanasius === 4, `cardsToAthanasius should be 4, got ${game.cardsToAthanasius}`);
 		});
 
-		await runCase('36-card game: cardsToAthanasius = 8 for 2 decks', async () => {
+		it('36-card game: cardsToAthanasius = 8 for 2 decks', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -119,7 +119,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			assert(game.cardsToAthanasius === 8, `cardsToAthanasius should be 8 for 2 decks, got ${game.cardsToAthanasius}`);
 		});
 
-		await runCase('36-card game: all dealt card IDs belong to the 36-deck pool', async () => {
+		it('36-card game: all dealt card IDs belong to the 36-deck pool', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -142,7 +142,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			}
 		});
 
-		await runCase('36-card game: first turn message delivered to exactly one player', async () => {
+		it('36-card game: first turn message delivered to exactly one player', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -162,8 +162,8 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Steals', async ({ runCase }) => {
-		await runCase('36-card game: successful steal transfers cards and keeps turn', async () => {
+	describe('Steals', async () => {
+		it('36-card game: successful steal transfers cards and keeps turn', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -193,7 +193,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			assert((persisted.hands[BOB.id] ?? []).length === 0, 'Bob should have no A cards left');
 		});
 
-		await runCase('36-card game: failed steal at suits stage shifts turn to the next player', async () => {
+		it('36-card game: failed steal at suits stage shifts turn to the next player', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -222,8 +222,8 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Athanasius', async ({ runCase }) => {
-		await runCase('36-card game: four same-rank cards compose an Athanasius', async () => {
+	describe('Athanasius', async () => {
+		it('36-card game: four same-rank cards compose an Athanasius', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -255,7 +255,7 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			assert((persisted.hands[ALICE.id] ?? []).length === 0, 'Alice hand should be empty after Athanasius');
 		});
 
-		await runCase('36-card game: game ends when all hands are empty after final steal', async () => {
+		it('36-card game: game ends when all hands are empty after final steal', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -290,8 +290,8 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Turn Delivery', async ({ runCase }) => {
-		await runCase('36-card game: turn message delivery skips players with empty hands', async () => {
+	describe('Turn Delivery', async () => {
+		it('36-card game: turn message delivery skips players with empty hands', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -313,4 +313,4 @@ export async function deck36Flow (tools: ModuleTools): Promise<void> {
 			assertSent(getLog(), CAROL.id, 'Твой ход!');
 		});
 	});
-}
+});

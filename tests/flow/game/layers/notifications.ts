@@ -1,9 +1,9 @@
 /**
  * notifications.ts — notification delivery coverage for instant and composed players.
  */
+import { describe, it } from 'vitest';
 import { getLog } from '../../../bootstrap';
 import { assert, assertNotSent, assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -39,8 +39,8 @@ const seedNotificationGame = async (views: Partial<Record<number, 'instant' | 'c
 /**
  * Runs notification coverage for instant mailings and composed round summaries.
  */
-export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('Instant players receive wrong-turn mailings in real time', async () => {
+describe('Notifications', async () => {
+	it('Instant players receive wrong-turn mailings in real time', async () => {
 		await resetGameFlowCase();
 		await seedNotificationGame();
 
@@ -49,7 +49,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assertSent(getLog(), CAROL.id, '🟥 <b>Алиса → Борис</b> | A | 1');
 	});
 
-	await runCase('Composed players are excluded from real-time wrong-turn mailings', async () => {
+	it('Composed players are excluded from real-time wrong-turn mailings', async () => {
 		await resetGameFlowCase();
 		await seedNotificationGame({ [CAROL.id]: 'composed' });
 
@@ -58,7 +58,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assertNotSent(getLog(), CAROL.id, '🟥 <b>Алиса → Борис</b> | A | 1');
 	});
 
-	await runCase('Composed players receive a last-round summary before their turn prompt', async () => {
+	it('Composed players receive a last-round summary before their turn prompt', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			users: createUsers({ [ALICE.id]: 'composed' }),
@@ -87,7 +87,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assert(!aliceMessages[1]!.includes('Вот что было за последний круг'), 'Second message should not contain the summary');
 	});
 
-	await runCase('Last-round summary stops at the active player’s previous turn', async () => {
+	it('Last-round summary stops at the active player’s previous turn', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			game: makeGame({
@@ -113,7 +113,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assert(logs.includes('🟧 <b>Борис → Алиса</b> | K | 1'), 'Newest logs should be included in order');
 	});
 
-	await runCase('Composed next players receive a summary when a failed turn hands control to them', async () => {
+	it('Composed next players receive a summary when a failed turn hands control to them', async () => {
 		await resetGameFlowCase();
 		await seedNotificationGame({ [BOB.id]: 'composed' });
 
@@ -126,7 +126,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assert(!bobMessages.some(message => message.includes('Нет карт K')), 'Bob should not receive the real-time failure mailing while on composed updates');
 	});
 
-	await runCase('Composed steal victim still receives an instant notification about their lost cards', async () => {
+	it('Composed steal victim still receives an instant notification about their lost cards', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			users: createUsers({ [BOB.id]: 'composed' }),
@@ -151,7 +151,7 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 		assertSent(getLog(), BOB.id, '🟧 <b>Алиса → Борис</b> | A');
 	});
 
-	await runCase('Composed observers are excluded from real-time steal broadcasts', async () => {
+	it('Composed observers are excluded from real-time steal broadcasts', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			users: createUsers({ [CAROL.id]: 'composed' }),
@@ -175,4 +175,4 @@ export async function runNotificationsLayer ({ runCase }: ModuleTools): Promise<
 
 		assertNotSent(getLog(), CAROL.id, '<b>Алиса → Борис</b> | A');
 	});
-}
+});

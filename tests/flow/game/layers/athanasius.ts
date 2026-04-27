@@ -1,9 +1,9 @@
 /**
  * athanasius.ts — Athanasius composition and endgame coverage for the game flow.
  */
+import { describe, it } from 'vitest';
 import { DB, getLog } from '../../../bootstrap';
 import { assert, assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 
 import {
 	ALICE,
@@ -25,8 +25,8 @@ import {
 /**
  * Runs Athanasius creation, initial notification, and endgame ranking coverage.
  */
-export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<void> {
-	await runCase('Successful steals compose an Athanasius, empty the hand, and pass the turn forward', async () => {
+describe('Athanasius', async () => {
+	it('Successful steals compose an Athanasius, empty the hand, and pass the turn forward', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id] }),
@@ -58,7 +58,7 @@ export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<voi
 		assertSent(getLog(), CAROL.id, '⭐ <b>Алиса → Борис</b> | A');
 	});
 
-	await runCase('Initial Athanasius notifications award achievements and mail other players', async () => {
+	it('Initial Athanasius notifications award achievements and mail other players', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id] }),
@@ -84,7 +84,7 @@ export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<voi
 		assertSent(getLog(), ALICE.id, 'При раздаче у Каролина выпал Афанасий K');
 	});
 
-	await runCase('The last successful steal ends the game and sends ranked results with a single monkey', async () => {
+	it('The last successful steal ends the game and sends ranked results with a single monkey', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			room: makeRoom({ players: [ALICE.id, BOB.id, CAROL.id, DAVE.id] }),
@@ -128,4 +128,4 @@ export async function runAthanasiusLayer ({ runCase }: ModuleTools): Promise<voi
 		assert(summary.indexOf('🦧') === summary.lastIndexOf('🦧'), 'Monkey emoji should appear exactly once');
 		assert(getPersistedGame().ended !== undefined, 'Game should be marked as ended after the final successful steal');
 	});
-}
+});

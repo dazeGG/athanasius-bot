@@ -1,9 +1,9 @@
 /**
  * confirm-mode.ts — confirmMode game turn flow coverage.
  */
+import { describe, it } from 'vitest';
 import { getLog, resetLog } from '../../../bootstrap';
 import { assertKeyboardButton, assertNotSent, assertSent } from '../../../runner';
-import type { ModuleTools } from '../../../runner';
 import type { CallbackCtx } from '../../../../src/core';
 
 import { withCallbackMethods } from '../../../bootstrap';
@@ -97,11 +97,11 @@ const seedConfirmGame = async (confirmMode?: ConfirmModeSettings): Promise<void>
 
 // ── Layer ─────────────────────────────────────────────────────────────────────
 
-export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<void> {
+describe('ConfirmMode', async () => {
 
 	// ── No confirm when confirmMode is undefined ──────────────────────────────
 
-	await runCase('card stage: turn processed normally when confirmMode is undefined', async () => {
+	it('card stage: turn processed normally when confirmMode is undefined', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -113,7 +113,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(log, ALICE.id, 'Выбери сколько карт');
 	});
 
-	await runCase('count select: processed normally when confirmMode is undefined', async () => {
+	it('count select: processed normally when confirmMode is undefined', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -123,7 +123,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Спрашиваем?');
 	});
 
-	await runCase('colors select: processed normally when confirmMode is undefined', async () => {
+	it('colors select: processed normally when confirmMode is undefined', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -133,7 +133,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Спрашиваем?');
 	});
 
-	await runCase('suits select: processed normally when confirmMode is undefined', async () => {
+	it('suits select: processed normally when confirmMode is undefined', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -147,7 +147,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── No confirm when stage flag is false ───────────────────────────────────
 
-	await runCase('card stage with confirmMode.card = false: processed normally', async () => {
+	it('card stage with confirmMode.card = false: processed normally', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: false, suits: false });
 
@@ -160,7 +160,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── Confirm triggered ─────────────────────────────────────────────────────
 
-	await runCase('card stage with confirmMode.card = true: shows confirm dialog', async () => {
+	it('card stage with confirmMode.card = true: shows confirm dialog', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: true, count: false, colors: false, suits: false });
 
@@ -175,7 +175,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Выбери сколько карт');
 	});
 
-	await runCase('count select with confirmMode.count = true: shows confirm dialog', async () => {
+	it('count select with confirmMode.count = true: shows confirm dialog', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: true, colors: false, suits: false });
 
@@ -186,7 +186,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(log, ALICE.id, 'Да · Нет');
 	});
 
-	await runCase('colors select with confirmMode.colors = true: shows confirm dialog', async () => {
+	it('colors select with confirmMode.colors = true: shows confirm dialog', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: true, suits: false });
 
@@ -197,7 +197,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(log, ALICE.id, 'Да · Нет');
 	});
 
-	await runCase('suits select with confirmMode.suits = true: shows confirm dialog', async () => {
+	it('suits select with confirmMode.suits = true: shows confirm dialog', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: false, suits: true });
 
@@ -210,7 +210,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(log, ALICE.id, 'Да · Нет');
 	});
 
-	await runCase('count +/- with confirmMode.count = true: NOT intercepted, updates count', async () => {
+	it('count +/- with confirmMode.count = true: NOT intercepted, updates count', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: true, colors: false, suits: false });
 
@@ -224,7 +224,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── Confirm flow — "Да" ───────────────────────────────────────────────────
 
-	await runCase('After confirm for card stage, pressing Да processes the turn', async () => {
+	it('After confirm for card stage, pressing Да processes the turn', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: true, count: false, colors: false, suits: false });
 
@@ -248,7 +248,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── Confirm flow — "Нет" (back) ───────────────────────────────────────────
 
-	await runCase('From card confirm: g:tb:c#gameId#playerId restores card select keyboard', async () => {
+	it('From card confirm: g:tb:c#gameId#playerId restores card select keyboard', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: true, count: false, colors: false, suits: false });
 
@@ -263,7 +263,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Спрашиваем?');
 	});
 
-	await runCase('From count confirm: back restores count keyboard', async () => {
+	it('From count confirm: back restores count keyboard', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: true, colors: false, suits: false });
 
@@ -277,7 +277,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Спрашиваем?');
 	});
 
-	await runCase('From colors confirm: back restores colors keyboard', async () => {
+	it('From colors confirm: back restores colors keyboard', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: true, suits: false });
 
@@ -291,7 +291,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Спрашиваем?');
 	});
 
-	await runCase('From suits confirm: back restores suits keyboard', async () => {
+	it('From suits confirm: back restores suits keyboard', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: false, suits: true });
 
@@ -307,7 +307,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── Back button on card select (always present) ───────────────────────────
 
-	await runCase('Back button on card select restores player select keyboard', async () => {
+	it('Back button on card select restores player select keyboard', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -323,7 +323,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, ALICE.id, 'Спрашиваем?');
 	});
 
-	await runCase('Back button on card select works even when confirmMode is disabled', async () => {
+	it('Back button on card select works even when confirmMode is disabled', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame({ card: false, count: false, colors: false, suits: false });
 
@@ -336,7 +336,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertSent(log, ALICE.id, BOB.name);
 	});
 
-	await runCase('Card select keyboard always has a Назад button', async () => {
+	it('Card select keyboard always has a Назад button', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -349,7 +349,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── Back rejected for non-active player ───────────────────────────────────
 
-	await runCase('g:tb: p# rejected when caller is not the active player', async () => {
+	it('g:tb: p# rejected when caller is not the active player', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -363,7 +363,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		assertNotSent(log, BOB.id, 'Твой ход');
 	});
 
-	await runCase('g:tb: c# rejected when caller is not the active player', async () => {
+	it('g:tb: c# rejected when caller is not the active player', async () => {
 		await resetGameFlowCase();
 		await seedConfirmGame(undefined);
 
@@ -378,7 +378,7 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 
 	// ── Stale game during confirm ─────────────────────────────────────────────
 
-	await runCase('Pressing Да when game has already ended returns stale message', async () => {
+	it('Pressing Да when game has already ended returns stale message', async () => {
 		await resetGameFlowCase();
 		await seedGameState({
 			users: createUsers().map(u => {
@@ -407,4 +407,4 @@ export async function runConfirmModeLayer ({ runCase }: ModuleTools): Promise<vo
 		const log = getLog();
 		assertSent(log, ALICE.id, STALE_GAME_MESSAGE_TEXT, { exact: true, latest: true });
 	});
-}
+});

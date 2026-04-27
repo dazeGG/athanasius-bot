@@ -2,6 +2,7 @@
  * mailing.ts — per-turn in-game message flow (GAME_MAILING).
  */
 
+import { describe, it } from 'vitest';
 import type { CallbackData } from '../../src/core';
 import { DB } from '../../src/db';
 import { txt } from '../../src/modules/mailing/ui';
@@ -9,7 +10,6 @@ import { escapeHtml } from '../../src/shared/lib';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertSent, assertNotSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 2001, username: 'alice_m', name: 'Алиса' },
@@ -107,12 +107,12 @@ const seedMailingGame = async ({
 	resetLog();
 };
 
-export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
+describe('mailingModule', async () => {
 	const handlers = await import('../../src/modules/mailing/handlers');
 
 	// ── Global keyboard button ────────────────────────────────────────────────
 
-	await runCase('Сообщение button replies with no-games message when player has no active mailing games', async () => {
+	it('Сообщение button replies with no-games message when player has no active mailing games', async () => {
 		await clearDB();
 		PLAYERS.forEach(p => SESSIONS.clear(p.id));
 		await seedDB({
@@ -132,7 +132,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(getLog(), ALICE.id, txt.noAvailableGames);
 	});
 
-	await runCase('Сообщение button opens prompt directly when player has exactly one eligible game', async () => {
+	it('Сообщение button opens prompt directly when player has exactly one eligible game', async () => {
 		await seedMailingGame({ allowMailing: true });
 
 		await handlers.mailingMessageHandler(makeMessageCtx(ALICE, 'Сообщение'));
@@ -144,7 +144,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(flow.name === 'GAME_MAILING' && flow.roomId === 'room-m', 'Flow should carry the roomId');
 	});
 
-	await runCase('Сообщение button shows no games when mailing setting is disabled', async () => {
+	it('Сообщение button shows no games when mailing setting is disabled', async () => {
 		await seedMailingGame({ allowMailing: false });
 
 		await handlers.mailingMessageHandler(makeMessageCtx(ALICE, 'Сообщение'));
@@ -154,7 +154,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Should not enter flow when mailing is disabled');
 	});
 
-	await runCase('Сообщение button shows no games after the player already mailed this turn', async () => {
+	it('Сообщение button shows no games after the player already mailed this turn', async () => {
 		await seedMailingGame({ allowMailing: true, mailedThisTurn: [ALICE.id] });
 
 		await handlers.mailingMessageHandler(makeMessageCtx(ALICE, 'Сообщение'));
@@ -166,7 +166,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 
 	// ── mailing:select callback ───────────────────────────────────────────────
 
-	await runCase('mailing:select opens the text prompt and sets GAME_MAILING flow', async () => {
+	it('mailing:select opens the text prompt and sets GAME_MAILING flow', async () => {
 		await seedMailingGame({ allowMailing: true });
 
 		await handlers.mailingSelectCallbackHandler(makeCallbackCtx(BOB, { module: 'mailing', action: 'select', meta: 'room-m' }));
@@ -178,7 +178,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(flow.name === 'GAME_MAILING' && flow.roomId === 'room-m', 'Flow should carry the roomId');
 	});
 
-	await runCase('mailing:select rejects when mailing setting is disabled', async () => {
+	it('mailing:select rejects when mailing setting is disabled', async () => {
 		await seedMailingGame({ allowMailing: false });
 
 		await handlers.mailingSelectCallbackHandler(makeCallbackCtx(ALICE, { module: 'mailing', action: 'select', meta: 'room-m' }));
@@ -188,7 +188,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Should not enter flow when setting is disabled');
 	});
 
-	await runCase('mailing:select rejects when the player already mailed this turn', async () => {
+	it('mailing:select rejects when the player already mailed this turn', async () => {
 		await seedMailingGame({ allowMailing: true, mailedThisTurn: [BOB.id] });
 
 		await handlers.mailingSelectCallbackHandler(makeCallbackCtx(BOB, { module: 'mailing', action: 'select', meta: 'room-m' }));
@@ -198,7 +198,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(BOB.id).flow.name === undefined, 'Should not enter flow after already mailing');
 	});
 
-	await runCase('mailing:select shows no-games message when the game no longer exists', async () => {
+	it('mailing:select shows no-games message when the game no longer exists', async () => {
 		await seedMailingGame({ allowMailing: true });
 		DB.data.games = [];
 
@@ -211,7 +211,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 
 	// ── mailingTextHandler ────────────────────────────────────────────────────
 
-	await runCase('Valid message is sent to all other players and marks the turn', async () => {
+	it('Valid message is sent to all other players and marks the turn', async () => {
 		await seedMailingGame({ allowMailing: true, roomName: '<b>Зал & ход</b>' });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m' });
 
@@ -227,7 +227,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(DB.data.games[0]!.utils.mailedThisTurn?.includes(ALICE.id) === true, 'Should mark player as mailed this turn');
 	});
 
-	await runCase('Blank message keeps the player in GAME_MAILING flow without sending', async () => {
+	it('Blank message keeps the player in GAME_MAILING flow without sending', async () => {
 		await seedMailingGame({ allowMailing: true });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m' });
 
@@ -240,7 +240,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, '');
 	});
 
-	await runCase('Overlong message keeps the player in GAME_MAILING flow without sending', async () => {
+	it('Overlong message keeps the player in GAME_MAILING flow without sending', async () => {
 		await seedMailingGame({ allowMailing: true });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m' });
 
@@ -253,7 +253,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'xxx');
 	});
 
-	await runCase('Stale GAME_MAILING flow is cleared silently when game no longer exists', async () => {
+	it('Stale GAME_MAILING flow is cleared silently when game no longer exists', async () => {
 		await seedMailingGame({ allowMailing: true });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m' });
 		DB.data.games = [];
@@ -265,7 +265,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Stale flow should be cleared');
 	});
 
-	await runCase('Text handler ignores messages outside GAME_MAILING flow', async () => {
+	it('Text handler ignores messages outside GAME_MAILING flow', async () => {
 		await seedMailingGame({ allowMailing: true });
 		SESSIONS.clear(ALICE.id);
 
@@ -276,7 +276,7 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Flow should remain empty');
 	});
 
-	await runCase('Text handler notifies player when mailing setting was disabled mid-flow', async () => {
+	it('Text handler notifies player when mailing setting was disabled mid-flow', async () => {
 		await seedMailingGame({ allowMailing: true });
 		SESSIONS.setFlow(ALICE.id, { name: 'GAME_MAILING', roomId: 'room-m' });
 		DB.data.rooms[0]!.settings.allowMailing = false;
@@ -288,4 +288,4 @@ export async function mailingModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, BOB.id, 'Привет');
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Flow should be cleared');
 	});
-}
+});

@@ -2,11 +2,11 @@
  * settings.ts — user settings coverage split into explicit cases.
  */
 
+import { describe, it } from 'vitest';
 import { DB } from '../../src/db';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent, assertNotSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса', updatesView: 'instant' as const },
@@ -114,10 +114,10 @@ const getUser = (playerId: number) => {
 /**
  * Runs tests coverage for user settings navigation and mutations.
  */
-export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
+describe('settingsModule', async () => {
 	const handlers = await import('../../src/modules/settings/handlers');
 
-	await runCase('Shows current settings and actions for idle user', async () => {
+	it('Shows current settings and actions for idle user', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 
@@ -131,7 +131,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, SETTINGS_KEYBOARD_LABELS);
 	});
 
-	await runCase('Blocks settings changes during an active game', async () => {
+	it('Blocks settings changes during an active game', async () => {
 		await resetSettingsCase();
 		await seedActiveGameFor(ALICE);
 
@@ -143,7 +143,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, 'Твои настройки');
 	});
 
-	await runCase('Toggles updates view from instant to composed', async () => {
+	it('Toggles updates view from instant to composed', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 
@@ -156,7 +156,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(getUser(ALICE.id).settings.updatesView === 'composed', 'Alice updatesView should become composed');
 	});
 
-	await runCase('Toggles updates view from composed back to instant', async () => {
+	it('Toggles updates view from composed back to instant', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 
@@ -168,7 +168,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(getUser(CAROL.id).settings.updatesView === 'instant', 'Carol updatesView should become instant');
 	});
 
-	await runCase('Opens rename flow and stores SETTINGS_CHANGE_NAME state', async () => {
+	it('Opens rename flow and stores SETTINGS_CHANGE_NAME state', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 
@@ -180,7 +180,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === 'SETTINGS_CHANGE_NAME', 'Alice state should be SETTINGS_CHANGE_NAME');
 	});
 
-	await runCase('Rejects invalid renamed value and keeps rename state', async () => {
+	it('Rejects invalid renamed value and keeps rename state', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
@@ -193,7 +193,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(getUser(ALICE.id).name === ALICE.name, 'Alice name should stay unchanged after invalid rename');
 	});
 
-	await runCase('Rejects duplicate renamed value ignoring case', async () => {
+	it('Rejects duplicate renamed value ignoring case', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
@@ -206,7 +206,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(getUser(ALICE.id).name === ALICE.name, 'Alice name should stay unchanged after duplicate rename');
 	});
 
-	await runCase('Renames user successfully after previous invalid attempt', async () => {
+	it('Renames user successfully after previous invalid attempt', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
@@ -225,7 +225,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(getUser(ALICE.id).name === 'Алевтина', 'Alice name should be updated after successful rename');
 	});
 
-	await runCase('Exit callback closes settings without sending extra messages', async () => {
+	it('Exit callback closes settings without sending extra messages', async () => {
 		await resetSettingsCase();
 		await seedRegisteredUsers();
 
@@ -236,7 +236,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(log.length === 1, 'Exit callback should only delete the settings message');
 	});
 
-	await runCase('Blocks rename callback during an active game', async () => {
+	it('Blocks rename callback during an active game', async () => {
 		await resetSettingsCase();
 		await seedActiveGameFor(ALICE);
 
@@ -248,7 +248,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(SESSIONS.get(ALICE.id).flow.name === undefined, 'Rename flow must not be set when blocked by an active game');
 	});
 
-	await runCase('Blocks updatesView callback during an active game', async () => {
+	it('Blocks updatesView callback during an active game', async () => {
 		await resetSettingsCase();
 		await seedActiveGameFor(ALICE);
 
@@ -259,7 +259,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assert(getUser(ALICE.id).settings.updatesView === ALICE.updatesView, 'updatesView must not change when blocked by an active game');
 	});
 
-	await runCase('Exit callback still closes settings during an active game', async () => {
+	it('Exit callback still closes settings during an active game', async () => {
 		await resetSettingsCase();
 		await seedActiveGameFor(ALICE);
 
@@ -270,7 +270,7 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertNotSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
 	});
 
-	await runCase('Blocks rename state message during an active game', async () => {
+	it('Blocks rename state message during an active game', async () => {
 		await resetSettingsCase();
 		await seedActiveGameFor(ALICE);
 		SESSIONS.setFlow(ALICE.id, { name: 'SETTINGS_CHANGE_NAME' });
@@ -281,4 +281,4 @@ export async function settingsModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Нельзя менять настройки во время игры');
 		assert(getUser(ALICE.id).name === ALICE.name, 'Name must not change when rename message is blocked by an active game');
 	});
-}
+});

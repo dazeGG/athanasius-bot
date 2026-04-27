@@ -2,9 +2,9 @@
  * start.ts — /start command coverage split into explicit cases.
  */
 
+import { describe, it } from 'vitest';
 import { clearDB, getLog, resetLog, seedDB, withMessageMethods } from '../bootstrap';
 import { assertSent } from '../runner';
-import type { ModuleTools } from '../runner';
 
 const PLAYERS = [
 	{ id: 1001, username: 'alice_sim', name: 'Алиса' },
@@ -52,10 +52,10 @@ const seedRegisteredUsers = async (players: readonly PlayerFixture[]): Promise<v
 /**
  * Runs tests coverage for the `/start` command entrypoints.
  */
-export async function startModule ({ runCase }: ModuleTools): Promise<void> {
+describe('startModule', async () => {
 	const handlers = await import('../../src/modules/start/handlers');
 
-	await runCase('Greets unregistered users and suggests /reg', async () => {
+	it('Greets unregistered users and suggests /reg', async () => {
 		await resetStartCase();
 
 		await handlers.startCommandHandler(makeMessageCtx(ALICE, '/start'));
@@ -65,7 +65,7 @@ export async function startModule ({ runCase }: ModuleTools): Promise<void> {
 		assertSent(log, ALICE.id, 'Для регистрации напиши мне /reg');
 	});
 
-	await runCase('Tells registered users to wait for the game start', async () => {
+	it('Tells registered users to wait for the game start', async () => {
 		await resetStartCase();
 		await seedRegisteredUsers([BOB]);
 
@@ -74,4 +74,4 @@ export async function startModule ({ runCase }: ModuleTools): Promise<void> {
 		const log = getLog();
 		assertSent(log, BOB.id, 'Ты уже зарегистрирован, подожди пока игра начнётся');
 	});
-}
+});

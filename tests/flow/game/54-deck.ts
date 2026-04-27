@@ -1,11 +1,11 @@
 /**
  * 54-deck.ts — game flow tests for the 54-card deck type (52 cards + 2 jokers).
  */
+import { describe, it } from 'vitest';
 import { Deck } from '../../../src/entities/deck';
 
 import { DB, Game, getLog } from '../../bootstrap';
 import { assert, assertSent, assertNotSent } from '../../runner';
-import type { ModuleTools } from '../../runner';
 
 import {
 	ALICE,
@@ -32,9 +32,9 @@ import {
 /**
  * Runs game flow coverage for the 54-card deck type (joker mechanics).
  */
-export async function deck54Flow (tools: ModuleTools): Promise<void> {
-	await tools.runLayer('Startup', async ({ runCase }) => {
-		await runCase('54-card game: Game.create deals exactly 54 cards per deck', async () => {
+describe('deck54Flow', async () => {
+	describe('Startup', async () => {
+		it('54-card game: Game.create deals exactly 54 cards per deck', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -59,7 +59,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			);
 		});
 
-		await runCase('54-card game: jokerCardsToAthanasius = 2 for 1 deck', async () => {
+		it('54-card game: jokerCardsToAthanasius = 2 for 1 deck', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -77,7 +77,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(persisted.utils.jokerCardsToAthanasius === 2, 'jokerCardsToAthanasius should be 2 for 1 deck');
 		});
 
-		await runCase('54-card game: jokerCardsToAthanasius = 4 for 2 decks', async () => {
+		it('54-card game: jokerCardsToAthanasius = 4 for 2 decks', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -95,7 +95,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(persisted.utils.jokerCardsToAthanasius === 4, 'jokerCardsToAthanasius should be 4 for 2 decks');
 		});
 
-		await runCase('54-card game: getCardsToAthanasiusForRank returns 2 for Joker and 4 for regular ranks', async () => {
+		it('54-card game: getCardsToAthanasiusForRank returns 2 for Joker and 4 for regular ranks', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -113,7 +113,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(game.getCardsToAthanasiusForRank('7') === 4, 'Regular rank 7 needs 4 cards for Athanasius');
 		});
 
-		await runCase('54-card game: game started mailing mentions 54-card deck type', async () => {
+		it('54-card game: game started mailing mentions 54-card deck type', async () => {
 			await resetGameFlowCase();
 
 			const room = makeRoom({
@@ -129,8 +129,8 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Joker Steals', async ({ runCase }) => {
-		await runCase('Joker steal: count stage with action=select advances to colors stage', async () => {
+	describe('Joker Steals', async () => {
+		it('Joker steal: count stage with action=select advances to colors stage', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -153,7 +153,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(latest.includes('красных'), 'Flow should advance to colors selection for Joker');
 		});
 
-		await runCase('Joker steal: correct colors guess at colors stage commits the steal', async () => {
+		it('Joker steal: correct colors guess at colors stage commits the steal', async () => {
 			await resetGameFlowCase();
 
 			// jokerCardsToAthanasius=3 means 3 jokers are needed for Athanasius — so stealing 1 black joker
@@ -186,7 +186,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			);
 		});
 
-		await runCase('Joker steal: colors stage is final — no suits stage follows', async () => {
+		it('Joker steal: colors stage is final — no suits stage follows', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -212,7 +212,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(turnWentOn || getGame().isEnded, 'After joker steal the turn must advance or the game must end');
 		});
 
-		await runCase('Joker steal: steal message uses joker emoji', async () => {
+		it('Joker steal: steal message uses joker emoji', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -235,8 +235,8 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 
 	});
 
-	await tools.runLayer('Joker Failures', async ({ runCase }) => {
-		await runCase('Joker steal: wrong color guess at colors stage fails the turn', async () => {
+	describe('Joker Failures', async () => {
+		it('Joker steal: wrong color guess at colors stage fails the turn', async () => {
 			await resetGameFlowCase();
 
 			// Bob has only a black joker; Alice guesses 1 red joker → wrong
@@ -260,7 +260,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift away from Alice after failed joker steal');
 		});
 
-		await runCase('Joker steal: failed turn does not transfer cards', async () => {
+		it('Joker steal: failed turn does not transfer cards', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -289,7 +289,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			);
 		});
 
-		await runCase('Joker steal: failure at count stage when target has fewer jokers than selected', async () => {
+		it('Joker steal: failure at count stage when target has fewer jokers than selected', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -316,8 +316,8 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Joker Athanasius', async ({ runCase }) => {
-		await runCase('Joker Athanasius: stealing the second joker completes the set and forms an Athanasius', async () => {
+	describe('Joker Athanasius', async () => {
+		it('Joker Athanasius: stealing the second joker completes the set and forms an Athanasius', async () => {
 			await resetGameFlowCase();
 
 			// Alice has red joker, Bob has black joker → Alice steals Bob's joker → 2 jokers = Athanasius
@@ -348,7 +348,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			);
 		});
 
-		await runCase('Joker Athanasius: steal notification includes Athanasius indication', async () => {
+		it('Joker Athanasius: steal notification includes Athanasius indication', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -370,7 +370,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assertSent(getLog(), CAROL.id, 'Афанасий');
 		});
 
-		await runCase('Joker Athanasius: game ends when Joker Athanasius empties the last non-empty hand', async () => {
+		it('Joker Athanasius: game ends when Joker Athanasius empties the last non-empty hand', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -397,8 +397,8 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Regular Cards', async ({ runCase }) => {
-		await runCase('54-card game: regular suit-based steal works alongside jokers', async () => {
+	describe('Regular Cards', async () => {
+		it('54-card game: regular suit-based steal works alongside jokers', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -428,7 +428,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(persisted.athanasiuses[ALICE.id]?.includes('A'), 'Alice should form Athanasius A from 52-deck cards in a 54-deck game');
 		});
 
-		await runCase('54-card game: regular steal failure shifts the turn correctly', async () => {
+		it('54-card game: regular steal failure shifts the turn correctly', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -458,7 +458,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(getGame().activePlayer.id !== ALICE.id, 'Turn should shift after failed regular steal in 54-deck game');
 		});
 
-		await runCase('54-card game: hand view of a player with both jokers shows red and black counts', async () => {
+		it('54-card game: hand view of a player with both jokers shows red and black counts', async () => {
 			const redJoker = Deck.getCardById(53)!;
 			const blackJoker = Deck.getCardById(54)!;
 			const view = Deck.getMyHandView([redJoker, blackJoker]);
@@ -468,8 +468,8 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 		});
 	});
 
-	await tools.runLayer('Notifications', async ({ runCase }) => {
-		await runCase('Joker steal: victim receives a notification', async () => {
+	describe('Notifications', async () => {
+		it('Joker steal: victim receives a notification', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -492,7 +492,7 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assert(received, 'Bob (victim) should receive a notification about Alice stealing the joker');
 		});
 
-		await runCase('Joker steal: bystander players receive a mailing notification', async () => {
+		it('Joker steal: bystander players receive a mailing notification', async () => {
 			await resetGameFlowCase();
 
 			await seedGameState({
@@ -519,4 +519,4 @@ export async function deck54Flow (tools: ModuleTools): Promise<void> {
 			assertNotSent(getLog(), ALICE.id, 'Алиса → Борис');
 		});
 	});
-}
+});

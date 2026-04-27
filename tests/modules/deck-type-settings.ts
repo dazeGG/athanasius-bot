@@ -1,11 +1,11 @@
 /**
  * deck-type-settings.ts — room settings: deck type selection (36/52/54) via SettingsHandlers.
  */
+import { describe, it } from 'vitest';
 import { ORM } from '../../src/db';
 
 import { SESSIONS, resetLog, getLog, clearDB, seedDB, withCallbackMethods } from '../bootstrap';
 import { assert, assertSent, assertNotSent, assertKeyboardButton } from '../runner';
-import type { ModuleTools } from '../runner';
 import type { CallbackData } from '../../src/core';
 
 const PLAYERS = [
@@ -68,10 +68,10 @@ const seedRoomWithMembers = async () => {
 	resetLog();
 };
 
-export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise<void> {
+describe('deckTypeSettingsModule', async () => {
 	const { SettingsHandlers } = await import('../../src/modules/rooms/settings.handlers');
 
-	await runCase('Settings screen includes "Тип колоды" button', async () => {
+	it('Settings screen includes "Тип колоды" button', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -80,7 +80,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertSent(log, OWNER.id, 'Тип колоды');
 	});
 
-	await runCase('Opening changeDeckType without a value shows the selection keyboard', async () => {
+	it('Opening changeDeckType without a value shows the selection keyboard', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -95,7 +95,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertKeyboardButton(log, OWNER.id, '54 карты (с джокерами)', 'room:cdt:room-dt:54');
 	});
 
-	await runCase('Currently selected deck type shows a checkmark in the selection keyboard', async () => {
+	it('Currently selected deck type shows a checkmark in the selection keyboard', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -107,7 +107,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertKeyboardButton(log, OWNER.id, '✅ 52 карты', 'room:cdt:room-dt:52');
 	});
 
-	await runCase('Changing deck type to 36 persists the new setting', async () => {
+	it('Changing deck type to 36 persists the new setting', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -116,7 +116,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assert(room.settings.deckType === 36, `deckType should be 36, got ${room.settings.deckType}`);
 	});
 
-	await runCase('Changing deck type to 54 persists the new setting', async () => {
+	it('Changing deck type to 54 persists the new setting', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -125,7 +125,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assert(room.settings.deckType === 54, `deckType should be 54, got ${room.settings.deckType}`);
 	});
 
-	await runCase('Changing deck type to 52 persists the new setting', async () => {
+	it('Changing deck type to 52 persists the new setting', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -137,7 +137,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assert(room.settings.deckType === 52, `deckType should be 52, got ${room.settings.deckType}`);
 	});
 
-	await runCase('After changing deck type the settings screen reflects the new value', async () => {
+	it('After changing deck type the settings screen reflects the new value', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -146,7 +146,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertSent(log, OWNER.id, '36 карт');
 	});
 
-	await runCase('Room base text shows "36 карт" label for 36-deck rooms', async () => {
+	it('Room base text shows "36 карт" label for 36-deck rooms', async () => {
 		await resetDeckTypeCase();
 		await seedDB({
 			users: PLAYERS.map(p => ({
@@ -180,7 +180,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertSent(log, OWNER.id, '36 карт');
 	});
 
-	await runCase('Room base text shows "54 карты" label for 54-deck rooms', async () => {
+	it('Room base text shows "54 карты" label for 54-deck rooms', async () => {
 		await resetDeckTypeCase();
 		await seedDB({
 			users: PLAYERS.map(p => ({
@@ -214,7 +214,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertSent(log, OWNER.id, '54 карты');
 	});
 
-	await runCase('Non-owner cannot change the deck type', async () => {
+	it('Non-owner cannot change the deck type', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -229,7 +229,7 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assert(roomAfter.settings.deckType === deckTypeBefore, 'Non-owner must not change deck type');
 	});
 
-	await runCase('Selection keyboard marks 36 as selected after room is set to 36', async () => {
+	it('Selection keyboard marks 36 as selected after room is set to 36', async () => {
 		await resetDeckTypeCase();
 		await seedRoomWithMembers();
 
@@ -243,4 +243,4 @@ export async function deckTypeSettingsModule ({ runCase }: ModuleTools): Promise
 		assertKeyboardButton(log, OWNER.id, '✅ 36 карт', 'room:cdt:room-dt:36');
 		assertKeyboardButton(log, OWNER.id, '52 карты', 'room:cdt:room-dt:52');
 	});
-}
+});
