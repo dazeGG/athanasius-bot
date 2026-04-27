@@ -210,6 +210,7 @@ const reply = async (ctx: ReplyLikeContext, text: string, options?: MessageOptio
 		keyboard: normalizeKeyboard(getKeyboard({ options })),
 		parseMode: getParseMode({ options }),
 	});
+	return { message_id: 0 };
 };
 
 const editMessageText = async (ctx: ReplyLikeContext, text: string, options?: MessageOptions['options']) => {
@@ -218,6 +219,7 @@ const editMessageText = async (ctx: ReplyLikeContext, text: string, options?: Me
 		keyboard: normalizeKeyboard(getKeyboard({ options })),
 		parseMode: getParseMode({ options }),
 	});
+	return { message_id: 0 };
 };
 
 const deleteMessage = async (ctx: ReplyLikeContext) => {
