@@ -1,50 +1,11 @@
-import type { nanoid } from 'nanoid';
-
-import type { CardName } from '~/entities/deck';
-
-export type UserId = number;
-export type RoomId = ReturnType<typeof nanoid>;
-export type GameId = ReturnType<typeof nanoid>;
-
-export interface ConfirmModeSettings {
-	card: boolean;
-	count: boolean;
-	colors: boolean;
-	suits: boolean;
-}
-
-export interface UserSettings {
-	updatesView: 'instant' | 'composed';
-	confirmMode?: ConfirmModeSettings;
-}
-
-export interface RoomSettings {
-	joinCode: string;
-	deckType: 52 | 54 | 36;
-	decksCount: number;
-	towHands: boolean;
-	allowMailing: boolean;
-}
-
-export interface GameLog {
-	from: UserId;
-	to: UserId;
-	cardName: CardName;
-	steal: boolean;
-	stealData?: [number] | [number, number] | [number, number, number, number];
-	athanasius?: boolean;
-}
-
-export interface GameUtils {
-	cardsToAthanasius: number;
-	jokerCardsToAthanasius: number;
-	logs: string[];
-	mailedThisTurn?: UserId[];
-}
-
-export interface GameUtilsParsed {
-	cardsToAthanasius: number;
-	jokerCardsToAthanasius: number;
-	logs: GameLog[];
-	mailedThisTurn?: UserId[];
-}
+export type {
+	UserId,
+	RoomId,
+	GameId,
+	ConfirmModeSettings,
+	UserSettings,
+	RoomSettings,
+	GameLog,
+	GameUtils,
+	GameUtilsParsed,
+} from '@athanasius/shared';

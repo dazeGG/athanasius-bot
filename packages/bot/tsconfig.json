@@ -4,7 +4,9 @@
     "baseUrl": "./src",
     "paths": {
       "~": ["."],
-      "~/*": ["*"]
+      "~/*": ["*"],
+      "@athanasius/shared": ["../../shared/src"],
+      "@athanasius/shared/*": ["../../shared/src/*"]
     }
   },
   "include": ["src"]
