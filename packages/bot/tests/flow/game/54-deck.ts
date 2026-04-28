@@ -2,7 +2,7 @@
  * 54-deck.ts — game flow tests for the 54-card deck type (52 cards + 2 jokers).
  */
 import { describe, it } from 'vitest';
-import { Deck } from '../../../src/entities/deck';
+import { Deck } from '@athanasius/shared';
 
 import { DB, Game, getLog } from '../../bootstrap';
 import { assert, assertSent, assertNotSent } from '../../runner';

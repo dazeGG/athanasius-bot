@@ -1,6 +1,5 @@
 {
   "name": "@athanasius/shared",
-  "version": "1.4.0",
   "private": true,
   "type": "module",
   "main": "src/index.ts",

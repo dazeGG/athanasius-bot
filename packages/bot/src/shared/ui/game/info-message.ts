@@ -1,7 +1,7 @@
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
-import type { CardName } from '~/entities/deck';
+import type { CardName } from '@athanasius/shared';
 import type { RoomSchema, UserSchema } from '~/db';
 import type { CardStageMeta, ColorsStageMeta, CountStageMeta, SuitsStageMeta } from '~/entities/game';
 

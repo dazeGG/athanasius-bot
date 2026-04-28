@@ -6,12 +6,12 @@ import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { playersList } from '~/shared/ui';
 import { txt, MIN_PLAYERS_TO_START } from '~/shared/ui/game';
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
 import type { AppContext, CallbackCtx } from '~/core';
 import type { RoomSchema, RoomId } from '~/db';
 import type { PlayerId } from '~/entities/game';
-import type { DeckType } from '~/entities/deck';
+import type { DeckType } from '@athanasius/shared';
 
 import * as ui from './ui';
 

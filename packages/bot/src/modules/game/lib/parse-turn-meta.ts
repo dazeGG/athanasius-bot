@@ -1,6 +1,6 @@
 import { DB } from '~/db';
-import { DeckConfig } from '~/entities/deck';
-import type { CardName } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
+import type { CardName } from '@athanasius/shared';
 
 import { TurnStage } from '~/entities/game';
 import type { TurnMeta } from '~/entities/game';

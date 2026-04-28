@@ -2,7 +2,7 @@
  * 36-deck.ts — game flow tests for rooms configured with the 36-card deck type.
  */
 import { describe, it } from 'vitest';
-import { Deck } from '../../../src/entities/deck';
+import { Deck } from '@athanasius/shared';
 
 import { DB, Game } from '../../bootstrap';
 import { assert, assertSent } from '../../runner';

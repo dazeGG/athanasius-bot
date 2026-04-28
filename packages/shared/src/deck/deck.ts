@@ -1,5 +1,3 @@
-
-
 import { DeckConfig } from './config';
 import type { DeckType } from './config';
 import type { Card, CardId, CardName, SuitName } from './types';

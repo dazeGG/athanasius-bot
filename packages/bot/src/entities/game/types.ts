@@ -1,39 +1,9 @@
-import type { GameId, UserId, UserSchema } from '~/db';
-import type { CardName } from '~/entities/deck';
+import { TurnStage } from '@athanasius/shared';
+import type { CardName, GameId, HandHasOptions, PlayerId, Suits } from '@athanasius/shared';
+import type { UserSchema } from '~/db';
 
-export interface HandHasOptions {
-	cardName: CardName;
-	count?: number;
-	colors?: {
-		red: number;
-		black: number;
-	};
-	suits?: {
-		hearts: number;
-		diamonds: number;
-		spades: number;
-		clubs: number;
-	};
-}
-
-export type PlayerId = UserId;
-
-export enum TurnStage {
-	player,
-	card,
-	count,
-	colors,
-	suits,
-}
-
-export interface Suits {
-	hearts: number;
-	diamonds: number;
-	spades: number;
-	clubs: number;
-	mode: string;
-	action?: string;
-}
+export { TurnStage };
+export type { HandHasOptions, PlayerId, Suits } from '@athanasius/shared';
 
 interface BaseTurnMeta {
 	gameId: GameId;

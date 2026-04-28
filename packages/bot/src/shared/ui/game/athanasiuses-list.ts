@@ -1,7 +1,7 @@
 import { ORM } from '~/db';
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import { escapeHtml } from '~/shared/lib';
-import type { CardName } from '~/entities/deck';
+import type { CardName } from '@athanasius/shared';
 import type { Game } from '~/entities/game';
 
 export const athanasiusesList = (game: Game): string => {

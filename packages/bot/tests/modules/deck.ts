@@ -2,7 +2,7 @@
  * deck.ts — unit tests for Deck and DeckConfig covering new 36/52/54 deck types and joker mechanics.
  */
 import { describe, it } from 'vitest';
-import { Deck, DeckConfig } from '../../src/entities/deck';
+import { Deck, DeckConfig } from '@athanasius/shared';
 
 import { assert } from '../runner';
 

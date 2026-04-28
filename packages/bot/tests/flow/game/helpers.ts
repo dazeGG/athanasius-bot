@@ -2,9 +2,9 @@
  * game/helpers.ts — shared fixtures, builders, and assertions for `Game Flow`.
  */
 import { ORM } from '../../../src/db';
-import { Deck, DeckConfig } from '../../../src/entities/deck';
+import { Deck, DeckConfig } from '@athanasius/shared';
 import type { GameSchema, RoomSchema, UserSchema } from '../../../src/db';
-import type { CardName, SuitName } from '../../../src/entities/deck';
+import type { CardName, SuitName } from '@athanasius/shared';
 import type { CallbackCtx } from '../../../src/core';
 
 import {

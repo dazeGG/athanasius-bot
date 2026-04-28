@@ -2,8 +2,8 @@ import { InlineKeyboard } from 'grammy';
 
 import { ORM } from '~/db';
 import type { UserId, GameSchema, RoomSchema } from '~/db';
-import { Deck, DeckConfig } from '~/entities/deck';
-import type { CardName, DeckType } from '~/entities/deck';
+import { Deck, DeckConfig } from '@athanasius/shared';
+import type { CardName, DeckType } from '@athanasius/shared';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';
 import type { CallbackCtx, AppContext } from '~/core';
 

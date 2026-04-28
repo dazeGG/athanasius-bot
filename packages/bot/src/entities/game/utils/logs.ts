@@ -1,5 +1,5 @@
 import { ORM } from '~/db';
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import { escapeHtml } from '~/shared/lib';
 import type { GameLog, GameUtilsParsed } from '~/db';
 

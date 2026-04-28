@@ -1,4 +1,4 @@
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import { escapeHtml } from '~/shared/lib';
 import type {
 	TurnMeta,

@@ -1,10 +1,10 @@
 import { InlineKeyboard } from 'grammy';
 
 import { DB } from '~/db';
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import { TurnStage } from '~/entities/game';
 import type { GameId } from '~/db';
-import type { CardName } from '~/entities/deck';
+import type { CardName } from '@athanasius/shared';
 import type { Game, PlayerId, CardStageMeta, CountStageMeta, ColorsStageMeta, SuitsStageMeta, Suits } from '~/entities/game';
 import { stringifyCallbackData } from '~/core/lib';
 

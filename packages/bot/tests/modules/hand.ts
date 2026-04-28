@@ -3,7 +3,7 @@
  */
 
 import { describe, it } from 'vitest';
-import { Deck } from '../../src/entities/deck';
+import { Deck } from '@athanasius/shared';
 
 import { clearDB, getLog, resetLog, seedDB, withCallbackMethods, withMessageMethods } from '../bootstrap';
 import { assert, assertDeleted, assertSent } from '../runner';

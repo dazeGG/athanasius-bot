@@ -1,7 +1,7 @@
 import { InlineKeyboard } from 'grammy';
 
 import { ORM } from '~/db';
-import { Deck } from '~/entities/deck';
+import { Deck } from '@athanasius/shared';
 import { Game } from '~/entities/game';
 import { escapeHtml } from '~/shared/lib';
 import { stringifyCallbackData, getCallbackMeta } from '~/core/lib';

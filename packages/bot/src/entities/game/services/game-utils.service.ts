@@ -1,4 +1,4 @@
-import { DeckConfig } from '~/entities/deck';
+import { DeckConfig } from '@athanasius/shared';
 import type { GameLog, GameUtils, GameUtilsParsed } from '~/db';
 
 function parseGameLog (originalLog: string): GameLog {

@@ -8,14 +8,12 @@ import { InfoMessage } from '~/shared/ui/game';
 import { sendFirstMessage, notifyInitialAthanasiuses } from '~/entities/game/services';
 import type { GameId, GameLog, GameSchema, UserSchema, GameUtilsParsed, RoomId, RoomSchema } from '~/db';
 
-import { Queue } from './model/queue';
-import { Hands } from './model/hands';
+import { Queue, Hands } from '@athanasius/shared';
 import { parseGameUtils, generateGameUtils } from './services';
 import { getLastRoundLogs, mailing as gameMailing } from './utils';
 import { TurnStage } from './types';
-import type { Hand } from './model/hand';
+import type { Hand, CardName } from '@athanasius/shared';
 import type { MailingOptions, PlayerId, Sender, TurnOptions, TurnReturn } from './types';
-import type { CardName } from '~/entities/deck';
 
 interface ConstructorOptionsById {
 	id: string;
