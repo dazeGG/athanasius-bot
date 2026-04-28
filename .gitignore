@@ -4,11 +4,3 @@ node_modules
 
 .idea
 .claude
-
-logs
-
-.env
-.env.test
-
-db.json
-db.*.json
