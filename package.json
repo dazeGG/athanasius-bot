@@ -5,7 +5,7 @@
   "scripts": {
     "bot:dev": "pnpm --filter @athanasius/bot dev",
     "bot:start": "pnpm --filter @athanasius/bot start",
-    "test": "pnpm --filter @athanasius/bot test",
+    "bot:test": "pnpm --filter @athanasius/bot test",
     "lint": "pnpm -r lint",
     "typecheck": "pnpm -r typecheck"
   }
