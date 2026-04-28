@@ -1,7 +1,6 @@
 {
   "name": "@athanasius/bot",
-  "version": "1.4.0",
-  "description": "",
+  "private": true,
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
