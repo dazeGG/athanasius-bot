@@ -83,6 +83,12 @@ The declaration is only successful if the full statement is exact.
 3. Players with empty hands must not appear in the target selection keyboard.
 4. Players with empty hands are skipped in turn order.
 
+### Turn Selection Defaults
+
+- The count starts at the rounded full rank size divided by the number of players at match start. This average stays fixed throughout the match; only the initial value is capped by the number of cards of that rank outside the active player's own hand.
+- The color selection starts with half the declared count red, rounded down, and the rest black.
+- Count and color adjustments use the existing single-step `-` / `+` buttons. Suit selection keeps the existing add/remove controls.
+
 ### Successful Turn
 
 1. On success, all cards of the declared rank are moved from the target player to the active player.

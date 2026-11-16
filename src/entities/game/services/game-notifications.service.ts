@@ -58,7 +58,7 @@ export async function sendFirstMessage (game: Game, sender: Sender, initial: boo
 	});
 }
 
-export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptions) {
+export async function notifyNextStage ({ ctx, game, me, turnMeta }: GameServiceOptions) {
 	switch (turnMeta.stage) {
 	case TurnStage.player:
 		await ctx.editMessageText(
@@ -66,18 +66,26 @@ export async function notifyNextStage ({ ctx, game, turnMeta }: GameServiceOptio
 			{ reply_markup: gkb.cardSelect({ me: ctx.from.id, game, playerId: turnMeta.player.id }) },
 		);
 		break;
-	case TurnStage.card:
+	case TurnStage.card: {
+		const rankCount = game.getCardsToAthanasiusForRank(turnMeta.cardName);
+		const myCount = game.getHand(me.id)?.getCardsByName(turnMeta.cardName).length ?? 0;
+		const initialCount = Math.max(1, Math.min(Math.round(rankCount / game.allPlayers.length), rankCount - myCount));
+
 		await ctx.editMessageText(
-			withGameName(game, GameMessage.getCountSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_COUNT)),
-			{ reply_markup: gkb.countSelect({ game, turnMeta, count: SERVICES_CONFIG.INITIAL_COUNT }) },
+			withGameName(game, GameMessage.getCountSelectMessage(turnMeta, initialCount)),
+			{ reply_markup: gkb.countSelect({ game, turnMeta, count: initialCount }) },
 		);
 		break;
-	case TurnStage.count:
+	}
+	case TurnStage.count: {
+		const initialRedCount = Math.floor(turnMeta.count / 2);
+
 		await ctx.editMessageText(
-			withGameName(game, GameMessage.getColorsSelectMessage(turnMeta, SERVICES_CONFIG.INITIAL_RED_COUNT)),
-			{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: SERVICES_CONFIG.INITIAL_RED_COUNT }) },
+			withGameName(game, GameMessage.getColorsSelectMessage(turnMeta, initialRedCount)),
+			{ reply_markup: gkb.colorsSelect({ game, turnMeta, redCount: initialRedCount }) },
 		);
 		break;
+	}
 	case TurnStage.colors:
 		// Defensive guard for direct service calls; processTurn handles Joker colors as the final stage.
 		if (turnMeta.cardName !== 'Joker') {

@@ -94,7 +94,7 @@ describe('Progression', async () => {
 
 		assert(latestMessage !== undefined, 'Alice should receive a colors selection message');
 		assert(latestMessage.includes('Выбери сколько <b>красных</b> карт ты хочешь спросить'), 'Flow should move to colors selection');
-		assert(latestMessage.includes('🔴: <b>0</b> ⚫: <b>2</b>'), 'Colors stage should start from the default red/black split');
+		assert(latestMessage.includes('🔴: <b>1</b> ⚫: <b>1</b>'), 'Colors stage should start from an even red/black split');
 	});
 
 	it('Colors selection advances the flow to the suits stage', async () => {
